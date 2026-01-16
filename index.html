@@ -8,35 +8,85 @@
     <style>
         body { background-color: #0f172a; color: white; font-family: sans-serif; overflow: hidden; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        textarea::placeholder { color: #475569; }
+        textarea::placeholder { color: #64748b; opacity: 0.7; }
+        
+        /* Анимация загрузки */
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top: 3px solid #3b82f6;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none; /* Скрыто по умолчанию */
+            margin: 0 auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="p-4 flex flex-col min-h-screen">
 
-    <div class="relative w-full h-56 rounded-2xl overflow-hidden mb-6 shadow-2xl">
-        <img src="1768422265866.jpg" class="w-full h-full object-cover" alt="Truck Studio">
+    <div class="relative w-full h-56 rounded-2xl overflow-hidden mb-6 shadow-2xl border border-slate-700">
+        <img src="1768422265866.jpg" class="w-full h-full object-cover opacity-90" alt="Truck Studio">
         <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent"></div>
         <div class="absolute bottom-4 left-4">
-            <h1 class="text-2xl font-black italic tracking-tighter uppercase">AI TRUCK STUDIO</h1>
-            <p class="text-[10px] text-blue-400 uppercase tracking-widest font-bold">Project Boss Edition</p>
+            <h1 class="text-2xl font-black italic tracking-tighter uppercase drop-shadow-lg">AI TRUCK STUDIO</h1>
+            <div class="flex items-center gap-2 mt-1">
+                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <p class="text-[10px] text-blue-300 uppercase tracking-widest font-bold">System Online</p>
+            </div>
         </div>
     </div>
 
     <div class="flex-grow">
-        <div class="glass rounded-2xl p-5 mb-6">
-            <h2 class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-3">Запрос для нейросети:</h2>
+        <div class="glass rounded-2xl p-6 mb-6 text-center shadow-lg relative">
+            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-[#0f172a] px-3 text-[10px] text-blue-400 font-bold uppercase tracking-widest">
+                Терминал ввода
+            </div>
             <textarea id="prompt" 
-                class="w-full bg-transparent border-none text-white text-lg placeholder-slate-700 outline-none resize-none" 
-                rows="6" 
+                class="w-full bg-transparent border-none text-white text-xl text-center placeholder-slate-600 outline-none resize-none leading-relaxed" 
+                rows="5" 
                 placeholder="Начнём..."></textarea>
         </div>
     </div>
 
-    <div class="pb-6">
-        <button onclick="alert('Система готова. Жду подключения API для запуска генерации.')" class="w-full bg-blue-600 active:scale-95 text-white font-black py-5 rounded-2xl shadow-2xl shadow-blue-900/40 transition-all uppercase tracking-widest text-sm">
-            Генерировать шедевр 🚛
+    <div class="pb-8">
+        <button id="gen-btn" onclick="startGeneration()" class="relative w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-black py-5 rounded-2xl shadow-2xl shadow-blue-900/30 transition-all uppercase tracking-[0.2em] text-sm overflow-hidden group">
+            <span id="btn-text">Сгенерировать</span>
+            <div id="loader" class="loader"></div>
         </button>
     </div>
 
+    <script>
+        function startGeneration() {
+            const prompt = document.getElementById('prompt').value;
+            const btnText = document.getElementById('btn-text');
+            const loader = document.getElementById('loader');
+            const btn = document.getElementById('gen-btn');
+
+            // Проверка на пустоту
+            if(!prompt || prompt.trim() === "") {
+                // Легкая вибрация (если поддерживается)
+                if(navigator.vibrate) navigator.vibrate(50);
+                alert('Босс, поле пустое! Напиши, что рисуем.');
+                return;
+            }
+
+            // Запуск анимации
+            btnText.style.display = 'none';
+            loader.style.display = 'block';
+            btn.classList.add('bg-slate-700'); // Меняем цвет кнопки пока думает
+            
+            // Имитация работы (потом сюда вставим реальный код)
+            setTimeout(() => {
+                alert('Система приняла запрос: "' + prompt + '"\n\n(Здесь начнется генерация, когда мы вставим API ключ)');
+                
+                // Возвращаем кнопку обратно
+                btnText.style.display = 'block';
+                loader.style.display = 'none';
+                btn.classList.remove('bg-slate-700');
+            }, 1500);
+        }
+    </script>
 </body>
 </html>
