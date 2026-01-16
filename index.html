@@ -24,8 +24,7 @@
         .content { display: none; flex-direction: column; flex-grow: 1; }
         .content.active { display: flex; }
 
-        /* Выбор модели */
-        .model-select { width: 100%; padding: 12px; background: #222; color: white; border: 1px solid #444; border-radius: 12px; margin-bottom: 10px; outline: none; appearance: none; }
+        .model-select { width: 100%; padding: 12px; background: #222; color: white; border: 1px solid #444; border-radius: 12px; margin-bottom: 10px; outline: none; }
 
         .input-area { display: flex; gap: 8px; background: #000; padding: 10px; border-radius: 18px; border: 1px solid #444; align-items: center; }
         .field { flex: 1; background: none; border: none; color: white; font-size: 16px; outline: none; }
@@ -44,7 +43,6 @@
         .tool-btn { background: #333; color: white; border: 1px solid #444; padding: 8px 12px; border-radius: 10px; font-size: 12px; cursor: pointer; flex: 1; font-weight: bold; }
 
         .gen-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #ff0055, #ff5500); border: none; border-radius: 15px; color: white; font-weight: 900; cursor: pointer; margin-top: 10px; }
-        
         #menu { display: none; position: fixed; background: #25252b; border: 1px solid #444; border-radius: 12px; z-index: 9999; min-width: 170px; }
         .menu-item { padding: 12px; color: white; font-size: 13px; border-bottom: 1px solid #333; cursor: pointer; }
     </style>
@@ -134,17 +132,21 @@
         u.lang = 'ru-RU'; window.speechSynthesis.speak(u);
     }
 
-    function voice(m){
+    // ИСПРАВЛЕННЫЙ ГОЛОС: Теперь текст сначала дублируется в поле
+    function voice(mode){
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if(!SR) return alert("Голос не поддерживается");
         const rec = new SR(); rec.lang = 'ru-RU';
-        const btn = document.getElementById('mic-'+m);
+        const btn = document.getElementById('mic-'+mode);
+        const field = mode === 'art' ? document.getElementById('i-art') : document.getElementById('i-chat');
+
         rec.onstart = () => btn.classList.add('active');
         rec.onend = () => btn.classList.remove('active');
         rec.onresult = (e) => {
             const v = e.results[0][0].transcript;
-            if(m === 'art') { document.getElementById('i-art').value = v; makeImg(); }
-            else { document.getElementById('i-chat').value = v; sendMsg(); }
+            field.value = v; // ДУБЛИРУЕМ ТЕКСТ В ПОЛЕ
+            if(mode === 'art') { setTimeout(makeImg, 500); }
+            else { setTimeout(sendMsg, 500); }
         };
         rec.start();
     }
@@ -161,8 +163,6 @@
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(inp.value)}?model=${model}&nologo=true&seed=${Math.random()}`;
         
         const div = document.createElement('div');
-        div.style.background = '#000';
-        div.style.borderRadius = '10px';
         div.innerHTML = `<img src="${url}" style="width:100%; border-radius:10px; border:1px solid #333; display:block">`;
         setupEvents(div, 'img', url);
         document.getElementById('imgs').prepend(div);
@@ -178,13 +178,17 @@
 
         try {
             const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(text)}`);
+            if (!r.ok) throw new Error();
             const res = await r.text();
             const ai = document.createElement('div'); ai.className = 'msg a';
             ai.innerHTML = marked.parse(res);
             setupEvents(ai, 'chat', res);
             box.appendChild(ai); box.scrollTop = box.scrollHeight;
             if(!text.toLowerCase().includes("нарисуй")) speak(res); 
-        } catch(e) { box.innerHTML += `<div class="msg a">Ошибка сети.</div>`; }
+        } catch(e) { 
+            box.innerHTML += `<div class="msg a">⚠️ Сервер перегружен. Попробуй еще раз через 5 секунд.</div>`;
+            box.scrollTop = box.scrollHeight;
+        }
     }
 </script>
 </body>
