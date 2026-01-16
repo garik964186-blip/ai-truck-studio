@@ -21,7 +21,6 @@
         .container { background-color: var(--card-bg); padding: 25px; border-radius: var(--border-radius); box-shadow: 0 20px 70px rgba(0,0,0,0.8); width: 100%; max-width: 950px; border: 1px solid #333; }
         .header { text-align: center; margin-bottom: 20px; }
         
-        /* Твой баннер из репозитория */
         .banner-img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--accent-color); margin-bottom: 15px; box-shadow: 0 0 20px rgba(255, 0, 85, 0.2); object-fit: cover; }
         
         h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-size: 28px; }
@@ -34,7 +33,7 @@
 
         .board-controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
         
-        /* Исправленная кнопка выбора моделей */
+        /* Исправленная кнопка выбора моделей - теперь она яркая */
         select {
             width: 100%;
             padding: 14px;
@@ -53,10 +52,12 @@
         
         .btn-group { display: flex; gap: 10px; }
         .presets { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
-        .preset-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; }
+        .preset-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; transition: 0.2s; }
+        .preset-btn:hover { border-color: var(--accent-color); color: white; }
         
-        #image-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; background: #08080a; padding: 15px; border-radius: 12px; border: 1px solid #333; min-height: 200px; }
-        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #222; }
+        #image-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; background: #08080a; padding: 15px; border-radius: 12px; border: 1px solid #333; min-height: 200px; margin-top: 15px; }
+        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #222; transition: 0.3s; }
+        .generated-img:hover { transform: scale(1.02); }
 
         textarea, input[type="text"] { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; margin-bottom: 10px; box-sizing: border-box; }
         .action-btn { width: 100%; padding: 15px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); }
@@ -95,8 +96,8 @@
         </div>
         
         <div class="presets">
-            <button class="preset-btn" onclick="addPreset('YouTube thumbnail, heavy truck on highway, cinematic, 8k')">🖼️ YouTube</button>
-            <button class="preset-btn" onclick="addPreset('KAMAZ K5 truck, realistic, mountain road, sunset')">🚛 КамАЗ К5</button>
+            <button class="preset-btn" onclick="addPreset('YouTube thumbnail, powerful heavy truck on highway, cinematic motion blur, high contrast, 8k')">🖼️ YouTube</button>
+            <button class="preset-btn" onclick="addPreset('luxury super car, futuristic design, neon city lights, wet asphalt reflections, ultra realistic, cinematic lighting, 8k')">🏎️ Крутые тачки</button>
         </div>
 
         <textarea id="prompt-input" rows="2" placeholder="Опишите машину или фуру..."></textarea>
@@ -142,6 +143,7 @@
             const newImg = document.createElement('img');
             newImg.src = url;
             newImg.className = 'generated-img';
+            newImg.onclick = () => window.open(url, '_blank');
             container.prepend(newImg);
             btn.disabled = false;
             btn.innerText = "🚀 СОЗДАТЬ";
@@ -175,6 +177,19 @@
     }
     
     function clearBoard() { document.getElementById('image-container').innerHTML = ''; }
+    
+    async function downloadAll() {
+        const imgs = document.querySelectorAll('.generated-img');
+        if(imgs.length === 0) return alert("Нет картинок для скачивания");
+        imgs.forEach((img, i) => {
+            const a = document.createElement('a');
+            a.href = img.src;
+            a.download = `auto_art_${i}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+    }
 </script>
 </body>
 </html>
