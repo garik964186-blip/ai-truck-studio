@@ -47,7 +47,9 @@
         .message.ai { align-self: flex-start; background: #222; border: 1px solid #333; }
 
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; }
+        .img-wrapper { position: relative; display: flex; flex-direction: column; gap: 5px; }
+        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
+        .save-badge { background: #444; color: #fff; font-size: 10px; text-align: center; padding: 4px; border-radius: 5px; text-decoration: none; border: 1px solid #555; }
     </style>
 </head>
 <body>
@@ -63,7 +65,7 @@
             <option value="dalle-3">🦊 (Art)</option>
             <option value="flux-realism">📸 (Real)</option>
         </select>
-        <button class="compact-btn" onclick="downloadAll()">📥</button>
+        <button class="compact-btn" onclick="downloadAll()" title="Открыть всё">📥</button>
         <button class="compact-btn" onclick="clearBoard()">🗑️</button>
     </div>
 
@@ -73,7 +75,7 @@
     </div>
 
     <div id="tab-art" class="tab-content active">
-        <textarea id="prompt-input" placeholder="..."></textarea>
+        <textarea id="prompt-input" placeholder="Опиши картинку..."></textarea>
         <div style="display:flex; justify-content: space-between; margin-top: 8px;">
             <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="width: 48%;">🎤</button>
             <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 48%;">❌</button>
@@ -151,10 +153,15 @@
         img.src = url;
         img.onload = () => {
             const container = document.getElementById('image-container');
-            const newImg = document.createElement('img');
-            newImg.src = url; newImg.className = 'generated-img';
-            newImg.onclick = () => window.open(url, '_blank');
-            container.prepend(newImg);
+            const wrapper = document.createElement('div');
+            wrapper.className = 'img-wrapper';
+            
+            wrapper.innerHTML = `
+                <img src="${url}" class="generated-img" onclick="window.open('${url}', '_blank')">
+                <a href="${url}" target="_blank" class="save-badge">💾 Сохранить</a>
+            `;
+            
+            container.prepend(wrapper);
             btn.classList.remove('loading'); btn.disabled = false;
         };
         img.onerror = () => { btn.classList.remove('loading'); btn.disabled = false; };
@@ -176,12 +183,15 @@
         box.scrollTop = box.scrollHeight;
     }
 
-    function clearBoard() { if(confirm("🗑️?")) document.getElementById('image-container').innerHTML = ''; }
+    function clearBoard() { if(confirm("Очистить доску?")) document.getElementById('image-container').innerHTML = ''; }
     
     function downloadAll() {
-        document.querySelectorAll('.generated-img').forEach((img, i) => {
-            const a = document.createElement('a'); a.href = img.src; a.download = `art_${i}.jpg`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        const images = document.querySelectorAll('.generated-img');
+        if(images.length === 0) return;
+        
+        alert("В Telegram изображения откроются в новых вкладках. Зажмите их для сохранения.");
+        images.forEach((img) => {
+            window.open(img.src, '_blank');
         });
     }
 </script>
