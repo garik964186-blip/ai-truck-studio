@@ -63,18 +63,7 @@
     </div>
 
     <div class="global-controls">
-        <select id="model-select">
-            <optgroup label="🖼️ РИСОВАНИЕ">
-                <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
-                <option value="dalle-3">🦊 АРТ (DALL-E 3)</option>
-                <option value="flux-realism">📸 ФОТО (Realism)</option>
-            </optgroup>
-            <optgroup label="💬 УМНЫЙ ЧАТ">
-                <option value="openai" selected>🤖 GPT-4o (Умный)</option>
-                <option value="gemini">♊ Gemini (Быстрый)</option>
-                <option value="claude">🎭 Claude (Творческий)</option>
-            </optgroup>
-        </select>
+        <select id="model-select"></select>
         <button class="compact-btn" onclick="downloadAll()">📥 ВСЁ</button>
         <button class="compact-btn" onclick="clearBoard()">🗑️</button>
     </div>
@@ -91,7 +80,7 @@
             <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 48%;">ОЧИСТИТЬ ❌</button>
         </div>
         <button id="gen-btn" onclick="generateImage()" class="action-btn">
-            <span class="btn-text">🚀 СОЗДАТЬ КАРТИНКУ</span>
+            <span class="btn-text">🚀 СОЗДАТЬ</span>
             <span class="truck-animation">🚛💨</span>
         </button>
         <div id="image-container"></div>
@@ -101,13 +90,33 @@
         <div id="chat-container"></div>
         <div style="display:flex; gap:5px;">
             <button id="voice-chat-btn" class="compact-btn" onclick="runVoice('chat')">🎤</button>
-            <input type="text" id="chat-input" class="chat-input-field" placeholder="Спроси у выбранной нейросети..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <input type="text" id="chat-input" class="chat-input-field" placeholder="Спроси..." onkeypress="if(event.key==='Enter') sendMessage()">
             <button onclick="sendMessage()" class="compact-btn" style="background: var(--accent-color);">➤</button>
         </div>
     </div>
 </div>
 
 <script>
+    const imageModels = `
+        <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
+        <option value="dalle-3">🦊 АРТ (DALL-E 3)</option>
+        <option value="flux-realism">📸 ФОТО (Realism)</option>
+    `;
+
+    const textModels = `
+        <option value="openai">🤖 GPT-4o (Умный)</option>
+        <option value="gemini">♊ Gemini (Быстрый)</option>
+        <option value="claude">🎭 Claude (Творческий)</option>
+    `;
+
+    function updateModels(tab) {
+        const select = document.getElementById('model-select');
+        select.innerHTML = tab === 'art' ? imageModels : textModels;
+    }
+
+    // Инициализация моделей при загрузке
+    updateModels('art');
+
     function showToast() {
         const t = document.getElementById('toast');
         t.classList.add('show');
@@ -118,6 +127,7 @@
         document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
         document.getElementById(`btn-tab-${tab}`).classList.add('active');
         document.getElementById(`tab-${tab}`).classList.add('active');
+        updateModels(tab); // МЕНЯЕМ МОДЕЛИ ПРИ КЛИКЕ
     }
 
     function speak(text) {
@@ -128,7 +138,7 @@
         utterance.rate = 1.3;
         utterance.pitch = 0.85; 
         const voices = window.speechSynthesis.getVoices();
-        const male = voices.find(v => v.lang.includes('ru') && (v.name.includes('Male') || v.name.includes('Dmitry'))) || voices.find(v => v.lang.includes('ru'));
+        const male = voices.find(v => v.lang.includes('ru') && (v.name.includes('Male') || v.name.includes('Dmitry')));
         if (male) utterance.voice = male;
         window.speechSynthesis.speak(utterance);
     }
@@ -165,22 +175,11 @@
     async function generateImage() {
         const inputEl = document.getElementById('prompt-input');
         let prompt = inputEl.value;
-        let model = document.getElementById('model-select').value;
+        const model = document.getElementById('model-select').value;
         const btn = document.getElementById('gen-btn');
-
-        // Если выбрана текстовая модель на доске - предупреждаем
-        if (['openai', 'gemini', 'claude'].includes(model)) {
-            alert("Босс, выбери модель для КАРТИНОК (Flux или DALL-E)!");
-            return;
-        }
-
         if (!prompt) return;
         btn.classList.add('loading'); btn.disabled = true;
-        
-        if (/[а-яА-Я]/.test(prompt)) {
-            prompt = await translateText(prompt);
-        }
-        
+        if (/[а-яА-Я]/.test(prompt)) prompt = await translateText(prompt);
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*9999)}&nologo=true`;
         const img = new Image(); img.src = url;
         img.onload = () => {
@@ -196,27 +195,18 @@
     async function sendMessage() {
         const input = document.getElementById('chat-input');
         const box = document.getElementById('chat-container');
-        let model = document.getElementById('model-select').value;
-        
-        // Если выбрана модель для картинок в чате - принудительно ставим умный чат
-        if (['flux-pro', 'dalle-3', 'flux-realism'].includes(model)) {
-            model = 'openai';
-        }
-
+        const model = document.getElementById('model-select').value;
         if(!input.value) return;
         const msg = input.value;
         box.innerHTML += `<div class="message user">${msg}</div>`;
         input.value = '';
         box.scrollTop = box.scrollHeight;
-        
         try {
             const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=${model}`);
             const text = await r.text();
-            
             const aiMsg = document.createElement('div');
             aiMsg.className = 'message ai';
             aiMsg.innerHTML = marked.parse(text);
-            
             const actions = document.createElement('div');
             actions.className = 'msg-actions';
             actions.innerHTML = `
@@ -227,12 +217,10 @@
             box.appendChild(aiMsg);
             box.scrollTop = box.scrollHeight;
             speak(text);
-        } catch(e) { 
-            box.innerHTML += `<div class="message ai">Ошибка связи. Попробуй еще раз.</div>`; 
-        }
+        } catch(e) { box.innerHTML += `<div class="message ai">Ошибка.</div>`; }
     }
 
-    function clearBoard() { if(confirm("Очистить?")) document.getElementById('image-container').innerHTML = ''; }
+    function clearBoard() { if(confirm("Удалить всё?")) document.getElementById('image-container').innerHTML = ''; }
     function downloadAll() {
         document.querySelectorAll('.generated-img').forEach((img, i) => {
             const a = document.createElement('a'); a.href = img.src; a.download = `art_${i}.jpg`;
