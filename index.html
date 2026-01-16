@@ -3,189 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ОТ ИГРУШКИ ДО ФУРЫ: AI Studio</title>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <title>AI TRUCK STUDIO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --bg-color: #0b0b0e;
-            --card-bg: #16161a;
-            --text-color: #e0e0e0;
-            --accent-color: #ff0055;
-            --accent-grad: linear-gradient(135deg, #ff0055, #ff5500);
-            --chat-user-bg: #ff0055;
-            --chat-ai-bg: #2a2a2e;
-            --input-bg: #222226;
-            --border-radius: 16px;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; padding: 20px 10px; margin: 0; }
-        .container { background-color: var(--card-bg); padding: 25px; border-radius: var(--border-radius); box-shadow: 0 20px 70px rgba(0,0,0,0.8); width: 100%; max-width: 950px; border: 1px solid #333; }
-        .header { text-align: center; margin-bottom: 20px; }
-        /* Обложка теперь берется из твоего файла */
-        .banner-img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--accent-color); margin-bottom: 15px; box-shadow: 0 0 20px rgba(255, 0, 85, 0.2); object-fit: cover; }
-        h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-size: 28px; }
-        .tabs { display: flex; background: #000; padding: 5px; border-radius: 12px; margin-bottom: 20px; gap: 5px; }
-        .tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: #777; font-weight: 900; cursor: pointer; border-radius: 8px; transition: 0.3s; }
-        .tab-btn.active { background: var(--accent-grad); color: white; }
-        .tab-content { display: none; flex-direction: column; }
-        .tab-content.active { display: flex; }
-        .board-controls { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .presets { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
-        .preset-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; transition: 0.2s; }
-        .preset-btn:hover { border-color: var(--accent-color); color: white; }
-        #image-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; background: #08080a; padding: 15px; border-radius: 12px; border: 2px dashed #333; min-height: 200px; }
-        .img-wrapper { position: relative; display: inline-block; transition: 0.3s; }
-        .generated-img { width: 100%; border-radius: 8px; cursor: pointer; border: 1px solid #222; }
-        .img-wrapper:hover { transform: scale(1.03); }
-        .del-img-btn { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; display: none; font-weight: bold; }
-        .img-wrapper:hover .del-img-btn { display: block; }
-        select, textarea, input { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; margin-bottom: 10px; box-sizing: border-box; }
-        .action-btn { width: 100%; padding: 15px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); }
-        .clear-btn { background: #444; color: #ccc; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; }
-        .clear-btn:hover { background: #cc0000; color: white; }
-        #chat-container { height: 400px; overflow-y: auto; background: #0f0f12; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #333; }
-        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 14px; position: relative; word-wrap: break-word; line-height: 1.5; }
-        .message.user { align-self: flex-end; background: var(--chat-user-bg); color: white; }
-        .message.ai { align-self: flex-start; background: var(--chat-ai-bg); color: #ddd; padding-top: 25px; }
-        .model-badge { position: absolute; top: 5px; left: 10px; font-size: 9px; color: var(--accent-color); font-weight: bold; }
-        .voice-btn { width: 50px; background: #333; border: 1px solid #444; border-radius: 10px; color: white; cursor: pointer; font-size: 18px; transition: 0.3s; }
-        .voice-btn.recording { background: var(--accent-color); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        body { background-color: #0f172a; color: white; font-family: sans-serif; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
-<body>
-<div class="container">
-    <div class="header">
-        <img src="1768422265866.jpg" class="banner-img" alt="От игрушки до фуры">
-        <h1><a>ОТ ИГРУШКИ ДО ФУРЫ</a></h1>
-    </div>
-    <div class="tabs">
-        <button id="btn-tab-art" class="tab-btn active" onclick="switchMainTab('art')">🎨 ДОСКА</button>
-        <button id="btn-tab-chat" class="tab-btn" onclick="switchMainTab('chat')">💬 ЧАТ</button>
-    </div>
-    <div id="tab-art" class="tab-content active">
-        <div class="board-controls">
-            <select id="model-select" style="flex:1; margin:0">
-                <option value="flux-pro">💎 Flux Pro (Лучший для фур)</option>
-                <option value="dalle-3">🎨 DALL-E 3</option>
-                <option value="flux-realism">📸 Realism</option>
-            </select>
-            <button class="clear-btn" onclick="downloadAll()">📥 СКАЧАТЬ ВСЁ</button>
-            <button class="clear-btn" onclick="clearBoard()">🗑️ ОЧИСТИТЬ</button>
-        </div>
-        <div class="presets">
-            <button class="preset-btn" onclick="addPreset('YouTube thumbnail background, powerful truck on highway, cinematic motion blur, high contrast, vibrant colors, 16:9 aspect ratio, 8k')">🖼️ YouTube Обложка</button>
-            <button class="preset-btn" onclick="addPreset('heavy truck, KAMAZ K5, cinematic lighting, mountain road, 8k resolution')">🚛 КамАЗ К5</button>
-            <button class="preset-btn" onclick="addPreset('modern semi-truck, highway at night, neon reflections, ultra realistic')">🌃 Ночная трасса</button>
-            <button class="preset-btn" onclick="addPreset('toy truck in a sandbox, macro photography, tilt-shift, bright colors')">🧸 Игрушка</button>
-        </div>
-        <textarea id="prompt-input" rows="2" placeholder="Опишите машину или фуру..."></textarea>
-        <button id="gen-btn" onclick="generateImage()" class="action-btn">🚀 СОЗДАТЬ</button>
-        <div id="image-container"></div>
-    </div>
-    <div id="tab-chat" class="tab-content">
-        <select id="chat-model-select">
-            <option value="openai-fast">⚡ GPT-4o Mini</option>
-            <option value="gemini">✨ Gemini Pro</option>
-        </select>
-        <div id="chat-container"></div>
-        <div style="display:flex; gap:5px;">
-            <button id="voice-btn" class="voice-btn" onclick="startVoice()">🎤</button>
-            <input type="text" id="chat-input" placeholder="Спросить об авто..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()" style="width:50px; background:var(--accent-color); border:none; border-radius:10px; color:white; cursor:pointer">➤</button>
+<body class="p-4 flex flex-col min-h-screen">
+
+    <div class="relative w-full h-56 rounded-2xl overflow-hidden mb-6 shadow-2xl">
+        <img src="1768422265866.jpg" class="w-full h-full object-cover" alt="Truck Studio">
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] to-transparent"></div>
+        <div class="absolute bottom-4 left-4">
+            <h1 class="text-2xl font-black italic tracking-tighter uppercase">AI TRUCK STUDIO</h1>
         </div>
     </div>
-</div>
-<script>
-    function switchMainTab(tab) {
-        document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
-        document.getElementById(`btn-tab-${tab}`).classList.add('active');
-        document.getElementById(`tab-${tab}`).classList.add('active');
-    }
 
-    window.onload = () => {
-        const saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
-        saved.reverse().forEach(url => renderImage(url));
-    };
+    <div class="flex-grow">
+        <div class="glass rounded-2xl p-5 mb-6">
+            <textarea id="prompt" 
+                class="w-full bg-transparent border-none text-white text-lg placeholder-slate-600 outline-none resize-none" 
+                rows="6" 
+                placeholder="Опиши машину или фуру..."></textarea>
+        </div>
+    </div>
 
-    function renderImage(url) {
-        const container = document.getElementById('image-container');
-        const wrapper = document.createElement('div');
-        wrapper.className = 'img-wrapper';
-        wrapper.innerHTML = `
-            <img src="${url}" class="generated-img" onclick="window.open('${url}', '_blank')">
-            <button class="del-img-btn" onclick="removeSingleImage('${url}', this)">×</button>
-        `;
-        container.prepend(wrapper);
-    }
+    <div class="pb-6">
+        <button onclick="alert('Генерация запущена!')" class="w-full bg-blue-600 active:scale-95 text-white font-black py-5 rounded-2xl shadow-2xl transition-all uppercase tracking-widest text-sm">
+            Создать 🚀
+        </button>
+    </div>
 
-    function addPreset(text) { document.getElementById('prompt-input').value = text; }
-
-    async function downloadAll() {
-        const saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
-        if(!saved.length) return alert("Пусто");
-        for(let i=0; i<saved.length; i++) {
-            const a = document.createElement('a'); a.href = saved[i]; a.download = `art_${i}.jpg`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            await new Promise(r => setTimeout(r, 400));
-        }
-    }
-
-    async function generateImage() {
-        const prompt = document.getElementById('prompt-input').value;
-        const model = document.getElementById('model-select').value;
-        const btn = document.getElementById('gen-btn');
-        if (!prompt) return;
-        btn.disabled = true; btn.innerText = "⏳ ГЕНЕРАЦИЯ...";
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*999999)}&nologo=true`;
-        const img = new Image(); img.src = url;
-        img.onload = () => { renderImage(url); saveToStorage(url); btn.disabled = false; btn.innerText = "🚀 СОЗДАТЬ"; };
-    }
-
-    function saveToStorage(url) {
-        let saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
-        saved.unshift(url); localStorage.setItem('setka_gallery', JSON.stringify(saved.slice(0, 40)));
-    }
-
-    function removeSingleImage(url, btn) {
-        let saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
-        localStorage.setItem('setka_gallery', JSON.stringify(saved.filter(item => item !== url)));
-        btn.parentElement.remove();
-    }
-
-    function clearBoard() { if(confirm("Удалить всё?")) { localStorage.removeItem('setka_gallery'); document.getElementById('image-container').innerHTML = ''; } }
-
-    function startVoice() {
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.lang = 'ru-RU';
-        recognition.onstart = () => document.getElementById('voice-btn').classList.add('recording');
-        recognition.onend = () => document.getElementById('voice-btn').classList.remove('recording');
-        recognition.onresult = (e) => document.getElementById('chat-input').value = e.results[0][0].transcript;
-        recognition.start();
-    }
-
-    let history = [];
-    async function sendMessage() {
-        const input = document.getElementById('chat-input');
-        const box = document.getElementById('chat-container');
-        const model = document.getElementById('chat-model-select').value;
-        if(!input.value) return;
-        const msg = input.value;
-        box.innerHTML += `<div class="message user">${msg}</div>`;
-        input.value = ''; history.push({role:"user", content:msg});
-        const aiDiv = document.createElement('div'); aiDiv.className="message ai";
-        aiDiv.innerHTML=`<span class="model-badge">${model}</span>...`;
-        box.appendChild(aiDiv); box.scrollTop = box.scrollHeight;
-        try {
-            const r = await fetch('https://text.pollinations.ai/', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({messages:history, model:model})
-            });
-            const text = await r.text();
-            aiDiv.innerHTML = `<span class="model-badge">${model}</span>` + marked.parse(text);
-            history.push({role:"assistant", content:text});
-        } catch(e) { aiDiv.innerText = "Ошибка."; }
-        box.scrollTop = box.scrollHeight;
-    }
-</script>
 </body>
 </html>
