@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>ОТ ИГРУШКИ ДО ФУРЫ: BOSS ULTIMATE</title>
+    <title>BOSS AI STUDIO: ULTIMATE</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
@@ -13,7 +13,6 @@
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; display: flex; justify-content: center; height: 100vh; overflow: hidden; touch-action: none; }
         
-        /* КНИЖНЫЙ ФОРМАТ */
         .book { width: 100%; max-width: 500px; height: 100vh; position: relative; transition: transform 0.6s cubic-bezier(0.2, 0, 0.2, 1); transform-style: preserve-3d; }
         .book.flipped { transform: rotateY(-180deg); }
 
@@ -22,31 +21,30 @@
 
         .content { padding: 15px; flex: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         
-        /* ДИЗАЙН ИЗ ПЕРВОГО КОДА */
         .header { text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .banner-img { width: 100%; height: 80px; border-radius: 12px; object-fit: cover; border: 1px solid var(--accent-color); box-shadow: 0 0 15px rgba(255, 0, 85, 0.3); }
-        .nav-info { font-size: 9px; color: #555; text-transform: uppercase; margin-top: 5px; letter-spacing: 1px; }
+        .banner-img { width: 100%; height: 80px; border-radius: 12px; object-fit: cover; border: 1px solid var(--accent-color); }
+        
+        /* ССЫЛКА НА КАНАЛ */
+        .channel-link { text-decoration: none; color: inherit; display: block; }
+        .channel-title { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 22px; margin: 5px 0; }
+        .nav-info { font-size: 9px; color: #555; text-transform: uppercase; margin-top: 5px; }
 
         .presets { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 5px; }
         .preset-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 10px; white-space: nowrap; }
 
         textarea, input, select { background: var(--input-bg); border: 1px solid #333; color: white; padding: 12px; border-radius: 12px; width: 100%; box-sizing: border-box; font-size: 14px; outline: none; }
         
-        .action-btn { background: var(--accent-grad); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.2s; }
-        .action-btn:active { transform: scale(0.98); }
+        .action-btn { background: var(--accent-grad); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 900; cursor: pointer; }
         .secondary-btn { background: #333; border: none; color: #ccc; padding: 10px; border-radius: 10px; cursor: pointer; font-size: 11px; }
 
-        /* ГАЛЕРЕЯ */
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .img-wrapper { position: relative; }
         .img-wrapper img { width: 100%; border-radius: 10px; border: 1px solid #333; }
-        .del-btn { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); border: none; color: white; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; }
 
-        /* ЧАТ */
         #chat-container { flex: 1; background: #08080a; border-radius: 15px; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; border: 1px solid #222; }
-        .msg { padding: 12px; border-radius: 15px; font-size: 14px; max-width: 85%; line-height: 1.5; }
-        .msg.user { align-self: flex-end; background: var(--accent-color); color: white; }
-        .msg.ai { align-self: flex-start; background: #2a2a2e; border: 1px solid #3d3d42; color: #ddd; }
+        .msg { padding: 12px; border-radius: 15px; font-size: 14px; max-width: 85%; }
+        .msg.user { align-self: flex-end; background: var(--accent-color); }
+        .msg.ai { align-self: flex-start; background: #2a2a2e; border: 1px solid #3d3d42; }
 
         .recording { background: #ff0000 !important; animation: pulse 1.2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,0,85,0.6); } 70% { box-shadow: 0 0 0 10px rgba(255,0,85,0); } 100% { box-shadow: 0 0 0 0 rgba(255,0,85,0); } }
@@ -58,13 +56,16 @@
     <div class="page front">
         <div class="content">
             <div class="header">
-                <img src="1768422265866.jpg" class="banner-img" onerror="this.src='https://via.placeholder.com/500x100?text=BOSS+ART+STUDIO'">
+                <a href="https://www.youtube.com/user/aivimek" target="_blank" class="channel-link">
+                    <img src="1768422265866.jpg" class="banner-img" onerror="this.src='https://via.placeholder.com/500x100?text=BOSS+TRUCKS'">
+                    <div class="channel-title">ОТ ИГРУШКИ ДО ФУРЫ</div>
+                </a>
                 <div class="nav-info">⬅ Свайп влево для чата</div>
             </div>
 
             <div style="display:flex; gap:5px;">
                 <select id="model-select" style="flex:1">
-                    <option value="flux">💎 Flux Pro (Тягачи)</option>
+                    <option value="flux">💎 Flux (Качество)</option>
                     <option value="flux-realism">📸 Realism (Фото)</option>
                 </select>
                 <button class="secondary-btn" onclick="downloadAll()">📥 Всё</button>
@@ -72,15 +73,15 @@
             </div>
 
             <div class="presets">
-                <button class="preset-btn" onclick="addP('KAMAZ K5 truck on highway, cinematic sunset')">🚛 K5</button>
-                <button class="preset-btn" onclick="addP('Modern semi truck, neon lights, rain, 8k')">🌃 Ночь</button>
-                <button class="preset-btn" onclick="addP('Toy truck, sandbox, macro shot')">🧸 Игрушка</button>
+                <button class="preset-btn" onclick="addP('KAMAZ K5 truck, cinematic lighting, 8k')">🚛 КамАЗ K5</button>
+                <button class="preset-btn" onclick="addP('Heavy truck on mountain road, realistic')">🏔️ Горы</button>
+                <button class="preset-btn" onclick="addP('Toy truck macro photography, bright colors')">🧸 Игрушка</button>
             </div>
 
-            <textarea id="prompt-input" rows="2" placeholder="Опиши машину..."></textarea>
+            <textarea id="prompt-input" rows="2" placeholder="Что рисуем, босс?"></textarea>
             
             <div style="display:flex; gap:5px;">
-                <button id="v-art" class="action-btn" style="flex:1" onclick="runVoice('art')">🎤 СКАЗАТЬ И РИСОВАТЬ</button>
+                <button id="v-art" class="action-btn" style="flex:1" onclick="runVoice('art')">🎤 ГОЛОС + АВТО</button>
                 <button class="action-btn" style="background:#444" onclick="generateImage()">🚀</button>
             </div>
 
@@ -106,10 +107,10 @@
 
             <div style="display:flex; gap:5px;">
                 <button id="v-chat" class="secondary-btn" style="width:55px; font-size:20px" onclick="runVoice('chat')">🎤</button>
-                <input type="text" id="chat-input" placeholder="Спроси босс..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <input type="text" id="chat-input" placeholder="Спроси у бота..." onkeypress="if(event.key==='Enter') sendMessage()">
                 <button onclick="sendMessage()" class="action-btn" style="width:55px; padding:0">➤</button>
             </div>
-            <button class="secondary-btn" style="font-size:10px" onclick="window.speechSynthesis.cancel()">🔇 ОСТАНОВИТЬ ГОЛОС</button>
+            <button class="secondary-btn" style="font-size:10px" onclick="window.speechSynthesis.cancel()">🔇 СТОП ГОЛОС</button>
         </div>
     </div>
 </div>
@@ -128,7 +129,6 @@
 
     function addP(t) { document.getElementById('prompt-input').value = t; }
 
-    // ГАЛЕРЕЯ (ЛОКАЛЬНОЕ ХРАНИЛИЩЕ)
     window.onload = () => {
         const saved = JSON.parse(localStorage.getItem('boss_gallery') || '[]');
         saved.forEach(url => renderImg(url));
@@ -137,7 +137,7 @@
     function renderImg(url) {
         const wrap = document.createElement('div');
         wrap.className = 'img-wrapper';
-        wrap.innerHTML = `<img src="${url}" onclick="window.open('${url}')"><button class="del-btn" onclick="delImg('${url}', this)">×</button>`;
+        wrap.innerHTML = `<img src="${url}" onclick="window.open('${url}')"><button style="position:absolute;top:5px;right:5px;background:red;color:white;border:none;border-radius:50%;width:20px;height:20px;" onclick="delImg('${url}', this)">×</button>`;
         document.getElementById('image-container').prepend(wrap);
     }
 
@@ -170,7 +170,7 @@
         } catch { return t; }
     }
 
-    // ЧАТ (GET для стабильности)
+    // ЧАТ
     async function sendMessage() {
         const inp = document.getElementById('chat-input');
         const box = document.getElementById('chat-container');
@@ -191,7 +191,7 @@
             loader.innerHTML = marked.parse(t);
             const s = new SpeechSynthesisUtterance(t.replace(/[#*`]/g, ''));
             s.lang = 'ru-RU'; window.speechSynthesis.speak(s);
-        } catch { loader.innerText = "Сервер 502. Смени модель!"; }
+        } catch { loader.innerText = "Сервер 502."; }
         box.scrollTop = box.scrollHeight;
     }
 
@@ -205,7 +205,6 @@
         let saved = JSON.parse(localStorage.getItem('boss_gallery') || '[]');
         saved.push(url);
         localStorage.setItem('boss_gallery', JSON.stringify(saved.slice(-40)));
-        
         renderImg(url);
     }
 
