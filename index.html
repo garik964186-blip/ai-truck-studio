@@ -2,46 +2,45 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Book: BOSS Edition (Auto-Gen)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AI Book: BOSS PRO Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             --bg-color: #0b0b0e; --card-bg: #16161a; --text-color: #e0e0e0;
             --accent-color: #ff0055; --accent-grad: linear-gradient(135deg, #ff0055, #ff5500);
-            --input-bg: #222226; --border-radius: 15px;
+            --input-bg: #222226; --border-radius: 20px;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; perspective: 2000px; overflow: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; perspective: 2000px; overflow: hidden; touch-action: none; }
         
-        .book { width: 95%; max-width: 500px; height: 90vh; position: relative; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; }
+        .book { width: 95%; max-width: 450px; height: 90vh; position: relative; transition: transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; }
         .book.flipped { transform: rotateY(-180deg); }
 
-        .page { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: var(--border-radius); background: var(--card-bg); border: 2px solid #333; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .page { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: var(--border-radius); background: var(--card-bg); border: 1px solid #333; display: flex; flex-direction: column; box-shadow: 0 15px 35px rgba(0,0,0,0.7); }
         .page.back { transform: rotateY(180deg); }
 
-        .content { padding: 15px; flex: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        .content { padding: 15px; flex: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .swipe-hint { font-size: 10px; color: #555; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
+
         .header { text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .banner-img { width: 100%; height: 80px; border-radius: 8px; object-fit: cover; border: 1px solid var(--accent-color); }
+        .banner-img { width: 100%; height: 75px; border-radius: 10px; object-fit: cover; border: 1px solid var(--accent-color); }
         
-        .flip-btn, .action-btn { background: var(--accent-grad); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 12px; }
-        .action-btn.secondary { background: #333; }
+        .action-btn { background: var(--accent-grad); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+        .action-btn.secondary { background: #2a2a2e; border: 1px solid #444; }
         
-        #chat-container { flex: 1; background: #000; border-radius: 10px; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; border: 1px solid #222; }
+        #chat-container { flex: 1; background: #000; border-radius: 12px; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; border: 1px solid #222; }
         .message { padding: 10px; border-radius: 12px; font-size: 14px; max-width: 85%; line-height: 1.4; }
         .message.user { align-self: flex-end; background: var(--accent-color); }
         .message.ai { align-self: flex-start; background: #2a2a2e; border: 1px solid #3d3d42; }
 
-        .input-group { display: flex; gap: 5px; }
-        textarea, input, select { background: var(--input-bg); border: 1px solid #444; color: white; padding: 10px; border-radius: 10px; width: 100%; box-sizing: border-box; font-size: 14px; outline: none; }
+        .input-group { display: flex; gap: 8px; align-items: stretch; }
+        textarea, input, select { background: var(--input-bg); border: 1px solid #444; color: white; padding: 12px; border-radius: 12px; width: 100%; box-sizing: border-box; font-size: 14px; outline: none; }
 
         .voice-active { background: #ff0000 !important; animation: pulse 1.2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
 
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-        .img-wrapper { position: relative; animation: slideUp 0.4s ease; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .img-wrapper img { width: 100%; border-radius: 8px; border: 1px solid #444; cursor: pointer; }
-        .dl-link { display: block; font-size: 10px; color: #777; text-align: center; text-decoration: none; margin-top: 3px; }
+        .img-wrapper img { width: 100%; border-radius: 10px; border: 1px solid #444; }
     </style>
 </head>
 <body>
@@ -49,38 +48,39 @@
 <div class="book" id="myBook">
     <div class="page front">
         <div class="content">
+            <div class="swipe-hint">Свайп влево для чата ⮕</div>
             <div class="header">
-                <img src="1768422265866.jpg" class="banner-img" onerror="this.src='https://via.placeholder.com/500x100?text=BOSS+ART+BOARD'">
-                <button class="flip-btn" onclick="toggleFlip()" style="width:100%; margin-top:10px;">📖 Открыть Чат →</button>
+                <img src="1768422265866.jpg" class="banner-img" onerror="this.src='https://via.placeholder.com/500x100?text=BOSS+ART'">
             </div>
             
             <div class="input-group">
                 <select id="model-select">
-                    <option value="flux">🚛 Pro (Flux)</option>
-                    <option value="flux-realism">📸 Real (Realism)</option>
+                    <option value="flux">🚛 Качество (Flux)</option>
+                    <option value="flux-realism">📸 Фото (Real)</option>
                 </select>
                 <button class="action-btn secondary" onclick="clearBoard()">🗑️</button>
             </div>
 
-            <textarea id="prompt-input" rows="3" placeholder="Нажми микрофон и скажи, что нарисовать..."></textarea>
+            <textarea id="prompt-input" rows="3" placeholder="Скажи что нарисовать..."></textarea>
             
-            <div class="input-group">
-                <button id="v-art" class="action-btn" style="flex:1" onclick="runVoice('art')">🎤 Сказать и Рисовать</button>
-                <button class="action-btn secondary" onclick="document.getElementById('prompt-input').value=''">❌</button>
-            </div>
-
-            <button class="flip-btn" id="gen-btn" onclick="generateImage()" style="height:50px; font-size:16px;">🚀 РУЧНОЙ ЗАПУСК</button>
+            <button id="v-art" class="action-btn" onclick="runVoice('art')">🎤 Сказать и Нарисовать (Авто)</button>
+            <button class="action-btn secondary" onclick="generateImage()">🚀 Ручной запуск</button>
+            
             <div id="image-container"></div>
         </div>
     </div>
 
     <div class="page back">
         <div class="content">
+            <div class="swipe-hint">⬅ Свайп вправо для Арта</div>
             <div class="header">
-                <button class="flip-btn" onclick="toggleFlip()" style="width:100%;">← Назад к Артам 📖</button>
-                <div class="input-group" style="margin-top:10px;">
-                    <button class="action-btn secondary" style="flex:1" onclick="stopSpeech()">🔇 Молчать</button>
-                    <button class="action-btn secondary" style="flex:1" onclick="clearChat()">🗑️ Очистить</button>
+                <div class="input-group">
+                    <select id="chat-model-select" style="font-size: 12px;">
+                        <option value="openai">🤖 ChatGPT (OpenAI)</option>
+                        <option value="llama">🦙 Llama 3</option>
+                        <option value="mistral">🌀 Mistral</option>
+                    </select>
+                    <button class="action-btn secondary" onclick="clearChat()">🗑️</button>
                 </div>
             </div>
 
@@ -91,12 +91,24 @@
                 <input type="text" id="chat-input" placeholder="Спроси у BOSS AI..." onkeypress="if(event.key==='Enter') sendMessage()">
                 <button class="action-btn" onclick="sendMessage()">➤</button>
             </div>
+            <button class="action-btn secondary" style="font-size: 10px; padding: 5px;" onclick="stopSpeech()">🔇 Остановить голос</button>
         </div>
     </div>
 </div>
 
 <script>
-    function toggleFlip() { document.getElementById('myBook').classList.toggle('flipped'); stopSpeech(); }
+    const book = document.getElementById('myBook');
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    // СВАЙПЫ
+    document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, false);
+    document.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, false);
+    function handleSwipe() {
+        const threshold = 80;
+        if (touchEndX < touchStartX - threshold && !book.classList.contains('flipped')) { book.classList.add('flipped'); stopSpeech(); }
+        if (touchEndX > touchStartX + threshold && book.classList.contains('flipped')) { book.classList.remove('flipped'); stopSpeech(); }
+    }
 
     // ГОЛОС
     function speak(t) {
@@ -110,23 +122,18 @@
     function runVoice(mode) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return alert("Голос не поддерживается");
-        
         const rec = new SpeechRecognition();
         rec.lang = 'ru-RU';
         const btn = mode === 'art' ? document.getElementById('v-art') : document.getElementById('v-chat');
-        
         rec.onstart = () => btn.classList.add('voice-active');
         rec.onend = () => btn.classList.remove('voice-active');
-        
         rec.onresult = async (e) => {
             const txt = e.results[0][0].transcript;
             if (mode === 'art') {
-                const input = document.getElementById('prompt-input');
-                input.value = "⏳ Перевожу и запускаю...";
+                document.getElementById('prompt-input').value = "⏳ Рисую...";
                 const translated = await translate(txt);
-                input.value = translated;
-                // АВТОМАТИЧЕСКИЙ ЗАПУСК ГЕНЕРАЦИИ
-                generateImage(); 
+                document.getElementById('prompt-input').value = translated;
+                generateImage();
             } else {
                 document.getElementById('chat-input').value = txt;
                 sendMessage();
@@ -146,6 +153,7 @@
     async function sendMessage() {
         const inp = document.getElementById('chat-input');
         const box = document.getElementById('chat-container');
+        const model = document.getElementById('chat-model-select').value;
         if(!inp.value.trim()) return;
         const m = inp.value;
         box.innerHTML += `<div class="message user">${m}</div>`;
@@ -154,39 +162,25 @@
         loader.className = 'message ai'; loader.innerText = '⏳ Думаю...';
         box.appendChild(loader);
         box.scrollTop = box.scrollHeight;
-
         try {
-            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(m)}?model=openai`);
-            if(!r.ok) throw new Error();
+            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(m)}?model=${model}`);
             const t = await r.text();
             loader.innerHTML = marked.parse(t);
             speak(t.replace(/[#*`]/g, ''));
-        } catch { loader.innerText = '⚠️ Ошибка сервера. Попробуй еще раз, босс.'; }
+        } catch { loader.innerText = '⚠️ Сервер временно недоступен (502).'; }
         box.scrollTop = box.scrollHeight;
     }
 
-    // АРТЫ
+    // АРТ
     function generateImage() {
         const p = document.getElementById('prompt-input').value;
         const m = document.getElementById('model-select').value;
-        const btn = document.getElementById('gen-btn');
         if(!p || p.includes("⏳")) return;
-
-        btn.innerText = "🌀 ГЕНЕРАЦИЯ...";
-        btn.disabled = true;
-
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?model=${m}&seed=${Math.floor(Math.random()*1e7)}&nologo=true&width=1024&height=1024`;
-        
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?model=${m}&seed=${Math.random()}&nologo=true`;
         const wrap = document.createElement('div');
         wrap.className = 'img-wrapper';
-        wrap.innerHTML = `<img src="${url}" onclick="window.open('${url}')"><a href="${url}" target="_blank" class="dl-link">💾 Сохранить</a>`;
-        
+        wrap.innerHTML = `<img src="${url}" onclick="window.open('${url}')">`;
         document.getElementById('image-container').prepend(wrap);
-
-        setTimeout(() => {
-            btn.innerText = "🚀 ЕЩЕ РАЗ";
-            btn.disabled = false;
-        }, 2000);
     }
 
     function clearChat() { document.getElementById('chat-container').innerHTML = ''; stopSpeech(); }
