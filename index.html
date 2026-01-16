@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Studio: ОТ ИГРУШКИ ДО ФУРЫ</title>
+    <title>AI Studio: Minimal Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
@@ -27,19 +27,19 @@
         .tab-content { display: none; flex-direction: column; }
         .tab-content.active { display: flex; }
 
-        select, .compact-btn { padding: 8px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        select, .compact-btn { padding: 8px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 6px; font-size: 14px; cursor: pointer; }
         
         textarea, .chat-input-field { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; font-size: 14px; }
         
-        /* Кнопка голоса с анимацией */
         .voice-btn-active { background: #ff0000 !important; animation: mic-pulse 1.5s infinite; color: white !important; }
         @keyframes mic-pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
 
-        .action-btn { width: 100%; padding: 12px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; margin-top: 10px; }
+        .action-btn { width: 100%; padding: 15px; color: white; border: none; border-radius: 10px; font-size: 20px; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; margin-top: 10px; }
         .truck-animation { position: absolute; left: -100px; top: 50%; transform: translateY(-50%) scaleX(-1); font-size: 24px; display: none; }
+        .static-icon { display: block; }
         @keyframes drive { 0% { left: -100px; } 100% { left: 110%; } }
         .loading .truck-animation { display: block; animation: drive 2s linear infinite; }
-        .loading .btn-text { display: none; }
+        .loading .static-icon { display: none; }
 
         #chat-container { height: 300px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #222; display: flex; flex-direction: column; gap: 10px; }
         .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 13px; }
@@ -59,27 +59,27 @@
 
     <div class="global-controls">
         <select id="model-select">
-            <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
-            <option value="dalle-3">🦊 АРТ (DALL-E 3)</option>
-            <option value="flux-realism">📸 ФОТО (Realism)</option>
+            <option value="flux-pro">🚛 (Pro)</option>
+            <option value="dalle-3">🦊 (Art)</option>
+            <option value="flux-realism">📸 (Real)</option>
         </select>
-        <button class="compact-btn" onclick="downloadAll()">📥 ВСЁ</button>
+        <button class="compact-btn" onclick="downloadAll()">📥</button>
         <button class="compact-btn" onclick="clearBoard()">🗑️</button>
     </div>
 
     <div class="tabs">
-        <button id="btn-tab-art" class="tab-btn active" onclick="switchMainTab('art')">🎨 ДОСКА</button>
-        <button id="btn-tab-chat" class="tab-btn" onclick="switchMainTab('chat')">💬 ЧАТ</button>
+        <button id="btn-tab-art" class="tab-btn active" onclick="switchMainTab('art')">🎨</button>
+        <button id="btn-tab-chat" class="tab-btn" onclick="switchMainTab('chat')">💬</button>
     </div>
 
     <div id="tab-art" class="tab-content active">
-        <textarea id="prompt-input" placeholder="Нажми 'Голос' и говори..."></textarea>
+        <textarea id="prompt-input" placeholder="..."></textarea>
         <div style="display:flex; justify-content: space-between; margin-top: 8px;">
-            <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="width: 48%;">🎤 ГОЛОС</button>
-            <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 48%;">ОЧИСТИТЬ ❌</button>
+            <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="width: 48%;">🎤</button>
+            <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 48%;">❌</button>
         </div>
         <button id="gen-btn" onclick="generateImage()" class="action-btn">
-            <span class="btn-text">🚀 СОЗДАТЬ</span>
+            <span class="static-icon">🚀</span>
             <span class="truck-animation">🚛💨</span>
         </button>
         <div id="image-container"></div>
@@ -89,7 +89,7 @@
         <div id="chat-container"></div>
         <div style="display:flex; gap:5px;">
             <button id="voice-chat-btn" class="compact-btn" onclick="runVoice('chat')">🎤</button>
-            <input type="text" id="chat-input" class="chat-input-field" placeholder="Спроси нейросеть..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <input type="text" id="chat-input" class="chat-input-field" placeholder="..." onkeypress="if(event.key==='Enter') sendMessage()">
             <button onclick="sendMessage()" class="compact-btn" style="background: var(--accent-color);">➤</button>
         </div>
     </div>
@@ -102,30 +102,21 @@
         document.getElementById(`tab-${tab}`).classList.add('active');
     }
 
-    // УНИВЕРСАЛЬНЫЙ ГОЛОСОВОЙ ДВИЖОК
     function runVoice(mode) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Босс, твой браузер не поддерживает голос. Попробуй Chrome.");
-            return;
-        }
+        if (!SpeechRecognition) return;
 
         const recognition = new SpeechRecognition();
         recognition.lang = 'ru-RU';
-        recognition.interimResults = false;
         const btn = mode === 'art' ? document.getElementById('voice-art-btn') : document.getElementById('voice-chat-btn');
 
         recognition.onstart = () => btn.classList.add('voice-btn-active');
         recognition.onend = () => btn.classList.remove('voice-btn-active');
-        recognition.onerror = (event) => {
-            btn.classList.remove('voice-btn-active');
-            if(event.error === 'not-allowed') alert("Нужно разрешить доступ к микрофону в настройках браузера!");
-        };
 
         recognition.onresult = async (event) => {
             const text = event.results[0][0].transcript;
             if (mode === 'art') {
-                document.getElementById('prompt-input').value = "Перевожу...";
+                document.getElementById('prompt-input').value = "⏳";
                 const translated = await translateText(text);
                 document.getElementById('prompt-input').value = translated;
                 generateImage();
@@ -134,7 +125,6 @@
                 sendMessage();
             }
         };
-
         recognition.start();
     }
 
@@ -151,7 +141,7 @@
         const prompt = document.getElementById('prompt-input').value;
         const model = document.getElementById('model-select').value;
         const btn = document.getElementById('gen-btn');
-        if (!prompt || prompt === "Перевожу...") return;
+        if (!prompt || prompt === "⏳") return;
         
         btn.classList.add('loading'); btn.disabled = true;
         const seed = Math.floor(Math.random() * 1000000);
@@ -182,15 +172,15 @@
             const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=openai`);
             const text = await r.text();
             box.innerHTML += `<div class="message ai">${marked.parse(text)}</div>`;
-        } catch(e) { box.innerHTML += `<div class="message ai">Ошибка связи.</div>`; }
+        } catch(e) { box.innerHTML += `<div class="message ai">⚠️</div>`; }
         box.scrollTop = box.scrollHeight;
     }
 
-    function clearBoard() { if(confirm("Очистить доску?")) document.getElementById('image-container').innerHTML = ''; }
+    function clearBoard() { if(confirm("🗑️?")) document.getElementById('image-container').innerHTML = ''; }
     
     function downloadAll() {
         document.querySelectorAll('.generated-img').forEach((img, i) => {
-            const a = document.createElement('a'); a.href = img.src; a.download = `truck_art_${i}.jpg`;
+            const a = document.createElement('a'); a.href = img.src; a.download = `art_${i}.jpg`;
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
         });
     }
