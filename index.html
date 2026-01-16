@@ -54,7 +54,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <img src="https://i.postimg.cc/k4mP5PzG/1000130702.png" class="banner-img" alt="От игрушки до фуры">
+        <img src="https://raw.githubusercontent.com/garik964186-blip/garik964186-blip.github.io/main/1000130702.png" class="banner-img" alt="От игрушки до фуры">
         <h1><a>ОТ ИГРУШКИ ДО ФУРЫ</a></h1>
     </div>
     <div class="tabs">
@@ -125,5 +125,28 @@
         if(!saved.length) return alert("Пусто");
         for(let i=0; i<saved.length; i++) {
             const a = document.createElement('a'); 
-            a.href =
-                
+            a.href = saved[i]; a.download = `art_${i}.jpg`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            await new Promise(r => setTimeout(r, 400));
+        }
+    }
+
+    async function generateImage() {
+        const prompt = document.getElementById('prompt-input').value;
+        const model = document.getElementById('model-select').value;
+        const btn = document.getElementById('gen-btn');
+        if (!prompt) return;
+        btn.disabled = true; btn.innerText = "⏳ ГЕНЕРАЦИЯ...";
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*999999)}&nologo=true`;
+        const img = new Image(); img.src = url;
+        img.onload = () => { renderImage(url); saveToStorage(url); btn.disabled = false; btn.innerText = "🚀 СОЗДАТЬ"; };
+    }
+
+    function saveToStorage(url) {
+        let saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
+        saved.unshift(url); localStorage.setItem('setka_gallery', JSON.stringify(saved.slice(0, 40)));
+    }
+
+    function removeSingleImage(url, btn) {
+        let saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
+        localStorage.
