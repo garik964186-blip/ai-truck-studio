@@ -47,7 +47,6 @@
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* Кнопка с исправленной фурой */
         .action-btn { 
             width: 100%; padding: 12px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; height: 45px;
         }
@@ -55,7 +54,6 @@
             position: absolute; 
             left: -100px; 
             top: 50%; 
-            /* scaleX(-1) разворачивает фуру кабиной вправо */
             transform: translateY(-50%) scaleX(-1); 
             font-size: 24px; 
             display: none; 
@@ -140,18 +138,35 @@
     function addPreset(text) { document.getElementById('prompt-input').value = text; }
     function clearTextInput() { document.getElementById('prompt-input').value = ''; }
 
-    // Голос с авто-стартом
+    // ФУНКЦИЯ ПЕРЕВОДА
+    async function translateText(text) {
+        try {
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t&q=${encodeURIComponent(text)}`);
+            const data = await res.json();
+            return data[0][0][0];
+        } catch (e) {
+            console.error("Translation error", e);
+            return text; // Если ошибка, возвращаем оригинал
+        }
+    }
+
     function startVoiceArt() {
         const btn = document.getElementById('voice-art-btn');
         const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         rec.lang = 'ru-RU';
         rec.onstart = () => btn.classList.add('recording');
         rec.onend = () => btn.classList.remove('recording');
-        rec.onresult = (e) => { 
+        rec.onresult = async (e) => { 
             const result = e.results[0][0].transcript;
             document.getElementById('prompt-input').value = result;
-            // Автоматический запуск генерации после распознавания
-            if(result.trim().length > 0) generateImage();
+            
+            // Автоматический перевод и старт
+            if(result.trim().length > 0) {
+                const translated = await translateText(result);
+                // Подменяем текст на английский для нейросети
+                document.getElementById('prompt-input').value = translated;
+                generateImage();
+            }
         };
         rec.start();
     }
@@ -164,7 +179,7 @@
         rec.onend = () => btn.style.background = '#333';
         rec.onresult = (e) => { 
             document.getElementById('chat-input').value = e.results[0][0].transcript;
-            sendMessage(); // В чате тоже авто-отправка
+            sendMessage();
         };
         rec.start();
     }
@@ -180,6 +195,7 @@
         btn.classList.add('loading');
         btn.disabled = true;
         
+        // Генерируем изображение
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*999999)}&nologo=true`;
         
         const img = new Image();
