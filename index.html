@@ -3,74 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SeTka Project: AI Studio v3.6.2</title>
+    <title>AI Studio: ОТ ИГРУШКИ ДО ФУРЫ</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
-            --bg-color: #0b0b0e;
-            --card-bg: #16161a;
-            --text-color: #e0e0e0;
-            --accent-color: #ff0055;
-            --accent-grad: linear-gradient(135deg, #ff0055, #ff5500);
-            --chat-user-bg: #ff0055;
-            --chat-ai-bg: #2a2a2e;
-            --input-bg: #222226;
-            --border-radius: 16px;
+            --bg-color: #0b0b0e; --card-bg: #16161a; --text-color: #e0e0e0;
+            --accent-color: #ff0055; --accent-grad: linear-gradient(135deg, #ff0055, #ff5500);
+            --input-bg: #222226; --border-radius: 12px;
         }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .container { background: var(--card-bg); padding: 15px; border-radius: var(--border-radius); width: 100%; max-width: 600px; border: 1px solid #333; display: flex; flex-direction: column; }
+        
+        .header { text-align: center; margin-bottom: 10px; }
+        .banner-img { width: 100%; height: 100px; border-radius: 8px; border: 1px solid var(--accent-color); object-fit: cover; margin-bottom: 8px; }
+        h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-size: 22px; }
 
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; padding: 20px 10px; margin: 0; }
-        .container { background-color: var(--card-bg); padding: 25px; border-radius: var(--border-radius); box-shadow: 0 20px 70px rgba(0,0,0,0.8); width: 100%; max-width: 950px; border: 1px solid #333; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .logo-img { max-width: 70px; border-radius: 50%; border: 2px solid var(--accent-color); }
-        h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+        .global-controls { display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 8px; margin-bottom: 15px; background: #000; padding: 8px; border-radius: 10px; border: 1px solid #222; }
 
-        .tabs { display: flex; background: #000; padding: 5px; border-radius: 12px; margin-bottom: 20px; gap: 5px; }
-        .tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: #777; font-weight: 900; cursor: pointer; border-radius: 8px; transition: 0.3s; }
-        .tab-btn.active { background: var(--accent-grad); color: white; }
+        .tabs { display: flex; background: #000; padding: 3px; border-radius: 10px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 10px; background: transparent; border: none; color: #777; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .tab-btn.active { background: var(--accent-grad); color: white; border-radius: 7px; }
 
         .tab-content { display: none; flex-direction: column; }
         .tab-content.active { display: flex; }
 
-        /* Графическая доска */
-        .board-controls { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .presets { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
-        .preset-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; transition: 0.2s; }
-        .preset-btn:hover { border-color: var(--accent-color); color: white; }
-
-        #image-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; background: #08080a; padding: 15px; border-radius: 12px; border: 2px dashed #333; min-height: 200px; }
+        select, .compact-btn { padding: 8px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 6px; font-size: 12px; cursor: pointer; }
         
-        .img-wrapper { position: relative; display: inline-block; transition: 0.3s; }
-        .generated-img { width: 100%; border-radius: 8px; cursor: pointer; border: 1px solid #222; }
-        .img-wrapper:hover { transform: scale(1.03); }
+        textarea, .chat-input-field { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; font-size: 14px; }
         
-        .del-img-btn { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; display: none; font-weight: bold; }
-        .img-wrapper:hover .del-img-btn { display: block; }
+        .voice-btn-active { background: #ff0000 !important; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        select, textarea, input { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; margin-bottom: 10px; box-sizing: border-box; }
-        .action-btn { width: 100%; padding: 15px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); }
-        .clear-btn { background: #444; color: #ccc; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; }
-        .clear-btn:hover { background: #cc0000; color: white; }
+        .action-btn { width: 100%; padding: 12px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; margin-top: 10px; }
+        .truck-animation { position: absolute; left: -100px; top: 50%; transform: translateY(-50%) scaleX(-1); font-size: 24px; display: none; }
+        @keyframes drive { 0% { left: -100px; } 100% { left: 110%; } }
+        .loading .truck-animation { display: block; animation: drive 2s linear infinite; }
 
-        /* Чат */
-        #chat-container { height: 400px; overflow-y: auto; background: #0f0f12; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #333; }
-        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 14px; position: relative; word-wrap: break-word; line-height: 1.5; }
-        .message.user { align-self: flex-end; background: var(--chat-user-bg); color: white; }
-        .message.ai { align-self: flex-start; background: var(--chat-ai-bg); color: #ddd; padding-top: 25px; }
-        .message.ai pre { background: #000; padding: 10px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; margin: 10px 0; }
-        .message.ai code { font-family: monospace; color: #ff0055; background: rgba(255,0,85,0.1); padding: 2px 4px; border-radius: 4px; }
-        .model-badge { position: absolute; top: 5px; left: 10px; font-size: 9px; color: var(--accent-color); font-weight: bold; }
-        
-        .voice-btn { width: 50px; background: #333; border: 1px solid #444; border-radius: 10px; color: white; cursor: pointer; font-size: 18px; transition: 0.3s; }
-        .voice-btn.recording { background: var(--accent-color); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        #chat-container { height: 350px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #222; display: flex; flex-direction: column; gap: 12px; }
+        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 14px; line-height: 1.4; position: relative; cursor: pointer; transition: 0.2s; }
+        .message.user { align-self: flex-end; background: var(--accent-color); color: white; }
+        .message.ai { align-self: flex-start; background: #222; border: 1px solid #444; }
+        .message.ai:hover { border-color: var(--accent-color); }
+
+        /* Меню действий для сообщения */
+        .msg-actions { display: flex; gap: 5px; margin-top: 8px; }
+        .mini-btn { padding: 4px 8px; font-size: 10px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .mini-btn:hover { background: var(--accent-color); }
+
+        #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="header">
-        <img src="https://i.postimg.cc/3wKYWN3j/Se-Tka-Foto.jpg" class="logo-img">
-        <h1><a>SeTka Studio 3.6</a></h1>
+        <img src="1768422265866.jpg" class="banner-img">
+        <h1><a href="https://youtube.com/@blip_blip?si=A5X-r6r16M9vYc_P" target="_blank">ОТ ИГРУШКИ ДО ФУРЫ</a></h1>
+    </div>
+
+    <div class="global-controls">
+        <select id="model-select">
+            <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
+            <option value="dalle-3">🦊 АРТ (DALL-E 3)</option>
+            <option value="flux-realism">📸 ФОТО (Realism)</option>
+        </select>
+        <button class="compact-btn" onclick="downloadAll()">📥 ВСЁ</button>
+        <button class="compact-btn" onclick="clearBoard()">🗑️</button>
     </div>
 
     <div class="tabs">
@@ -79,39 +77,24 @@
     </div>
 
     <div id="tab-art" class="tab-content active">
-        <div class="board-controls">
-            <select id="model-select" style="flex:1; margin:0">
-                <option value="flux-pro">💎 Flux Pro</option>
-                <option value="dalle-3">🎨 DALL-E 3</option>
-                <option value="flux-realism">📸 Realism</option>
-                <option value="turbo">⚡ Turbo</option>
-            </select>
-            <button class="clear-btn" onclick="downloadAll()">📥 СКАЧАТЬ ВСЁ</button>
-            <button class="clear-btn" onclick="clearBoard()">🗑️ ОЧИСТИТЬ</button>
+        <textarea id="prompt-input" placeholder="Пиши на русском..."></textarea>
+        <div style="display:flex; justify-content: space-between; margin-top: 8px;">
+            <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="width: 48%;">🎤 ГОЛОС</button>
+            <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 48%;">ОЧИСТИТЬ ❌</button>
         </div>
-
-        <div class="presets">
-            <button class="preset-btn" onclick="addPreset('cyberpunk style, neon lights, high detail')">🌃 Киберпанк</button>
-            <button class="preset-btn" onclick="addPreset('photorealistic, 8k, highly detailed, raw photo')">📸 Реализм</button>
-            <button class="preset-btn" onclick="addPreset('anime style, vibrant colors, studio ghibli')">🎎 Аниме</button>
-            <button class="preset-btn" onclick="addPreset('oil painting, artistic, masterpiece')">🎨 Живопись</button>
-        </div>
-
-        <textarea id="prompt-input" rows="2" placeholder="Опишите картинку..."></textarea>
-        <button id="gen-btn" onclick="generateImage()" class="action-btn">🚀 СОЗДАТЬ</button>
+        <button id="gen-btn" onclick="generateImage()" class="action-btn">
+            <span class="btn-text">🚀 СОЗДАТЬ</span>
+            <span class="truck-animation">🚛💨</span>
+        </button>
         <div id="image-container"></div>
     </div>
 
     <div id="tab-chat" class="tab-content">
-        <select id="chat-model-select">
-            <option value="openai-fast">⚡ GPT-4o Mini</option>
-            <option value="gemini">✨ Gemini Pro</option>
-        </select>
         <div id="chat-container"></div>
         <div style="display:flex; gap:5px;">
-            <button id="voice-btn" class="voice-btn" onclick="startVoice()">🎤</button>
-            <input type="text" id="chat-input" placeholder="Спросить..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()" style="width:50px; background:var(--accent-color); border:none; border-radius:10px; color:white; cursor:pointer">➤</button>
+            <button id="voice-chat-btn" class="compact-btn" onclick="runVoice('chat')">🎤</button>
+            <input type="text" id="chat-input" class="chat-input-field" placeholder="Спроси..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <button onclick="sendMessage()" class="compact-btn" style="background: var(--accent-color);">➤</button>
         </div>
     </div>
 </div>
@@ -121,141 +104,127 @@
         document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
         document.getElementById(`btn-tab-${tab}`).classList.add('active');
         document.getElementById(`tab-${tab}`).classList.add('active');
+        window.speechSynthesis.cancel();
     }
 
-    window.onload = () => {
-        const saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
-        saved.reverse().forEach(url => renderImage(url));
-    };
-
-    // Функция озвучки
+    // МУЖСКОЙ ГОЛОС
     function speak(text) {
-        window.speechSynthesis.cancel(); // Остановить текущую озвучку, если есть
-        const cleanedText = text.replace(/[*#`]/g, ''); // Убираем символы разметки для чистого голоса
-        const utterance = new SpeechSynthesisUtterance(cleanedText);
+        window.speechSynthesis.cancel();
+        let cleanText = text.replace(/[*#`_]/g, '').trim();
+        const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = 'ru-RU';
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
+        utterance.rate = 1.3;
+        utterance.pitch = 0.85; 
+        const voices = window.speechSynthesis.getVoices();
+        const male = voices.find(v => v.lang.includes('ru') && (v.name.includes('Male') || v.name.includes('Dmitry'))) || voices.find(v => v.lang.includes('ru'));
+        if (male) utterance.voice = male;
         window.speechSynthesis.speak(utterance);
     }
 
-    function renderImage(url) {
-        const container = document.getElementById('image-container');
-        const wrapper = document.createElement('div');
-        wrapper.className = 'img-wrapper';
-        wrapper.innerHTML = `
-            <img src="${url}" class="generated-img" onclick="window.open('${url}', '_blank')">
-            <button class="del-img-btn" onclick="removeSingleImage('${url}', this)">×</button>
-        `;
-        container.prepend(wrapper);
+    // КОПИРОВАНИЕ
+    function copyText(text) {
+        navigator.clipboard.writeText(text);
+        alert("Текст скопирован, Босс!");
     }
 
-    function addPreset(text) {
-        const input = document.getElementById('prompt-input');
-        input.value += (input.value ? ', ' : '') + text;
+    async function translateText(text) {
+        try {
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`);
+            const data = await res.json();
+            return data[0][0][0];
+        } catch (e) { return text; }
     }
 
-    async function downloadAll() {
-        const saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
-        if(!saved.length) return alert("Галерея пуста");
-        for(let i=0; i<saved.length; i++) {
-            const a = document.createElement('a');
-            a.href = saved[i];
-            a.download = `art_${Date.now()}_${i}.jpg`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            await new Promise(r => setTimeout(r, 400));
-        }
-    }
-
-    async function generateImage() {
-        const prompt = document.getElementById('prompt-input').value;
-        const model = document.getElementById('model-select').value;
-        const btn = document.getElementById('gen-btn');
-        if (!prompt) return;
-
-        btn.disabled = true; btn.innerText = "⏳ ГЕНЕРАЦИЯ...";
-        const seed = Math.floor(Math.random() * 999999);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${seed}&nologo=true`;
-
-        const img = new Image();
-        img.src = url;
-        img.onload = () => {
-            renderImage(url);
-            saveToStorage(url);
-            btn.disabled = false; btn.innerText = "🚀 СОЗДАТЬ";
-        };
-    }
-
-    function saveToStorage(url) {
-        let saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
-        saved.unshift(url);
-        localStorage.setItem('setka_gallery', JSON.stringify(saved.slice(0, 40)));
-    }
-
-    function removeSingleImage(url, btn) {
-        let saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
-        saved = saved.filter(item => item !== url);
-        localStorage.setItem('setka_gallery', JSON.stringify(saved));
-        btn.parentElement.remove();
-    }
-
-    function clearBoard() {
-        if(confirm("Удалить все изображения?")) {
-            localStorage.removeItem('setka_gallery');
-            document.getElementById('image-container').innerHTML = '';
-        }
-    }
-
-    function startVoice() {
-        const btn = document.getElementById('voice-btn');
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    function runVoice(mode) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+        const recognition = new SpeechRecognition();
         recognition.lang = 'ru-RU';
-        
-        recognition.onstart = () => btn.classList.add('recording');
-        recognition.onend = () => btn.classList.remove('recording');
-        
-        recognition.onresult = (e) => {
-            document.getElementById('chat-input').value = e.results[0][0].transcript;
+        const btn = mode === 'art' ? document.getElementById('voice-art-btn') : document.getElementById('voice-chat-btn');
+        recognition.onstart = () => { btn.classList.add('voice-btn-active'); window.speechSynthesis.cancel(); };
+        recognition.onend = () => btn.classList.remove('voice-btn-active');
+        recognition.onresult = async (event) => {
+            const result = event.results[0][0].transcript;
+            if (mode === 'art') {
+                document.getElementById('prompt-input').value = "Перевожу...";
+                const translated = await translateText(result);
+                document.getElementById('prompt-input').value = translated;
+                generateImage();
+            } else {
+                document.getElementById('chat-input').value = result;
+                sendMessage();
+            }
         };
         recognition.start();
     }
 
-    let history = [];
+    async function generateImage() {
+        const inputEl = document.getElementById('prompt-input');
+        let prompt = inputEl.value;
+        const model = document.getElementById('model-select').value;
+        const btn = document.getElementById('gen-btn');
+        if (!prompt || prompt === "Перевожу...") return;
+        btn.classList.add('loading'); btn.disabled = true;
+        if (/[а-яА-Я]/.test(prompt)) {
+            inputEl.value = "Перевожу...";
+            prompt = await translateText(prompt);
+            inputEl.value = prompt;
+        }
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*9999)}&nologo=true`;
+        const img = new Image(); img.src = url;
+        img.onload = () => {
+            const container = document.getElementById('image-container');
+            const newImg = document.createElement('img');
+            newImg.src = url; newImg.className = 'generated-img';
+            newImg.onclick = () => window.open(url, '_blank');
+            container.prepend(newImg);
+            btn.classList.remove('loading'); btn.disabled = false;
+        };
+    }
+
     async function sendMessage() {
         const input = document.getElementById('chat-input');
         const box = document.getElementById('chat-container');
-        const model = document.getElementById('chat-model-select').value;
         if(!input.value) return;
-
         const msg = input.value;
         box.innerHTML += `<div class="message user">${msg}</div>`;
         input.value = '';
-        history.push({role:"user", content:msg});
-
-        const aiDiv = document.createElement('div');
-        aiDiv.className="message ai";
-        aiDiv.innerHTML=`<span class="model-badge">${model}</span>...`;
-        box.appendChild(aiDiv);
         box.scrollTop = box.scrollHeight;
-
         try {
-            const r = await fetch('https://text.pollinations.ai/', {
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({messages:history, model:model})
-            });
+            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=openai`);
             const text = await r.text();
-            aiDiv.innerHTML = `<span class="model-badge">${model}</span>` + marked.parse(text);
-            history.push({role:"assistant", content:text});
             
-            // Запуск озвучки ответа
-            speak(text);
+            // Создаем элемент сообщения AI
+            const aiMsg = document.createElement('div');
+            aiMsg.className = 'message ai';
+            aiMsg.innerHTML = marked.parse(text);
+            
+            // Добавляем меню при клике
+            aiMsg.onclick = () => {
+                if(aiMsg.querySelector('.msg-actions')) return; // Если уже открыто
+                const actions = document.createElement('div');
+                actions.className = 'msg-actions';
+                actions.innerHTML = `
+                    <button class="mini-btn" onclick="speak('${text.replace(/'/g, "\\'")}'); event.stopPropagation();">🔊 ПОВТОР</button>
+                    <button class="mini-btn" onclick="copyText('${text.replace(/'/g, "\\'")}'); event.stopPropagation();">📋 КОПИРОВАТЬ</button>
+                `;
+                aiMsg.appendChild(actions);
+            };
 
-        } catch(e) { aiDiv.innerText = "Ошибка соединения."; }
-        box.scrollTop = box.scrollHeight;
+            box.appendChild(aiMsg);
+            box.scrollTop = box.scrollHeight;
+            speak(text); 
+        } catch(e) { box.innerHTML += `<div class="message ai">Ошибка.</div>`; }
     }
+
+    function clearBoard() { if(confirm("Очистить?")) document.getElementById('image-container').innerHTML = ''; }
+    function downloadAll() {
+        document.querySelectorAll('.generated-img').forEach((img, i) => {
+            const a = document.createElement('a'); a.href = img.src; a.download = `art_${i}.jpg`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        });
+    }
+    window.speechSynthesis.getVoices();
 </script>
 </body>
 </html>
