@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" translate="no">
 <head>
     <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Studio: ОТ ИГРУШКИ ДО ФУРЫ</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -40,15 +41,12 @@
         .loading .truck-animation { display: block; animation: drive 2s linear infinite; }
 
         #chat-container { height: 350px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #222; display: flex; flex-direction: column; gap: 12px; }
-        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 14px; line-height: 1.4; position: relative; cursor: pointer; transition: 0.2s; }
+        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 14px; line-height: 1.4; position: relative; cursor: pointer; }
         .message.user { align-self: flex-end; background: var(--accent-color); color: white; }
         .message.ai { align-self: flex-start; background: #222; border: 1px solid #444; }
-        .message.ai:hover { border-color: var(--accent-color); }
 
-        /* Меню действий для сообщения */
         .msg-actions { display: flex; gap: 5px; margin-top: 8px; }
         .mini-btn { padding: 4px 8px; font-size: 10px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .mini-btn:hover { background: var(--accent-color); }
 
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; }
@@ -57,18 +55,8 @@
 <body>
 <div class="container">
     <div class="header">
-        <img src="1768422265866.jpg" class="banner-img">
+        <img src="1768422265866.jpg" class="banner-img" onerror="this.src='https://i.postimg.cc/mD9t7mS3/1000130841.jpg'">
         <h1><a href="https://youtube.com/@blip_blip?si=A5X-r6r16M9vYc_P" target="_blank">ОТ ИГРУШКИ ДО ФУРЫ</a></h1>
-    </div>
-
-    <div class="global-controls">
-        <select id="model-select">
-            <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
-            <option value="dalle-3">🦊 АРТ (DALL-E 3)</option>
-            <option value="flux-realism">📸 ФОТО (Realism)</option>
-        </select>
-        <button class="compact-btn" onclick="downloadAll()">📥 ВСЁ</button>
-        <button class="compact-btn" onclick="clearBoard()">🗑️</button>
     </div>
 
     <div class="tabs">
@@ -77,10 +65,19 @@
     </div>
 
     <div id="tab-art" class="tab-content active">
+        <div class="global-controls">
+            <select id="model-select">
+                <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
+                <option value="dalle-3">🦊 АРТ (DALL-E 3)</option>
+                <option value="flux-realism">📸 ФОТО (Realism)</option>
+            </select>
+            <button class="compact-btn" onclick="downloadAll()">📥 ВСЁ</button>
+            <button class="compact-btn" onclick="clearBoard()">🗑️</button>
+        </div>
         <textarea id="prompt-input" placeholder="Пиши на русском..."></textarea>
         <div style="display:flex; justify-content: space-between; margin-top: 8px;">
             <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="width: 48%;">🎤 ГОЛОС</button>
-            <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 48%;">ОЧИСТИТЬ ❌</button>
+            <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 48%;">❌ СБРОС</button>
         </div>
         <button id="gen-btn" onclick="generateImage()" class="action-btn">
             <span class="btn-text">🚀 СОЗДАТЬ</span>
@@ -90,6 +87,13 @@
     </div>
 
     <div id="tab-chat" class="tab-content">
+        <div class="global-controls">
+            <select id="chat-model-select">
+                <option value="openai">⚡ GPT-4o</option>
+                <option value="gemini">✨ Gemini Pro</option>
+            </select>
+            <button class="compact-btn" onclick="document.getElementById('chat-container').innerHTML = '';">🗑️ ЧИСТКА</button>
+        </div>
         <div id="chat-container"></div>
         <div style="display:flex; gap:5px;">
             <button id="voice-chat-btn" class="compact-btn" onclick="runVoice('chat')">🎤</button>
@@ -107,24 +111,12 @@
         window.speechSynthesis.cancel();
     }
 
-    // МУЖСКОЙ ГОЛОС
     function speak(text) {
         window.speechSynthesis.cancel();
-        let cleanText = text.replace(/[*#`_]/g, '').trim();
-        const utterance = new SpeechSynthesisUtterance(cleanText);
+        let utterance = new SpeechSynthesisUtterance(text.replace(/[*#`_]/g, '').trim());
         utterance.lang = 'ru-RU';
         utterance.rate = 1.3;
-        utterance.pitch = 0.85; 
-        const voices = window.speechSynthesis.getVoices();
-        const male = voices.find(v => v.lang.includes('ru') && (v.name.includes('Male') || v.name.includes('Dmitry'))) || voices.find(v => v.lang.includes('ru'));
-        if (male) utterance.voice = male;
         window.speechSynthesis.speak(utterance);
-    }
-
-    // КОПИРОВАНИЕ
-    function copyText(text) {
-        navigator.clipboard.writeText(text);
-        alert("Текст скопирован, Босс!");
     }
 
     async function translateText(text) {
@@ -137,18 +129,15 @@
 
     function runVoice(mode) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
         const recognition = new SpeechRecognition();
         recognition.lang = 'ru-RU';
         const btn = mode === 'art' ? document.getElementById('voice-art-btn') : document.getElementById('voice-chat-btn');
-        recognition.onstart = () => { btn.classList.add('voice-btn-active'); window.speechSynthesis.cancel(); };
+        recognition.onstart = () => btn.classList.add('voice-btn-active');
         recognition.onend = () => btn.classList.remove('voice-btn-active');
         recognition.onresult = async (event) => {
             const result = event.results[0][0].transcript;
             if (mode === 'art') {
-                document.getElementById('prompt-input').value = "Перевожу...";
-                const translated = await translateText(result);
-                document.getElementById('prompt-input').value = translated;
+                document.getElementById('prompt-input').value = await translateText(result);
                 generateImage();
             } else {
                 document.getElementById('chat-input').value = result;
@@ -161,16 +150,11 @@
     async function generateImage() {
         const inputEl = document.getElementById('prompt-input');
         let prompt = inputEl.value;
-        const model = document.getElementById('model-select').value;
         const btn = document.getElementById('gen-btn');
-        if (!prompt || prompt === "Перевожу...") return;
+        if (!prompt) return;
         btn.classList.add('loading'); btn.disabled = true;
-        if (/[а-яА-Я]/.test(prompt)) {
-            inputEl.value = "Перевожу...";
-            prompt = await translateText(prompt);
-            inputEl.value = prompt;
-        }
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*9999)}&nologo=true`;
+        if (/[а-яА-Я]/.test(prompt)) prompt = await translateText(prompt);
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${document.getElementById('model-select').value}&seed=${Math.floor(Math.random()*9999)}&nologo=true`;
         const img = new Image(); img.src = url;
         img.onload = () => {
             const container = document.getElementById('image-container');
@@ -191,30 +175,16 @@
         input.value = '';
         box.scrollTop = box.scrollHeight;
         try {
-            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=openai`);
+            const model = document.getElementById('chat-model-select').value;
+            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=${model}`);
             const text = await r.text();
-            
-            // Создаем элемент сообщения AI
             const aiMsg = document.createElement('div');
             aiMsg.className = 'message ai';
             aiMsg.innerHTML = marked.parse(text);
-            
-            // Добавляем меню при клике
-            aiMsg.onclick = () => {
-                if(aiMsg.querySelector('.msg-actions')) return; // Если уже открыто
-                const actions = document.createElement('div');
-                actions.className = 'msg-actions';
-                actions.innerHTML = `
-                    <button class="mini-btn" onclick="speak('${text.replace(/'/g, "\\'")}'); event.stopPropagation();">🔊 ПОВТОР</button>
-                    <button class="mini-btn" onclick="copyText('${text.replace(/'/g, "\\'")}'); event.stopPropagation();">📋 КОПИРОВАТЬ</button>
-                `;
-                aiMsg.appendChild(actions);
-            };
-
             box.appendChild(aiMsg);
             box.scrollTop = box.scrollHeight;
             speak(text); 
-        } catch(e) { box.innerHTML += `<div class="message ai">Ошибка.</div>`; }
+        } catch(e) { box.innerHTML += `<div class="message ai">Ошибка связи.</div>`; }
     }
 
     function clearBoard() { if(confirm("Очистить?")) document.getElementById('image-container').innerHTML = ''; }
@@ -224,7 +194,6 @@
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
         });
     }
-    window.speechSynthesis.getVoices();
 </script>
 </body>
 </html>
