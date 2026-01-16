@@ -20,9 +20,7 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; padding: 20px 10px; margin: 0; }
         .container { background-color: var(--card-bg); padding: 25px; border-radius: var(--border-radius); box-shadow: 0 20px 70px rgba(0,0,0,0.8); width: 100%; max-width: 950px; border: 1px solid #333; }
         .header { text-align: center; margin-bottom: 20px; }
-        
         .banner-img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--accent-color); margin-bottom: 15px; box-shadow: 0 0 20px rgba(255, 0, 85, 0.2); object-fit: cover; }
-        
         h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-size: 28px; }
         
         .tabs { display: flex; background: #000; padding: 5px; border-radius: 12px; margin-bottom: 20px; gap: 5px; }
@@ -32,45 +30,44 @@
         .tab-content.active { display: flex; }
 
         .board-controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-        
         select {
-            width: 100%;
-            padding: 14px;
-            background: #222226;
-            border: 2px solid var(--accent-color);
-            color: white;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            appearance: none;
+            width: 100%; padding: 14px; background: #222226; border: 2px solid var(--accent-color); color: white; border-radius: 10px; font-weight: bold; cursor: pointer; appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 15px center;
-            background-size: 20px;
+            background-repeat: no-repeat; background-position: right 15px center; background-size: 20px;
         }
         
         .btn-group { display: flex; gap: 10px; }
         .presets { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
-        .preset-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; transition: 0.2s; }
-        .preset-btn:hover { border-color: var(--accent-color); color: white; }
+        .preset-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; }
         
+        .input-wrapper { position: relative; display: flex; flex-direction: column; gap: 5px; }
+        textarea { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; min-height: 80px; }
+        
+        /* Кнопки управления текстом */
+        .text-actions { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; }
+        .voice-input-btn { background: #333; color: #fff; border: 1px solid #444; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        .voice-input-btn.recording { background: var(--accent-color); animation: pulse 1.5s infinite; }
+        .clear-text-btn { background: #333; color: #ff5500; border: 1px solid #444; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* КНОПКА С АНИМАЦИЕЙ ГРУЗОВИКА */
+        .action-btn { 
+            width: 100%; padding: 15px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; min-height: 55px;
+        }
+        .truck-animation { position: absolute; left: -50px; top: 50%; transform: translateY(-50%); font-size: 24px; display: none; }
+        @keyframes drive { 0% { left: -50px; } 100% { left: 110%; } }
+        .loading .truck-animation { display: block; animation: drive 2s linear infinite; }
+        .loading .btn-text { display: none; }
+
         #image-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; background: #08080a; padding: 15px; border-radius: 12px; border: 1px solid #333; min-height: 200px; margin-top: 15px; }
-        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #222; transition: 0.3s; }
-
-        textarea, input[type="text"] { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; }
-        
-        /* Кнопка очистки текста */
-        .clear-text-btn { background: #333; color: #ff5500; border: 1px solid #444; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 11px; margin-bottom: 10px; align-self: flex-end; font-weight: bold; }
-        .clear-text-btn:hover { background: #444; color: white; }
-
-        .action-btn { width: 100%; padding: 15px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); }
+        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #222; }
         .clear-board-btn { flex: 1; background: #333; color: #ccc; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; }
         
         #chat-container { height: 350px; overflow-y: auto; background: #0f0f12; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #333; }
         .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
         .message.user { align-self: flex-end; background: var(--chat-user-bg); color: white; }
         .message.ai { align-self: flex-start; background: var(--chat-ai-bg); color: #ddd; }
-        .voice-btn { width: 50px; background: #333; border: 1px solid #444; border-radius: 10px; color: white; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -99,14 +96,22 @@
         </div>
         
         <div class="presets">
-            <button class="preset-btn" onclick="addPreset('YouTube thumbnail, powerful heavy truck on highway, cinematic motion blur, high contrast, 8k')">🖼️ YouTube</button>
-            <button class="preset-btn" onclick="addPreset('luxury super car, futuristic design, neon city lights, wet asphalt reflections, ultra realistic, cinematic lighting, 8k')">🏎️ Крутые тачки</button>
+            <button class="preset-btn" onclick="addPreset('YouTube thumbnail, powerful heavy truck on highway, cinematic, 8k')">🖼️ YouTube</button>
+            <button class="preset-btn" onclick="addPreset('luxury super car, futuristic design, neon city lights, 8k')">🏎️ Крутые тачки</button>
         </div>
 
-        <textarea id="prompt-input" rows="2" placeholder="Опишите машину или фуру..."></textarea>
-        <button class="clear-text-btn" onclick="clearTextInput()">❌ СТЕРЕТЬ ТЕКСТ</button>
+        <div class="input-wrapper">
+            <textarea id="prompt-input" placeholder="Опишите машину или надиктуйте голосом..."></textarea>
+            <div class="text-actions">
+                <button id="voice-art-btn" class="voice-input-btn" onclick="startVoiceArt()">🎤 ГОЛОС</button>
+                <button class="clear-text-btn" onclick="clearTextInput()">❌ СТЕРЕТЬ</button>
+            </div>
+        </div>
         
-        <button id="gen-btn" onclick="generateImage()" class="action-btn">🚀 СОЗДАТЬ</button>
+        <button id="gen-btn" onclick="generateImage()" class="action-btn">
+            <span class="btn-text">🚀 СОЗДАТЬ</span>
+            <span class="truck-animation">🚛</span>
+        </button>
         
         <div id="image-container"></div>
     </div>
@@ -114,8 +119,8 @@
     <div id="tab-chat" class="tab-content">
         <div id="chat-container"></div>
         <div style="display:flex; gap:5px;">
-            <button id="voice-btn" class="voice-btn" onclick="startVoice()">🎤</button>
-            <input type="text" id="chat-input" placeholder="Спросить об авто..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <button id="chat-voice-btn" class="voice-input-btn" onclick="startVoiceChat()" style="width:50px; justify-content:center;">🎤</button>
+            <input type="text" id="chat-input" style="flex:1; padding:12px; background:var(--input-bg); border:1px solid #333; color:white; border-radius:10px;" placeholder="Спросить..." onkeypress="if(event.key==='Enter') sendMessage()">
             <button onclick="sendMessage()" style="width:50px; background:var(--accent-color); border:none; border-radius:10px; color:white; cursor:pointer">➤</button>
         </div>
     </div>
@@ -129,10 +134,28 @@
     }
 
     function addPreset(text) { document.getElementById('prompt-input').value = text; }
+    function clearTextInput() { document.getElementById('prompt-input').value = ''; }
 
-    // ФУНКЦИЯ ОЧИСТКИ ПОЛЯ ВВОДА
-    function clearTextInput() {
-        document.getElementById('prompt-input').value = '';
+    // ГОЛОСОВОЙ ВВОД ДЛЯ ДОСКИ
+    function startVoiceArt() {
+        const btn = document.getElementById('voice-art-btn');
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'ru-RU';
+        recognition.onstart = () => btn.classList.add('recording');
+        recognition.onend = () => btn.classList.remove('recording');
+        recognition.onresult = (e) => { document.getElementById('prompt-input').value = e.results[0][0].transcript; };
+        recognition.start();
+    }
+
+    // ГОЛОСОВОЙ ВВОД ДЛЯ ЧАТА
+    function startVoiceChat() {
+        const btn = document.getElementById('chat-voice-btn');
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'ru-RU';
+        recognition.onstart = () => btn.classList.add('recording');
+        recognition.onend = () => btn.classList.remove('recording');
+        recognition.onresult = (e) => { document.getElementById('chat-input').value = e.results[0][0].transcript; };
+        recognition.start();
     }
 
     async function generateImage() {
@@ -140,23 +163,16 @@
         const model = document.getElementById('model-select').value;
         const btn = document.getElementById('gen-btn');
         if (!prompt) return;
-
-        btn.disabled = true;
-        btn.innerText = "⏳ ГЕНЕРАЦИЯ...";
-        
+        btn.classList.add('loading'); btn.disabled = true;
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*999999)}&nologo=true`;
-        
-        const img = new Image();
-        img.src = url;
+        const img = new Image(); img.src = url;
         img.onload = () => {
             const container = document.getElementById('image-container');
             const newImg = document.createElement('img');
-            newImg.src = url;
-            newImg.className = 'generated-img';
+            newImg.src = url; newImg.className = 'generated-img';
             newImg.onclick = () => window.open(url, '_blank');
             container.prepend(newImg);
-            btn.disabled = false;
-            btn.innerText = "🚀 СОЗДАТЬ";
+            btn.classList.remove('loading'); btn.disabled = false;
         };
     }
 
@@ -164,40 +180,25 @@
         const input = document.getElementById('chat-input');
         const box = document.getElementById('chat-container');
         if(!input.value) return;
-
         const msg = input.value;
         box.innerHTML += `<div class="message user">${msg}</div>`;
         input.value = '';
-
         try {
             const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=openai`);
             const text = await r.text();
             box.innerHTML += `<div class="message ai">${marked.parse(text)}</div>`;
-        } catch(e) {
-            box.innerHTML += `<div class="message ai">Ошибка связи.</div>`;
-        }
+        } catch(e) { box.innerHTML += `<div class="message ai">Ошибка.</div>`; }
         box.scrollTop = box.scrollHeight;
     }
-
-    function startVoice() {
-        const recognition = new (window.SpeechRecognition || window.webkitRecognition)();
-        recognition.lang = 'ru-RU';
-        recognition.onresult = (e) => { document.getElementById('chat-input').value = e.results[0][0].transcript; };
-        recognition.start();
-    }
     
-    function clearBoard() { if(confirm("Очистить все созданные фото?")) document.getElementById('image-container').innerHTML = ''; }
+    function clearBoard() { if(confirm("Очистить галерею?")) document.getElementById('image-container').innerHTML = ''; }
     
     async function downloadAll() {
         const imgs = document.querySelectorAll('.generated-img');
-        if(imgs.length === 0) return alert("Нет картинок для скачивания");
+        if(imgs.length === 0) return;
         imgs.forEach((img, i) => {
-            const a = document.createElement('a');
-            a.href = img.src;
-            a.download = `auto_art_${i}.jpg`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            const a = document.createElement('a'); a.href = img.src; a.download = `art_${i}.jpg`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
         });
     }
 </script>
