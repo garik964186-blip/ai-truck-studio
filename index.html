@@ -16,7 +16,25 @@
         
         .header { text-align: center; margin-bottom: 15px; }
         .banner-img { width: 100%; height: 120px; border-radius: 8px; border: 1px solid var(--accent-color); object-fit: cover; margin-bottom: 10px; }
-        h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-size: 20px; }
+        
+        /* Ссылка в заголовке */
+        h1 { margin: 0; line-height: 1.2; }
+        h1 a { 
+            font-weight: 900; 
+            text-transform: uppercase; 
+            background: var(--accent-grad); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            text-decoration: none; 
+            font-size: 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-block;
+        }
+        h1 a:hover { 
+            filter: brightness(1.3) drop-shadow(0 0 5px rgba(255, 0, 85, 0.5));
+            transform: scale(1.02);
+        }
         
         .tabs { display: flex; background: #000; padding: 3px; border-radius: 10px; margin-bottom: 15px; }
         .tab-btn { flex: 1; padding: 8px; background: transparent; border: none; color: #777; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.3s; }
@@ -34,48 +52,30 @@
         
         .compact-btn { background: #333; color: #ccc; padding: 8px; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: bold; }
         
-        .presets { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px; }
-        .preset-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 10px; white-space: nowrap; }
-        
         .input-wrapper { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
         textarea { width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; min-height: 60px; font-size: 14px; }
         
         .text-actions { display: flex; justify-content: space-between; align-items: center; }
-        .voice-input-btn { background: #333; color: #fff; border: 1px solid #444; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        .voice-input-btn { background: #333; color: #fff; border: 1px solid #444; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; }
         .voice-input-btn.recording { background: var(--accent-color); animation: pulse 1.5s infinite; }
-        .clear-text-btn { color: #ff5500; background: none; border: none; cursor: pointer; font-size: 11px; font-weight: bold; }
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        .action-btn { 
-            width: 100%; padding: 12px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; height: 45px;
-        }
-        .truck-animation { 
-            position: absolute; 
-            left: -100px; 
-            top: 50%; 
-            transform: translateY(-50%) scaleX(-1); 
-            font-size: 24px; 
-            display: none; 
-        }
+        .action-btn { width: 100%; padding: 12px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; height: 45px; }
+        .truck-animation { position: absolute; left: -100px; top: 50%; transform: translateY(-50%) scaleX(-1); font-size: 24px; display: none; }
         @keyframes drive { 0% { left: -100px; } 100% { left: 110%; } }
         .loading .truck-animation { display: block; animation: drive 2s linear infinite; }
         .loading .btn-text { display: none; }
 
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .generated-img { width: 100%; border-radius: 8px; border: 1px solid #222; cursor: pointer; }
-
-        #chat-container { height: 250px; overflow-y: auto; background: #0f0f12; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #333; font-size: 13px; }
-        .message { max-width: 85%; padding: 8px 12px; border-radius: 10px; margin-bottom: 8px; line-height: 1.4; }
-        .message.user { align-self: flex-end; background: var(--accent-color); color: white; margin-left: auto; }
-        .message.ai { align-self: flex-start; background: #2a2a2e; color: #ddd; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
         <img src="1768422265866.jpg" class="banner-img" alt="От игрушки до фуры">
-        <h1><a>ОТ ИГРУШКИ ДО ФУРЫ</a></h1>
+        <h1><a href="https://youtube.com/@blip_blip?si=A5X-r6r16M9vYc_P" target="_blank">ОТ ИГРУШКИ ДО ФУРЫ</a></h1>
     </div>
 
     <div class="tabs">
@@ -95,18 +95,12 @@
                 <button class="compact-btn" onclick="clearBoard()">🗑️</button>
             </div>
         </div>
-        
-        <div class="presets">
-            <button class="preset-btn" onclick="addPreset('YouTube thumbnail, powerful truck on highway, 8k')">🖼️ YouTube</button>
-            <button class="preset-btn" onclick="addPreset('luxury super car, futuristic, neon lights, 8k')">🏎️ Спорткары</button>
-            <button class="preset-btn" onclick="addPreset('big fluffy cat sitting on a truck, cinematic')">🐱 Кот на фуре</button>
-        </div>
 
         <div class="input-wrapper">
             <textarea id="prompt-input" placeholder="Напиши или надиктуй..."></textarea>
             <div class="text-actions">
                 <button id="voice-art-btn" class="voice-input-btn" onclick="startVoiceArt()">🎤 ГОЛОС</button>
-                <button class="clear-text-btn" onclick="clearTextInput()">ОЧИСТИТЬ ❌</button>
+                <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''">ОЧИСТИТЬ ❌</button>
             </div>
         </div>
         
@@ -117,15 +111,6 @@
         
         <div id="image-container"></div>
     </div>
-
-    <div id="tab-chat" class="tab-content">
-        <div id="chat-container"></div>
-        <div style="display:flex; gap:5px;">
-            <button id="chat-voice-btn" class="compact-btn" onclick="startVoiceChat()" style="width:40px;">🎤</button>
-            <input type="text" id="chat-input" style="flex:1; padding:8px; background:var(--input-bg); border:1px solid #333; color:white; border-radius:8px; font-size:13px;" placeholder="Спросить..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()" style="width:40px; background:var(--accent-color); border:none; border-radius:8px; color:white;">➤</button>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -135,19 +120,13 @@
         document.getElementById(`tab-${tab}`).classList.add('active');
     }
 
-    function addPreset(text) { document.getElementById('prompt-input').value = text; }
-    function clearTextInput() { document.getElementById('prompt-input').value = ''; }
-
-    // ФУНКЦИЯ ПЕРЕВОДА
     async function translateText(text) {
+        let cleanText = text.replace(/(сгенерируй|нарисуй|создай|покажи|слушай|можешь мне|плиз)/gi, '').trim();
         try {
-            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t&q=${encodeURIComponent(text)}`);
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t&q=${encodeURIComponent(cleanText)}`);
             const data = await res.json();
             return data[0][0][0];
-        } catch (e) {
-            console.error("Translation error", e);
-            return text; // Если ошибка, возвращаем оригинал
-        }
+        } catch (e) { return cleanText; }
     }
 
     function startVoiceArt() {
@@ -158,28 +137,9 @@
         rec.onend = () => btn.classList.remove('recording');
         rec.onresult = async (e) => { 
             const result = e.results[0][0].transcript;
-            document.getElementById('prompt-input').value = result;
-            
-            // Автоматический перевод и старт
-            if(result.trim().length > 0) {
-                const translated = await translateText(result);
-                // Подменяем текст на английский для нейросети
-                document.getElementById('prompt-input').value = translated;
-                generateImage();
-            }
-        };
-        rec.start();
-    }
-
-    function startVoiceChat() {
-        const btn = document.getElementById('chat-voice-btn');
-        const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        rec.lang = 'ru-RU';
-        rec.onstart = () => btn.style.background = '#ff0055';
-        rec.onend = () => btn.style.background = '#333';
-        rec.onresult = (e) => { 
-            document.getElementById('chat-input').value = e.results[0][0].transcript;
-            sendMessage();
+            const translated = await translateText(result);
+            document.getElementById('prompt-input').value = translated;
+            generateImage();
         };
         rec.start();
     }
@@ -191,12 +151,10 @@
         const btn = document.getElementById('gen-btn');
         
         if (!prompt) return;
+        btn.classList.add('loading'); btn.disabled = true;
         
-        btn.classList.add('loading');
-        btn.disabled = true;
-        
-        // Генерируем изображение
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*999999)}&nologo=true`;
+        const randomSeed = Math.floor(Math.random() * 1000000);
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${randomSeed}&nologo=true&width=1024&height=1024`;
         
         const img = new Image();
         img.src = url;
@@ -207,36 +165,17 @@
             newImg.className = 'generated-img';
             newImg.onclick = () => window.open(url, '_blank');
             container.prepend(newImg);
-            btn.classList.remove('loading');
-            btn.disabled = false;
+            btn.classList.remove('loading'); btn.disabled = false;
         };
-        img.onerror = () => {
-            btn.classList.remove('loading');
-            btn.disabled = false;
-        };
+        img.onerror = () => { btn.classList.remove('loading'); btn.disabled = false; };
     }
 
-    async function sendMessage() {
-        const input = document.getElementById('chat-input');
-        const box = document.getElementById('chat-container');
-        if(!input.value) return;
-        const msg = input.value;
-        box.innerHTML += `<div class="message user">${msg}</div>`;
-        input.value = '';
-        try {
-            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=openai`);
-            const text = await r.text();
-            box.innerHTML += `<div class="message ai">${marked.parse(text)}</div>`;
-        } catch(e) { box.innerHTML += `<div class="message ai">Ошибка.</div>`; }
-        box.scrollTop = box.scrollHeight;
-    }
+    function clearBoard() { if(confirm("Очистить доску?")) document.getElementById('image-container').innerHTML = ''; }
     
-    function clearBoard() { if(confirm("Очистить?")) document.getElementById('image-container').innerHTML = ''; }
-    
-    async function downloadAll() {
+    function downloadAll() {
         const imgs = document.querySelectorAll('.generated-img');
         imgs.forEach((img, i) => {
-            const a = document.createElement('a'); a.href = img.src; a.download = `art_${i}.jpg`;
+            const a = document.createElement('a'); a.href = img.src; a.download = `truck_art_${i}.jpg`;
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
         });
     }
