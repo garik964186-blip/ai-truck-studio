@@ -10,62 +10,45 @@
         :root { --bg: #0b0b0e; --card: #16161a; --accent: #ff0055; --text: #e0e0e0; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; overflow-x: hidden; }
-        
         .container { max-width: 500px; margin: 0 auto; background: var(--card); padding: 12px; border-radius: 20px; border: 1px solid #333; min-height: 95vh; display: flex; flex-direction: column; }
-        
         .header { text-align: center; }
         .banner-img { width: 100%; border-radius: 15px; border: 1px solid var(--accent); max-height: 140px; object-fit: cover; background: #000; }
         .main-title { color: var(--accent); font-weight: 900; font-size: 20px; margin: 15px 0; display: block; text-transform: uppercase; }
-
         .tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #000; padding: 5px; border-radius: 15px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: #666; font-weight: bold; cursor: pointer; border-radius: 10px; font-size: 14px; transition: 0.3s; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: #666; font-weight: bold; cursor: pointer; border-radius: 10px; font-size: 14px; }
         .tab-btn.active { background: linear-gradient(135deg, #ff0055, #ff5500); color: white; }
-
         .content { display: none; flex-direction: column; flex-grow: 1; }
         .content.active { display: flex; }
-
         .controls { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 10px; }
         select, .btn-s { padding: 12px; background: #25252b; border: 1px solid #444; color: white; border-radius: 12px; font-size: 13px; outline: none; }
-        
         .input-box { display: flex; gap: 8px; background: #000; padding: 10px; border-radius: 18px; border: 1px solid #444; align-items: center; width: 100%; margin-bottom: 10px; }
         textarea, .field { flex: 1; background: none; border: none; color: white; outline: none; font-size: 16px; padding: 5px; resize: none; width: 100%; }
-        
-        .mic { width: 48px; height: 48px; border-radius: 12px; border: none; background: #333; color: white; font-size: 20px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .mic { width: 48px; height: 48px; border-radius: 12px; border: none; background: #333; color: white; font-size: 20px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
         .mic.active { background: var(--accent); animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0px rgba(255, 0, 85, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(255, 0, 85, 0); } }
-
         #chat-box { flex-grow: 1; height: 400px; overflow-y: auto; background: #08080a; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; position: relative; word-wrap: break-word; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
         .msg.u { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
         .msg.a { align-self: flex-start; background: #2a2a2e; border: 1px solid #38383d; color: #eee; border-bottom-left-radius: 4px; width: 95%; }
-        
-        .msg.a table { width: 100%; border-collapse: collapse; display: block; overflow-x: auto; margin: 10px 0; border-radius: 8px; }
-        .msg.a td, .msg.a th { border: 1px solid #444; padding: 8px; font-size: 12px; text-align: left; }
-        
-        /* Стиль для ASCII-арта в чате */
-        .msg.a pre { background: #1a1a1e; padding: 10px; border-radius: 8px; overflow-x: auto; font-family: monospace; color: #aaffaa; }
-
-
-        .gen-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #ff0055, #ff5500); border: none; border-radius: 15px; color: white; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
-        
+        /* Стиль для котика и артов */
+        pre { background: #1a1a1e; padding: 10px; border-radius: 8px; overflow-x: auto; font-family: monospace; color: #00ff00; margin: 5px 0; }
+        .gen-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #ff0055, #ff5500); border: none; border-radius: 15px; color: white; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; }
         #imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
         .img-wrap { display: flex; flex-direction: column; gap: 8px; background: #111; padding: 5px; border-radius: 14px; border: 1px solid #222; }
         .gen-img { width: 100%; border-radius: 10px; display: block; border: 1px solid #333; }
-        .dl-btn { width: 100%; padding: 10px; background: #25252b; border: 1px solid #444; color: #fff; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none; display: block; }
+        .dl-btn { width: 100%; padding: 10px; background: #25252b; border: 1px solid #444; color: #fff; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <img src="https://i.postimg.cc/mD9t7mS3/1000130841.jpg" class="banner-img" alt="Banner">
+        <img src="https://i.postimg.cc/mD9t7mS3/1000130841.jpg" class="banner-img">
         <div class="main-title">ОТ ИГРУШКИ ДО ФУРЫ</div>
     </div>
-    
     <div class="tabs">
         <button id="b-art" class="tab-btn active" onclick="tab('art')">🎨 ДОСКА</button>
         <button id="b-chat" class="tab-btn" onclick="tab('chat')">💬 ЧАТ</button>
     </div>
-    
     <div id="art" class="content active">
         <div class="controls">
             <select id="m-art">
@@ -82,7 +65,6 @@
         <button id="go-art" onclick="make()" class="gen-btn">🚀 СОЗДАТЬ КАРТИНКУ</button>
         <div id="imgs"></div>
     </div>
-
     <div id="chat" class="content">
         <div class="controls">
             <select id="m-chat"><option value="openai">⚡ GPT-4o</option><option value="gemini">✨ Gemini Pro</option></select>
@@ -96,7 +78,6 @@
         </div>
     </div>
 </div>
-
 <script>
     function tab(t){
         document.querySelectorAll('.tab-btn, .content').forEach(e=>e.classList.remove('active'));
@@ -104,20 +85,17 @@
         document.getElementById(t).classList.add('active');
         window.speechSynthesis.cancel();
     }
-    
     function speak(t){
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(t.replace(/[*#`_]/g,'').trim());
         u.lang='ru-RU'; u.rate=1.2; window.speechSynthesis.speak(u);
     }
-
     async function trans(t){
         try {
             const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(t)}`);
             const d = await r.json(); return d[0][0][0];
         } catch(e){ return t; }
     }
-
     function voice(m){
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if(!SR) return alert("Микрофон не поддерживается");
@@ -132,63 +110,41 @@
         };
         rec.start();
     }
-
     async function make(){
         const inp = document.getElementById('i-art'); let p = inp.value; if(!p) return;
         const btn = document.getElementById('go-art'); btn.disabled=true; btn.innerText="⏳ ГЕНЕРАЦИЯ...";
         if(/[а-я]/.test(p)) p = await trans(p);
         const seed = Math.floor(Math.random() * 1000000);
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?model=${document.getElementById('m-art').value}&seed=${seed}&nologo=true`;
-        
-        const wrap = document.createElement('div');
-        wrap.className = 'img-wrap';
-        wrap.innerHTML = `<img src="${url}" class="gen-img"><a href="${url}" download="art_${seed}.jpg" target="_blank" class="dl-btn">📥 СКАЧАТЬ</a>`;
-        
+        const wrap = document.createElement('div'); wrap.className = 'img-wrap';
+        wrap.innerHTML = `<img src="${url}" class="gen-img"><a href="${url}" target="_blank" class="dl-btn">📥 СКАЧАТЬ</a>`;
         document.getElementById('imgs').prepend(wrap);
         btn.disabled=false; btn.innerText="🚀 СОЗДАТЬ КАРТИНКУ";
         inp.value = '';
     }
-
     async function send(){
         const inp = document.getElementById('i-chat'); const box = document.getElementById('chat-box');
         if(!inp.value) return; const m = inp.value;
         box.innerHTML += `<div class="msg u">${m}</div>`; inp.value=''; box.scrollTop=box.scrollHeight;
-        
-        let responseText;
-        // Проверяем, хочет ли пользователь "нарисовать" текстовое изображение
-        const drawKeywords = ["нарисуй", "сделай арт", "изобрази", "покажи рисунок"];
-        const isDrawingRequest = drawKeywords.some(keyword => m.toLowerCase().includes(keyword));
 
-        if (isDrawingRequest) {
-            // Здесь можно добавить более сложную логику для разных ASCII-артов
-            // Пока что для примера, просто возвращаем котика или что-то еще
-            if (m.toLowerCase().includes("кот") || m.toLowerCase().includes("котик")) {
-                responseText = `Конечно! Вот вам милый котик:\n\n\`\`\`\n/\\_/\\\n( o.o )\n > ^ <\n\`\`\``;
-            } else if (m.toLowerCase().includes("сердце") || m.toLowerCase().includes("любовь")) {
-                responseText = `Вот сердечко для вас:\n\n\`\`\`\n  _  _\n / \\/ \\\n \\    /\n  \\  /\n   \\/\n\`\`\``;
-            } else if (m.toLowerCase().includes("звезда")) {
-                responseText = `Вот сияющая звезда:\n\n\`\`\`\n  /\\\n <**>\n  \\/\n\`\`\``;
-            }
-             else {
-                responseText = `Я не могу генерировать настоящие графические изображения, но могу подарить вам небольшое ASCII-искусство. Как вам такой котик?\n\n\`\`\`\n/\\_/\\\n( o.o )\n > ^ <\n\`\`\`\n\nЕсли хотите что-то конкретное — скажите, и я постараюсь нарисовать (текстом) именно то, что возникает у вас в голове!`;
-            }
-            // Markdown.parse автоматически обработает ```` для pre-форматирования
+        // Фишка: Ловим запрос на котика (как на скриншоте 8)
+        if(m.toLowerCase().includes("нарисуй") || m.toLowerCase().includes("арт")){
+            const art = "Конечно! Лови котика:\n\n```\n /\\_/\\ \n( o.o )\n > ^ < \n```";
             const ai = document.createElement('div'); ai.className='msg a';
-            ai.innerHTML = marked.parse(responseText);
-            box.appendChild(ai); box.scrollTop=box.scrollHeight; speak(responseText);
-
-        } else {
-            // Отправляем запрос в AI-модель как обычно
-            try {
-                const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(m)}?model=${document.getElementById('m-chat').value}`);
-                const t = await r.text();
-                const ai = document.createElement('div'); ai.className='msg a';
-                ai.innerHTML = marked.parse(t);
-                box.appendChild(ai); box.scrollTop=box.scrollHeight; speak(t);
-            } catch(e){ box.innerHTML += `<div class="msg a">Ошибка связи.</div>`; }
+            ai.innerHTML = marked.parse(art);
+            box.appendChild(ai); box.scrollTop=box.scrollHeight; speak("Конечно! Лови котика");
+            return;
         }
+
+        try {
+            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(m)}?model=${document.getElementById('m-chat').value}`);
+            const t = await r.text();
+            const ai = document.createElement('div'); ai.className='msg a';
+            ai.innerHTML = marked.parse(t);
+            box.appendChild(ai); box.scrollTop=box.scrollHeight; speak(t);
+        } catch(e){ box.innerHTML += `<div class="msg a">Ошибка связи.</div>`; }
     }
-    function clr(){ if(confirm("Очистить галерею?")) document.getElementById('imgs').innerHTML=''; }
+    function clr(){ if(confirm("Очистить?")) document.getElementById('imgs').innerHTML=''; }
 </script>
 </body>
 </html>
