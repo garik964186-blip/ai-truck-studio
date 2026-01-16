@@ -3,187 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Book: BOSS Edition</title>
+    <title>AI Book: BOSS Edition (Auto-Gen)</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
-            --bg-color: #0b0b0e; 
-            --card-bg: #16161a; 
-            --text-color: #e0e0e0;
-            --accent-color: #ff0055; 
-            --accent-grad: linear-gradient(135deg, #ff0055, #ff5500);
-            --input-bg: #222226; 
-            --border-radius: 15px;
+            --bg-color: #0b0b0e; --card-bg: #16161a; --text-color: #e0e0e0;
+            --accent-color: #ff0055; --accent-grad: linear-gradient(135deg, #ff0055, #ff5500);
+            --input-bg: #222226; --border-radius: 15px;
         }
-
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg-color); 
-            color: var(--text-color); 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            perspective: 2000px; /* Глубина 3D */
-            overflow: hidden;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; perspective: 2000px; overflow: hidden; }
         
-        /* КОНТЕЙНЕР КНИГИ */
-        .book { 
-            width: 95%; 
-            max-width: 500px; 
-            height: 90vh; 
-            position: relative; 
-            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
-            transform-style: preserve-3d; 
-        }
+        .book { width: 95%; max-width: 500px; height: 90vh; position: relative; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); transform-style: preserve-3d; }
+        .book.flipped { transform: rotateY(-180deg); }
 
-        /* Состояние перевернутой страницы */
-        .book.flipped { 
-            transform: rotateY(-180deg); 
-        }
+        .page { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: var(--border-radius); background: var(--card-bg); border: 2px solid #333; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .page.back { transform: rotateY(180deg); }
 
-        /* ОБЩИЕ СТИЛИ СТОРОН (СТРАНИЦ) */
-        .page { 
-            position: absolute; 
-            width: 100%; 
-            height: 100%; 
-            backface-visibility: hidden; 
-            border-radius: var(--border-radius); 
-            background: var(--card-bg); 
-            border: 2px solid #333; 
-            display: flex; 
-            flex-direction: column; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
-        }
+        .content { padding: 15px; flex: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        .header { text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .banner-img { width: 100%; height: 80px; border-radius: 8px; object-fit: cover; border: 1px solid var(--accent-color); }
         
-        /* ЗАДНЯЯ СТОРОНА (ЧАТ) — изначально развернута */
-        .page.back { 
-            transform: rotateY(180deg); 
-        }
-
-        .content { 
-            padding: 15px; 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            overflow-y: auto; 
-        }
-
-        .header { 
-            text-align: center; 
-            border-bottom: 1px solid #333; 
-            padding-bottom: 10px; 
-            margin-bottom: 5px;
-        }
-
-        .banner-img { 
-            width: 100%; 
-            height: 90px; 
-            border-radius: 8px; 
-            object-fit: cover; 
-            border: 1px solid var(--accent-color); 
-        }
-
-        /* КНОПКИ */
-        .flip-btn { 
-            background: var(--accent-grad); 
-            color: white; 
-            border: none; 
-            padding: 12px; 
-            border-radius: 10px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: 0.3s;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 1px;
-        }
+        .flip-btn, .action-btn { background: var(--accent-grad); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 12px; }
+        .action-btn.secondary { background: #333; }
         
-        .flip-btn:active { transform: scale(0.95); }
+        #chat-container { flex: 1; background: #000; border-radius: 10px; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; border: 1px solid #222; }
+        .message { padding: 10px; border-radius: 12px; font-size: 14px; max-width: 85%; line-height: 1.4; }
+        .message.user { align-self: flex-end; background: var(--accent-color); }
+        .message.ai { align-self: flex-start; background: #2a2a2e; border: 1px solid #3d3d42; }
 
-        /* ИНТЕРФЕЙС ГЕНЕРАЦИИ */
-        .controls { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 8px; 
-        }
+        .input-group { display: flex; gap: 5px; }
+        textarea, input, select { background: var(--input-bg); border: 1px solid #444; color: white; padding: 10px; border-radius: 10px; width: 100%; box-sizing: border-box; font-size: 14px; outline: none; }
 
-        select, textarea, input { 
-            background: var(--input-bg); 
-            border: 1px solid #444; 
-            color: white; 
-            padding: 12px; 
-            border-radius: 10px; 
-            width: 100%; 
-            box-sizing: border-box; 
-            font-size: 14px;
-        }
+        .voice-active { background: #ff0000 !important; animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
 
-        #image-container { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
-            margin-top: 10px; 
-        }
-
-        .img-wrapper {
-            position: relative;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .img-wrapper img { 
-            width: 100%; 
-            border-radius: 8px; 
-            border: 1px solid #444; 
-            display: block;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* ИНТЕРФЕЙС ЧАТА */
-        #chat-container { 
-            flex: 1; 
-            background: #000; 
-            border-radius: 10px; 
-            padding: 12px; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            border: 1px solid #222; 
-        }
-
-        .message { 
-            padding: 10px 14px; 
-            border-radius: 12px; 
-            font-size: 14px; 
-            max-width: 85%; 
-            line-height: 1.4;
-        }
-
-        .message.user { 
-            align-self: flex-end; 
-            background: var(--accent-color); 
-            color: white;
-            border-bottom-right-radius: 2px;
-        }
-
-        .message.ai { 
-            align-self: flex-start; 
-            background: #2a2a2e; 
-            border: 1px solid #3d3d42;
-            border-bottom-left-radius: 2px;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 5px;
-            margin-top: 5px;
-        }
-
+        #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .img-wrapper { position: relative; animation: slideUp 0.4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .img-wrapper img { width: 100%; border-radius: 8px; border: 1px solid #444; cursor: pointer; }
+        .dl-link { display: block; font-size: 10px; color: #777; text-align: center; text-decoration: none; margin-top: 3px; }
     </style>
 </head>
 <body>
@@ -192,22 +50,26 @@
     <div class="page front">
         <div class="content">
             <div class="header">
-                <img src="1768422265866.jpg" class="banner-img" onerror="this.src='https://via.placeholder.com/500x100?text=ОТ+ИГРУШКИ+ДО+ФУРЫ'">
-                <button class="flip-btn" onclick="toggleFlip()" style="margin-top: 10px; width: 100%;">📖 Открыть Чат →</button>
+                <img src="1768422265866.jpg" class="banner-img" onerror="this.src='https://via.placeholder.com/500x100?text=BOSS+ART+BOARD'">
+                <button class="flip-btn" onclick="toggleFlip()" style="width:100%; margin-top:10px;">📖 Открыть Чат →</button>
             </div>
             
-            <div class="controls">
+            <div class="input-group">
                 <select id="model-select">
-                    <option value="flux">🚛 Качество (Flux)</option>
-                    <option value="flux-realism">📸 Реализм (Real)</option>
+                    <option value="flux">🚛 Pro (Flux)</option>
+                    <option value="flux-realism">📸 Real (Realism)</option>
                 </select>
-                <button class="flip-btn" style="background:#333" onclick="clearBoard()">🗑️ Сброс</button>
+                <button class="action-btn secondary" onclick="clearBoard()">🗑️</button>
             </div>
 
-            <textarea id="prompt-input" rows="3" placeholder="Опиши что нарисовать... (например: Камаз К5 в тумане)"></textarea>
+            <textarea id="prompt-input" rows="3" placeholder="Нажми микрофон и скажи, что нарисовать..."></textarea>
             
-            <button class="flip-btn" id="gen-btn" onclick="generateImage()" style="height: 55px; font-size: 16px;">🚀 ПОЕХАЛИ</button>
-            
+            <div class="input-group">
+                <button id="v-art" class="action-btn" style="flex:1" onclick="runVoice('art')">🎤 Сказать и Рисовать</button>
+                <button class="action-btn secondary" onclick="document.getElementById('prompt-input').value=''">❌</button>
+            </div>
+
+            <button class="flip-btn" id="gen-btn" onclick="generateImage()" style="height:50px; font-size:16px;">🚀 РУЧНОЙ ЗАПУСК</button>
             <div id="image-container"></div>
         </div>
     </div>
@@ -215,111 +77,120 @@
     <div class="page back">
         <div class="content">
             <div class="header">
-                <button class="flip-btn" onclick="toggleFlip()" style="width: 100%;">← Назад к Артам 📖</button>
-                <h3 style="margin: 10px 0 0 0; color: var(--accent-color);">💬 ЧАТ С НЕЙРОСЕТЬЮ</h3>
+                <button class="flip-btn" onclick="toggleFlip()" style="width:100%;">← Назад к Артам 📖</button>
+                <div class="input-group" style="margin-top:10px;">
+                    <button class="action-btn secondary" style="flex:1" onclick="stopSpeech()">🔇 Молчать</button>
+                    <button class="action-btn secondary" style="flex:1" onclick="clearChat()">🗑️ Очистить</button>
+                </div>
             </div>
 
             <div id="chat-container"></div>
 
             <div class="input-group">
-                <input type="text" id="chat-input" placeholder="Спроси что-нибудь..." onkeypress="if(event.key==='Enter') sendMessage()">
-                <button class="flip-btn" onclick="sendMessage()" style="padding: 0 20px;">➤</button>
+                <button id="v-chat" class="action-btn" onclick="runVoice('chat')">🎤</button>
+                <input type="text" id="chat-input" placeholder="Спроси у BOSS AI..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <button class="action-btn" onclick="sendMessage()">➤</button>
             </div>
-            <button class="flip-btn" style="background:#333; font-size: 9px; padding: 5px;" onclick="clearChat()">🗑️ Очистить историю</button>
         </div>
     </div>
 </div>
 
 <script>
-    // ПЕРЕЛИСТЫВАНИЕ
-    function toggleFlip() {
-        document.getElementById('myBook').classList.toggle('flipped');
-        stopSpeech();
-    }
+    function toggleFlip() { document.getElementById('myBook').classList.toggle('flipped'); stopSpeech(); }
 
-    // ГОЛОСОВОЙ ДВИЖОК
-    function speak(text) {
+    // ГОЛОС
+    function speak(t) {
         stopSpeech();
-        const u = new SpeechSynthesisUtterance(text);
+        const u = new SpeechSynthesisUtterance(t);
         u.lang = 'ru-RU';
-        u.rate = 1.1;
         window.speechSynthesis.speak(u);
     }
-
     function stopSpeech() { window.speechSynthesis.cancel(); }
 
-    // ЛОГИКА ЧАТА
+    function runVoice(mode) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return alert("Голос не поддерживается");
+        
+        const rec = new SpeechRecognition();
+        rec.lang = 'ru-RU';
+        const btn = mode === 'art' ? document.getElementById('v-art') : document.getElementById('v-chat');
+        
+        rec.onstart = () => btn.classList.add('voice-active');
+        rec.onend = () => btn.classList.remove('voice-active');
+        
+        rec.onresult = async (e) => {
+            const txt = e.results[0][0].transcript;
+            if (mode === 'art') {
+                const input = document.getElementById('prompt-input');
+                input.value = "⏳ Перевожу и запускаю...";
+                const translated = await translate(txt);
+                input.value = translated;
+                // АВТОМАТИЧЕСКИЙ ЗАПУСК ГЕНЕРАЦИИ
+                generateImage(); 
+            } else {
+                document.getElementById('chat-input').value = txt;
+                sendMessage();
+            }
+        };
+        rec.start();
+    }
+
+    async function translate(t) {
+        try {
+            const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t&q=${encodeURIComponent(t)}`);
+            const d = await r.json(); return d[0][0][0];
+        } catch { return t; }
+    }
+
+    // ЧАТ
     async function sendMessage() {
         const inp = document.getElementById('chat-input');
         const box = document.getElementById('chat-container');
         if(!inp.value.trim()) return;
-        
         const m = inp.value;
         box.innerHTML += `<div class="message user">${m}</div>`;
         inp.value = '';
-        
         const loader = document.createElement('div');
-        loader.className = 'message ai';
-        loader.innerText = '⏳ Думаю...';
+        loader.className = 'message ai'; loader.innerText = '⏳ Думаю...';
         box.appendChild(loader);
         box.scrollTop = box.scrollHeight;
 
         try {
-            // Используем модель openai через pollination
             const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(m)}?model=openai`);
-            if (!r.ok) throw new Error("502");
-            
+            if(!r.ok) throw new Error();
             const t = await r.text();
             loader.innerHTML = marked.parse(t);
             speak(t.replace(/[#*`]/g, ''));
-        } catch (err) {
-            loader.innerHTML = `<span style="color: #ff5500">⚠️ Босс, сервер "прилег" (Ошибка 502). Попробуй через минуту!</span>`;
-        }
+        } catch { loader.innerText = '⚠️ Ошибка сервера. Попробуй еще раз, босс.'; }
         box.scrollTop = box.scrollHeight;
     }
 
-    function clearChat() {
-        document.getElementById('chat-container').innerHTML = '';
-        stopSpeech();
-    }
-
-    // ЛОГИКА АРТОВ
-    async function generateImage() {
-        const pInput = document.getElementById('prompt-input');
+    // АРТЫ
+    function generateImage() {
+        const p = document.getElementById('prompt-input').value;
+        const m = document.getElementById('model-select').value;
         const btn = document.getElementById('gen-btn');
-        const container = document.getElementById('image-container');
-        
-        if(!pInput.value.trim()) return;
-        
-        const originalText = btn.innerText;
-        btn.innerText = "⏳ РИСУЮ...";
+        if(!p || p.includes("⏳")) return;
+
+        btn.innerText = "🌀 ГЕНЕРАЦИЯ...";
         btn.disabled = true;
 
-        const p = pInput.value;
-        const m = document.getElementById('model-select').value;
-        const seed = Math.floor(Math.random() * 1000000);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?model=${m}&seed=${seed}&nologo=true&width=1024&height=1024`;
-
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?model=${m}&seed=${Math.floor(Math.random()*1e7)}&nologo=true&width=1024&height=1024`;
+        
         const wrap = document.createElement('div');
         wrap.className = 'img-wrapper';
-        wrap.innerHTML = `
-            <img src="${url}" onclick="window.open('${url}')" alt="AI Image">
-            <a href="${url}" target="_blank" style="display:block; text-align:center; color:#777; font-size:10px; text-decoration:none; margin-top:3px;">💾 Открыть оригинал</a>
-        `;
+        wrap.innerHTML = `<img src="${url}" onclick="window.open('${url}')"><a href="${url}" target="_blank" class="dl-link">💾 Сохранить</a>`;
         
-        container.prepend(wrap);
-        
-        // Небольшая задержка для имитации работы
+        document.getElementById('image-container').prepend(wrap);
+
         setTimeout(() => {
-            btn.innerText = originalText;
+            btn.innerText = "🚀 ЕЩЕ РАЗ";
             btn.disabled = false;
-        }, 1500);
+        }, 2000);
     }
 
-    function clearBoard() {
-        document.getElementById('image-container').innerHTML = '';
-        document.getElementById('prompt-input').value = '';
-    }
+    function clearChat() { document.getElementById('chat-container').innerHTML = ''; stopSpeech(); }
+    function clearBoard() { document.getElementById('image-container').innerHTML = ''; document.getElementById('prompt-input').value = ''; }
 </script>
 
 </body>
