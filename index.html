@@ -12,45 +12,37 @@
         
         .container { max-width: 500px; margin: 0 auto; background: var(--card); padding: 12px; border-radius: 20px; border: 1px solid #333; min-height: 95vh; display: flex; flex-direction: column; }
         
-        /* Блок обложки */
-        .header { text-align: center; margin-bottom: 10px; position: relative; }
-        .banner-wrap { width: 100%; height: 140px; border-radius: 15px; overflow: hidden; border: 1px solid var(--accent); background: linear-gradient(45deg, #1a1a1a, #333); }
+        .header { text-align: center; margin-bottom: 10px; }
+        .banner-wrap { width: 100%; height: 140px; border-radius: 15px; overflow: hidden; border: 1px solid var(--accent); background: #000; }
         .banner-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        
-        .main-title { color: var(--accent); font-weight: 900; font-size: 20px; margin: 15px 0; display: block; text-transform: uppercase; letter-spacing: 1px; }
+        .main-title { color: var(--accent); font-weight: 900; font-size: 20px; margin: 15px 0; display: block; text-transform: uppercase; }
 
         .tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #000; padding: 5px; border-radius: 15px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: #666; font-weight: bold; cursor: pointer; border-radius: 10px; transition: 0.3s; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: #666; font-weight: bold; cursor: pointer; border-radius: 10px; }
         .tab-btn.active { background: linear-gradient(135deg, #ff0055, #ff5500); color: white; }
 
         .content { display: none; flex-direction: column; flex-grow: 1; }
         .content.active { display: flex; }
 
-        .controls { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 10px; }
-        select, .btn-s { padding: 12px; background: #25252b; border: 1px solid #444; color: white; border-radius: 12px; font-size: 13px; }
-        
         .input-box { display: flex; gap: 8px; background: #000; padding: 10px; border-radius: 18px; border: 1px solid #444; align-items: center; margin-bottom: 10px; }
         textarea, .field { flex: 1; background: none; border: none; color: white; font-size: 16px; resize: none; }
         
-        .mic { width: 48px; height: 48px; border-radius: 12px; border: none; background: #333; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .mic.active { background: var(--accent); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0px rgba(255, 0, 85, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(255, 0, 85, 0); } }
-
         #chat-box { flex-grow: 1; height: 380px; overflow-y: auto; background: #08080a; border-radius: 15px; padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 15px; border: 1px solid #222; }
-        .msg { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; word-wrap: break-word; cursor: pointer; }
         .msg.u { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
         .msg.a { align-self: flex-start; background: #2a2a2e; border: 1px solid #38383d; border-bottom-left-radius: 4px; width: 95%; }
 
-        .gen-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #ff0055, #ff5500); border: none; border-radius: 15px; color: white; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; }
-        
-        #imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-        .img-wrap { border-radius: 14px; overflow: hidden; border: 1px solid #333; background: #111; }
-        .gen-img { width: 100%; display: block; }
+        .mic { width: 48px; height: 48px; border-radius: 12px; border: none; background: #333; color: white; font-size: 20px; display: flex; align-items: center; justify-content: center; }
+        .mic.active { background: var(--accent); opacity: 0.7; }
 
-        #menu { display: none; position: fixed; background: #25252b; border: 1px solid #444; border-radius: 12px; z-index: 9999; min-width: 190px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+        #menu { display: none; position: fixed; background: #25252b; border: 1px solid #444; border-radius: 12px; z-index: 9999; min-width: 190px; }
         .menu-item { padding: 15px; color: white; font-size: 14px; border-bottom: 1px solid #333; cursor: pointer; }
         .menu-item:last-child { border: none; }
-        .menu-item:active { background: var(--accent); }
+
+        .gen-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #ff0055, #ff5500); border: none; border-radius: 15px; color: white; font-weight: 900; cursor: pointer; }
+        #imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .img-wrap { border-radius: 14px; overflow: hidden; border: 1px solid #333; }
+        .gen-img { width: 100%; display: block; }
     </style>
 </head>
 <body oncontextmenu="return false;" onclick="hideMenu()">
@@ -58,9 +50,7 @@
 <div class="container">
     <div class="header">
         <div class="banner-wrap">
-            <img src="https://i.ibb.co/v4m8YmP/truck-banner.jpg" 
-                 onerror="this.src='https://i.postimg.cc/mD9t7mS3/1000130841.jpg'" 
-                 class="banner-img" alt="ОТ ИГРУШКИ ДО ФУРЫ">
+            <img src="https://i.postimg.cc/mD9t7mS3/1000130841.jpg" class="banner-img" alt="ОТ ИГРУШКИ ДО ФУРЫ">
         </div>
         <div class="main-title">ОТ ИГРУШКИ ДО ФУРЫ</div>
     </div>
@@ -71,27 +61,15 @@
     </div>
     
     <div id="art" class="content active">
-        <div class="controls">
-            <select id="m-art">
-                <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
-                <option value="dalle-3">🦊 АРТ (Dall-E 3)</option>
-                <option value="realism">📸 ФОТО (Realism)</option>
-            </select>
-            <button class="btn-s" onclick="document.getElementById('imgs').innerHTML=''">🗑️</button>
-        </div>
         <div class="input-box">
             <button id="mic-art" class="mic" onclick="voice('art')">🎤</button>
             <textarea id="i-art" rows="1" placeholder="Что нарисовать?"></textarea>
         </div>
-        <button id="go-art" onclick="make()" class="gen-btn">🚀 СОЗДАТЬ</button>
+        <button onclick="make()" class="gen-btn">🚀 СОЗДАТЬ</button>
         <div id="imgs"></div>
     </div>
 
     <div id="chat" class="content">
-        <div class="controls">
-            <select id="m-chat"><option value="openai">⚡ GPT-4o</option><option value="gemini">✨ Gemini</option></select>
-            <button class="btn-s" onclick="document.getElementById('chat-box').innerHTML=''">🗑️</button>
-        </div>
         <div id="chat-box"></div>
         <div class="input-box">
             <button id="mic-chat" class="mic" onclick="voice('chat')">🎤</button>
@@ -111,27 +89,34 @@
         document.querySelectorAll('.tab-btn, .content').forEach(e=>e.classList.remove('active'));
         document.getElementById('b-'+t).classList.add('active');
         document.getElementById(t).classList.add('active');
-        hideMenu(); stopAudio();
+        stopAudio();
     }
 
-    function setupLongPress(el, type, data) {
+    function stopAudio() { window.speechSynthesis.cancel(); }
+
+    function setupInteraction(el, type, data) {
+        // Одиночный клик - Стоп звук
+        el.onclick = (e) => {
+            if(type === 'chat') {
+                stopAudio();
+            }
+        };
+
+        // Долгое нажатие - Меню
         el.oncontextmenu = (e) => { e.preventDefault(); showMenu(e, type, data); };
         el.ontouchstart = (e) => {
             pressTimer = setTimeout(() => showMenu(e.touches[0], type, data), 700);
         };
         el.ontouchend = () => clearTimeout(pressTimer);
-        el.ontouchmove = () => clearTimeout(pressTimer);
     }
 
     function showMenu(e, type, data) {
         currentData = data;
         const m = document.getElementById('menu');
         m.innerHTML = type === 'chat' ? 
-            `<div class="menu-item" onclick="copyD()">📋 Скопировать текст</div>
-             <div class="menu-item" onclick="stopAudio()">🔇 Заглушить звук</div>
-             <div class="menu-item" onclick="replayAudio()">🔊 Повторить звук</div>` :
-            `<div class="menu-item" onclick="copyD()">🔗 Скопировать ссылку</div>
-             <div class="menu-item" onclick="downloadI()">📥 Скачать фото</div>`;
+            `<div class="menu-item" onclick="copyD()">📋 Копировать текст</div>
+             <div class="menu-item" onclick="speak(currentData)">🔊 Повторить звук</div>` :
+            `<div class="menu-item" onclick="window.open(currentData, '_blank')">📥 Скачать фото</div>`;
         
         m.style.display = 'block';
         m.style.left = Math.min(e.pageX, window.innerWidth - 200) + 'px';
@@ -140,12 +125,9 @@
 
     function hideMenu() { document.getElementById('menu').style.display = 'none'; }
     function copyD() { navigator.clipboard.writeText(currentData); hideMenu(); }
-    function stopAudio() { window.speechSynthesis.cancel(); hideMenu(); }
-    function replayAudio() { speak(currentData); hideMenu(); }
-    function downloadI() { window.open(currentData, '_blank'); hideMenu(); }
 
     function speak(t) {
-        window.speechSynthesis.cancel();
+        stopAudio();
         const u = new SpeechSynthesisUtterance(t.replace(/[*#`_]/g,''));
         u.lang = 'ru-RU'; window.speechSynthesis.speak(u);
     }
@@ -153,9 +135,6 @@
     function voice(m){
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         const rec = new SR(); rec.lang = 'ru-RU';
-        const btn = document.getElementById('mic-'+m);
-        rec.onstart = () => btn.classList.add('active');
-        rec.onend = () => btn.classList.remove('active');
         rec.onresult = (e) => {
             const v = e.results[0][0].transcript;
             if(m === 'art') { document.getElementById('i-art').value = v; make(); }
@@ -166,14 +145,60 @@
 
     async function make(){
         const inp = document.getElementById('i-art'); if(!inp.value) return;
-        const btn = document.getElementById('go-art'); btn.innerText = "⏳ ГЕНЕРАЦИЯ...";
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(inp.value)}?model=${document.getElementById('m-art').value}&nologo=true&seed=${Math.random()}`;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(inp.value)}?nologo=true`;
         const wrap = document.createElement('div');
         wrap.className = 'img-wrap';
         wrap.innerHTML = `<img src="${url}" class="gen-img">`;
-        setupLongPress(wrap, 'img', url);
+        setupInteraction(wrap, 'img', url);
         document.getElementById('imgs').prepend(wrap);
-        btn.innerText = "🚀 СОЗДАТЬ"; inp.value = '';
+        inp.value = '';
+    }
+
+    // Функция для генерации 2D ASCII-арта
+    function generate2DAsciiArt(prompt) {
+        const lowerPrompt = prompt.toLowerCase();
+        let art = "";
+
+        if (lowerPrompt.includes("кот") || lowerPrompt.includes("котик")) {
+            art = `
+ /\\_/\\ 
+( o.o )
+ > ^ < 
+`;
+        } else if (lowerPrompt.includes("сердце")) {
+            art = `
+  _  _
+ / \\/ \\
+ \\    /
+  \\  /
+   \\/
+`;
+        } else if (lowerPrompt.includes("звезда")) {
+            art = `
+  /\\
+ <**>
+  \\/
+`;
+        } else if (lowerPrompt.includes("дом")) {
+            art = `
+    /\\
+   /  \\
+  /____\\
+  | [] |
+  ------
+`;
+        } else {
+            art = `
+Я не могу генерировать 3D изображения, но могу нарисовать вам 2D ASCII-арт.
+Вот пример:
+ /\\_/\\ 
+( o.o )
+ > ^ < 
+
+Попробуйте попросить меня нарисовать что-то плоское, например: "нарисуй кота" или "нарисуй сердце".
+`;
+        }
+        return `\`\`\`\n${art}\n\`\`\``; // Оборачиваем в markdown для форматирования
     }
 
     async function send(){
@@ -181,14 +206,23 @@
         const box = document.getElementById('chat-box');
         const m = inp.value; box.innerHTML += `<div class="msg u">${m}</div>`;
         inp.value = ''; box.scrollTop = box.scrollHeight;
-        try {
-            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(m)}?model=${document.getElementById('m-chat').value}`);
-            const t = await r.text();
-            const ai = document.createElement('div'); ai.className = 'msg a';
-            ai.innerHTML = marked.parse(t);
-            setupLongPress(ai, 'chat', t);
-            box.appendChild(ai); box.scrollTop = box.scrollHeight; speak(t);
-        } catch(e) {}
+        
+        let responseText;
+        if (m.toLowerCase().includes("нарисуй") || m.toLowerCase().includes("картинку") || m.toLowerCase().includes("арт")) {
+            responseText = generate2DAsciiArt(m);
+        } else {
+            try {
+                const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(m)}`);
+                responseText = await r.text();
+            } catch(e) {
+                responseText = "Извините, произошла ошибка при получении ответа.";
+            }
+        }
+        
+        const ai = document.createElement('div'); ai.className = 'msg a';
+        ai.innerHTML = marked.parse(responseText);
+        setupInteraction(ai, 'chat', responseText);
+        box.appendChild(ai); box.scrollTop = box.scrollHeight; speak(responseText);
     }
 </script>
 </body>
