@@ -12,30 +12,44 @@
             --input-bg: #222226; --border-radius: 12px;
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
-        .container { background: var(--card-bg); padding: 15px; border-radius: var(--border-radius); width: 100%; max-width: 600px; border: 1px solid #333; display: flex; flex-direction: column; min-height: 95vh; }
+        .container { background: var(--card-bg); padding: 15px; border-radius: var(--border-radius); width: 100%; max-width: 600px; border: 1px solid #333; display: flex; flex-direction: column; min-height: 95vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
         .header { text-align: center; margin-bottom: 10px; }
-        .banner-img { width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--accent-color); object-fit: cover; margin-bottom: 8px; }
+        .banner-img { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--accent-color); object-fit: cover; margin-bottom: 8px; }
         h1 { font-weight: 900; text-transform: uppercase; margin: 10px 0; font-size: 22px; color: var(--accent-color); letter-spacing: 1px; }
-        .global-controls { display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 8px; margin-bottom: 15px; background: #000; padding: 8px; border-radius: 10px; border: 1px solid #222; }
+
+        .global-controls { display: grid; grid-template-columns: 1.5fr 1.5fr auto; gap: 8px; margin-bottom: 15px; background: #000; padding: 8px; border-radius: 10px; border: 1px solid #222; }
+
         .tabs { display: flex; background: #000; padding: 4px; border-radius: 10px; margin-bottom: 15px; gap: 4px; }
-        .tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: white; font-weight: bold; cursor: pointer; font-size: 13px; text-transform: uppercase; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .tab-btn { flex: 1; padding: 14px; background: transparent; border: none; color: white; font-weight: bold; cursor: pointer; font-size: 13px; text-transform: uppercase; border-radius: 8px; transition: 0.3s; }
         .tab-btn.active { background: var(--accent-grad); box-shadow: 0 0 15px rgba(255, 0, 85, 0.3); }
+
         .tab-content { display: none; flex-direction: column; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        select, .compact-btn { padding: 10px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 8px; font-size: 13px; cursor: pointer; outline: none; }
-        textarea, .chat-input-field { width: 100%; padding: 15px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 12px; box-sizing: border-box; resize: none; font-size: 15px; outline: none; transition: 0.3s; }
-        .action-btn { width: 100%; padding: 16px; color: white; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; margin-top: 10px; font-size: 14px; text-transform: uppercase; }
+
+        select, .compact-btn { padding: 12px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 8px; font-size: 13px; cursor: pointer; }
+        
+        textarea { width: 100%; padding: 15px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 12px; box-sizing: border-box; resize: none; font-size: 16px; outline: none; transition: 0.3s; }
+        textarea:focus { border-color: var(--accent-color); }
+        
+        .action-btn { width: 100%; padding: 18px; color: white; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; margin-top: 10px; font-size: 14px; text-transform: uppercase; transition: 0.3s; }
         .truck-animation { position: absolute; left: -100px; top: 50%; transform: translateY(-50%) scaleX(-1); font-size: 24px; display: none; }
         @keyframes drive { 0% { left: -100px; } 100% { left: 110%; } }
         .loading .truck-animation { display: block; animation: drive 2s linear infinite; }
         .loading .btn-text { visibility: hidden; }
-        #chat-container { height: 400px; overflow-y: auto; background: #08080a; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; }
+
+        #chat-container { height: 350px; overflow-y: auto; background: #08080a; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; }
         .message { max-width: 85%; padding: 12px 16px; border-radius: 15px; font-size: 14px; line-height: 1.5; }
         .message.user { align-self: flex-end; background: var(--accent-color); color: white; border-bottom-right-radius: 2px; }
-        .message.ai { align-self: flex-start; background: #1a1a1e; border: 1px solid #333; border-bottom-left-radius: 2px; }
+        .message.ai { align-self: flex-start; background: #1a1a1e; border: 1px solid #333; border-bottom-left-radius: 2px; color: #eee; }
+
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .generated-img { width: 100%; border-radius: 10px; border: 1px solid #333; cursor: pointer; }
+        .generated-img { width: 100%; border-radius: 10px; border: 1px solid #333; cursor: pointer; transition: 0.2s; }
+        .generated-img:hover { transform: scale(1.02); border-color: var(--accent-color); }
+        
+        .voice-btn-active { background: #ff0000 !important; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -44,23 +58,26 @@
         <img src="1768422265866.jpg" class="banner-img" alt="Banner">
         <h1>ОТ ИГРУШКИ ДО ФУРЫ</h1>
     </div>
+
     <div class="global-controls">
         <select id="model-select">
-            <option value="flux">🚛 ФУРЫ (Flux)</option>
-            <option value="turbo">🦊 АРТ (Turbo)</option>
+            <option value="flux">🚛 МОДЕЛЬ: ФУРЫ</option>
+            <option value="any">🦊 МОДЕЛЬ: АРТ</option>
         </select>
         <button class="compact-btn" onclick="downloadAll()">📥 ВСЁ</button>
         <button class="compact-btn" onclick="clearBoard()">🗑️</button>
     </div>
+
     <div class="tabs">
         <button id="btn-tab-art" class="tab-btn active" onclick="switchMainTab('art')">🎨 ДОСКА</button>
         <button id="btn-tab-chat" class="tab-btn" onclick="switchMainTab('chat')">💬 ЧАТ</button>
     </div>
+
     <div id="tab-art" class="tab-content active">
-        <textarea id="prompt-input" rows="3" placeholder="Напиши: КамАЗ К5 на ночной трассе..."></textarea>
+        <textarea id="prompt-input" rows="3" placeholder="Напиши сюжет для картинки..."></textarea>
         <div style="display:flex; gap: 10px; margin-top: 10px;">
             <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="flex: 1;">🎤 ГОЛОС</button>
-            <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="flex: 1;">❌</button>
+            <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="flex: 1;">ОЧИСТИТЬ ❌</button>
         </div>
         <button id="gen-btn" onclick="generateImage()" class="action-btn">
             <span class="btn-text">🚀 СОЗДАТЬ МАГИЮ</span>
@@ -68,10 +85,17 @@
         </button>
         <div id="image-container"></div>
     </div>
+
     <div id="tab-chat" class="tab-content">
         <div id="chat-container"></div>
-        <textarea id="chat-input" class="chat-input-field" rows="2" placeholder="Спроси что-нибудь..."></textarea>
-        <button id="chat-send-btn" onclick="sendMessage()" class="action-btn">🚀 ОТПРАВИТЬ</button>
+        <textarea id="chat-input" rows="2" placeholder="Задай вопрос нейросети..."></textarea>
+        <div style="display:flex; gap: 10px; margin-top: 10px;">
+            <button id="voice-chat-btn" class="compact-btn" onclick="runVoice('chat')" style="flex: 1;">🎤</button>
+            <button id="chat-send-btn" onclick="sendMessage()" class="action-btn" style="flex: 3; margin-top: 0;">
+                <span class="btn-text">🚀 ОТПРАВИТЬ</span>
+                <span class="truck-animation">🚛💨</span>
+            </button>
+        </div>
     </div>
 </div>
 
@@ -82,7 +106,7 @@
         document.getElementById(`tab-${tab}`).classList.add('active');
     }
 
-    async function translateText(text) {
+    async function translate(text) {
         try {
             const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`);
             const data = await res.json();
@@ -91,53 +115,89 @@
     }
 
     async function generateImage() {
-        const inputEl = document.getElementById('prompt-input');
+        const input = document.getElementById('prompt-input');
         const btn = document.getElementById('gen-btn');
-        let prompt = inputEl.value;
-        if (!prompt) return;
+        let text = input.value.trim();
+        if(!text) return;
 
         btn.classList.add('loading');
         btn.disabled = true;
 
-        // Авто-улучшение промпта для качества
-        if (/[а-яА-Я]/.test(prompt)) {
-            prompt = await translateText(prompt);
+        if(/[а-яА-Я]/.test(text)) {
+            text = await translate(text);
+            input.value = text;
         }
-        const finalPrompt = `${prompt}, photorealistic, high quality, 8k resolution, cinematic lighting`;
 
+        const seed = Math.floor(Math.random() * 999999);
         const model = document.getElementById('model-select').value;
-        const seed = Math.floor(Math.random() * 1000000);
-        const url = `https://pollinations.ai/p/${encodeURIComponent(finalPrompt)}?model=${model}&seed=${seed}&width=1024&height=1024&nologo=true&t=${Date.now()}`;
+        const url = `https://pollinations.ai/p/${encodeURIComponent(text)}?width=1024&height=1024&seed=${seed}&model=${model}&nologo=true`;
 
         const img = new Image();
         img.src = url;
         img.onload = () => {
-            const container = document.getElementById('image-container');
-            const newImg = document.createElement('img');
-            newImg.src = url; newImg.className = 'generated-img';
-            newImg.onclick = () => window.open(url, '_blank');
-            container.prepend(newImg);
+            const el = document.createElement('img');
+            el.src = url; el.className = 'generated-img';
+            el.onclick = () => window.open(url);
+            document.getElementById('image-container').prepend(el);
             btn.classList.remove('loading');
             btn.disabled = false;
         };
         img.onerror = () => {
-            alert("Сервер занят, попробуй еще раз через 10 секунд");
             btn.classList.remove('loading');
             btn.disabled = false;
+            alert("Сервер перегружен, попробуй еще раз через кнопку!");
         };
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const box = document.getElementById('chat-container');
+        const btn = document.getElementById('chat-send-btn');
+        const text = input.value.trim();
+        if(!text) return;
+
+        box.innerHTML += `<div class="message user">${text}</div>`;
+        input.value = '';
+        box.scrollTop = box.scrollHeight;
+        btn.classList.add('loading');
+
+        try {
+            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(text)}?model=openai`);
+            const aiText = await r.text();
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'message ai';
+            aiDiv.innerHTML = marked.parse(aiText);
+            box.appendChild(aiDiv);
+            box.scrollTop = box.scrollHeight;
+            
+            const utterance = new SpeechSynthesisUtterance(aiText.replace(/[*#`_]/g, ''));
+            utterance.lang = 'ru-RU';
+            window.speechSynthesis.speak(utterance);
+        } catch(e) {}
+        
+        btn.classList.remove('loading');
     }
 
     function runVoice(mode) {
         const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         rec.lang = 'ru-RU';
+        const btn = document.getElementById(`voice-${mode}-btn`);
+        rec.onstart = () => btn.classList.add('voice-btn-active');
+        rec.onend = () => btn.classList.remove('voice-btn-active');
         rec.onresult = (e) => {
-            const t = e.results[0][0].transcript;
-            if(mode === 'art') { document.getElementById('prompt-input').value = t; generateImage(); }
+            const res = e.results[0][0].transcript;
+            if(mode === 'art') { document.getElementById('prompt-input').value = res; generateImage(); }
+            else { document.getElementById('chat-input').value = res; sendMessage(); }
         };
         rec.start();
     }
-    
-    // Остальные функции (sendMessage и т.д.) остаются такими же
+
+    function clearBoard() { document.getElementById('image-container').innerHTML = ''; }
+    function downloadAll() {
+        document.querySelectorAll('.generated-img').forEach((img, i) => {
+            const a = document.createElement('a'); a.href = img.src; a.download = `truck_art_${i}.jpg`; a.click();
+        });
+    }
 </script>
 </body>
 </html>
