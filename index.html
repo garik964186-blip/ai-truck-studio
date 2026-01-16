@@ -20,7 +20,6 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; padding: 20px 10px; margin: 0; }
         .container { background-color: var(--card-bg); padding: 25px; border-radius: var(--border-radius); box-shadow: 0 20px 70px rgba(0,0,0,0.8); width: 100%; max-width: 950px; border: 1px solid #333; }
         .header { text-align: center; margin-bottom: 20px; }
-        /* Обновленный стиль для новой обложки */
         .banner-img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--accent-color); margin-bottom: 15px; box-shadow: 0 0 20px rgba(255, 0, 85, 0.2); object-fit: cover; }
         h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-size: 28px; }
         .tabs { display: flex; background: #000; padding: 5px; border-radius: 12px; margin-bottom: 20px; gap: 5px; }
@@ -95,6 +94,7 @@
         </div>
     </div>
 </div>
+
 <script>
     function switchMainTab(tab) {
         document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
@@ -122,10 +122,14 @@
 
     async function downloadAll() {
         const saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
-        if(!saved.length) return alert("Пусто");
+        if(!saved.length) return alert("Галерея пуста");
         for(let i=0; i<saved.length; i++) {
-            const a = document.createElement('a'); a.href = saved[i]; a.download = `art_${i}.jpg`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            const a = document.createElement('a'); 
+            a.href = saved[i]; 
+            a.download = `truck_art_${i}.jpg`;
+            document.body.appendChild(a); 
+            a.click(); 
+            document.body.removeChild(a);
             await new Promise(r => setTimeout(r, 400));
         }
     }
@@ -135,15 +139,26 @@
         const model = document.getElementById('model-select').value;
         const btn = document.getElementById('gen-btn');
         if (!prompt) return;
-        btn.disabled = true; btn.innerText = "⏳ ГЕНЕРАЦИЯ...";
+        
+        btn.disabled = true; 
+        btn.innerText = "⏳ ГЕНЕРАЦИЯ...";
+        
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*999999)}&nologo=true`;
-        const img = new Image(); img.src = url;
-        img.onload = () => { renderImage(url); saveToStorage(url); btn.disabled = false; btn.innerText = "🚀 СОЗДАТЬ"; };
+        
+        const img = new Image(); 
+        img.src = url;
+        img.onload = () => { 
+            renderImage(url); 
+            saveToStorage(url); 
+            btn.disabled = false; 
+            btn.innerText = "🚀 СОЗДАТЬ"; 
+        };
     }
 
     function saveToStorage(url) {
         let saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
-        saved.unshift(url); localStorage.setItem('setka_gallery', JSON.stringify(saved.slice(0, 40)));
+        saved.unshift(url); 
+        localStorage.setItem('setka_gallery', JSON.stringify(saved.slice(0, 40)));
     }
 
     function removeSingleImage(url, btn) {
@@ -152,7 +167,12 @@
         btn.parentElement.remove();
     }
 
-    function clearBoard() { if(confirm("Удалить всё?")) { localStorage.removeItem('setka_gallery'); document.getElementById('image-container').innerHTML = ''; } }
+    function clearBoard() { 
+        if(confirm("Удалить все изображения с доски?")) { 
+            localStorage.removeItem('setka_gallery'); 
+            document.getElementById('image-container').innerHTML = ''; 
+        } 
+    }
 
     function startVoice() {
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -169,21 +189,30 @@
         const box = document.getElementById('chat-container');
         const model = document.getElementById('chat-model-select').value;
         if(!input.value) return;
+
         const msg = input.value;
         box.innerHTML += `<div class="message user">${msg}</div>`;
-        input.value = ''; history.push({role:"user", content:msg});
-        const aiDiv = document.createElement('div'); aiDiv.className="message ai";
+        input.value = ''; 
+        history.push({role:"user", content:msg});
+
+        const aiDiv = document.createElement('div'); 
+        aiDiv.className="message ai";
         aiDiv.innerHTML=`<span class="model-badge">${model}</span>...`;
-        box.appendChild(aiDiv); box.scrollTop = box.scrollHeight;
+        box.appendChild(aiDiv); 
+        box.scrollTop = box.scrollHeight;
+
         try {
             const r = await fetch('https://text.pollinations.ai/', {
-                method:'POST', headers:{'Content-Type':'application/json'},
+                method:'POST', 
+                headers:{'Content-Type':'application/json'},
                 body:JSON.stringify({messages:history, model:model})
             });
             const text = await r.text();
             aiDiv.innerHTML = `<span class="model-badge">${model}</span>` + marked.parse(text);
             history.push({role:"assistant", content:text});
-        } catch(e) { aiDiv.innerText = "Ошибка."; }
+        } catch(e) { 
+            aiDiv.innerText = "Ошибка соединения."; 
+        }
         box.scrollTop = box.scrollHeight;
     }
 </script>
