@@ -14,31 +14,50 @@
         :root { --bg: #0b0b0e; --card: #16161a; --accent: #ff0055; --text: #e0e0e0; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; overflow-x: hidden; }
+        
         .container { max-width: 500px; margin: 0 auto; background: var(--card); padding: 12px; border-radius: 20px; border: 1px solid #333; min-height: 95vh; display: flex; flex-direction: column; position: relative; }
+        
+        /* Шапка и баннер */
         .header { text-align: center; }
         .banner-img { width: 100%; border-radius: 15px; border: 1px solid var(--accent); height: 160px; object-fit: cover; background: #000; }
         .main-title { color: var(--accent); font-weight: 900; font-size: 20px; margin: 15px 0; display: block; text-transform: uppercase; }
+
+        /* Вкладки */
         .tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #000; padding: 5px; border-radius: 15px; }
         .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: #666; font-weight: bold; cursor: pointer; border-radius: 10px; font-size: 14px; transition: 0.3s; }
         .tab-btn.active { background: linear-gradient(135deg, #ff0055, #ff5500); color: white; }
+
         .content { display: none; flex-direction: column; flex-grow: 1; }
         .content.active { display: flex; }
+
+        /* Интерфейс */
         .controls { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 10px; }
-        select, .btn-s { padding: 12px; background: #25252b; border: 1px solid #444; color: white; border-radius: 12px; font-size: 13px; }
+        select, .btn-s { padding: 12px; background: #25252b; border: 1px solid #444; color: white; border-radius: 12px; font-size: 13px; outline: none; }
+        
         .input-box { display: flex; gap: 8px; background: #000; padding: 10px; border-radius: 18px; border: 1px solid #444; align-items: center; margin-bottom: 10px; }
         textarea, .field { flex: 1; background: none; border: none; color: white; outline: none; font-size: 16px; padding: 5px; resize: none; }
-        #chat-box { flex-grow: 1; height: 350px; overflow-y: auto; background: #08080a; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; }
+        
+        /* Чат и сообщения */
+        #chat-box { flex-grow: 1; height: 380px; overflow-y: auto; background: #08080a; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; }
         .msg { max-width: 90%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
         .msg.u { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
         .msg.a { align-self: flex-start; background: #2a2a2e; border: 1px solid #444; color: #eee; border-bottom-left-radius: 4px; }
+        
+        /* Оформление кода */
         code { background: #000; padding: 2px 5px; border-radius: 4px; font-family: monospace; color: #ff9d00; }
-        pre code { display: block; padding: 10px; overflow-x: auto; background: #000; color: #fff; border-radius: 10px; border: 1px solid #444; }
+        pre code { display: block; padding: 12px; overflow-x: auto; background: #000; color: #fff; border-radius: 10px; border: 1px solid #444; font-size: 13px; }
+
         .gen-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #ff0055, #ff5500); border: none; border-radius: 15px; color: white; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; }
+        .gen-btn:disabled { opacity: 0.5; }
+
+        /* Галерея и Zoom */
         #imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
         .img-wrap { background: #111; padding: 5px; border-radius: 14px; border: 1px solid #222; }
-        .gen-img { width: 100%; border-radius: 10px; cursor: zoom-in; transition: 0.3s; }
-        .gen-img.zoomed { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1.0); width: 95vw; z-index: 9999; border: 2px solid var(--accent); box-shadow: 0 0 100px #000; cursor: zoom-out; }
+        .gen-img { width: 100%; border-radius: 10px; cursor: zoom-in; transition: 0.3s; display: block; }
+        
+        .gen-img.zoomed { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95vw; max-width: 480px; z-index: 9999; border: 2px solid var(--accent); box-shadow: 0 0 100px #000; cursor: zoom-out; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9998; }
+        
         .mic { width: 48px; height: 48px; border-radius: 12px; border: none; background: #333; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .mic.active { background: var(--accent); animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0px rgba(255, 0, 85, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(255, 0, 85, 0); } }
@@ -75,7 +94,7 @@
 
     <div id="chat" class="content">
         <div class="controls">
-            <select id="m-chat"><option value="openai">⚡ GPT-4o</option><option value="gemini">✨ Gemini</option><option value="mistral-large">🌀 Code</option></select>
+            <select id="m-chat"><option value="openai">⚡ GPT-4o</option><option value="gemini">✨ Gemini</option><option value="mistral-large">🌀 Code AI</option></select>
             <button class="btn-s" onclick="document.getElementById('chat-box').innerHTML=''">🗑️</button>
         </div>
         <div id="chat-box"></div>
@@ -88,6 +107,7 @@
 </div>
 
 <script>
+    // Настройка озвучки
     function speak(t) {
         window.speechSynthesis.cancel();
         const clean = t.replace(/```[\s\S]*?```/g, ' [код] ').replace(/[*#`_]/g, '').trim();
@@ -95,6 +115,7 @@
         u.lang = 'ru-RU'; u.rate = 1.1; window.speechSynthesis.speak(u);
     }
 
+    // Логика увеличения картинок
     function toggleImageZoom(img) {
         const overlay = document.getElementById('overlay');
         img.classList.toggle('zoomed');
@@ -113,6 +134,7 @@
         window.speechSynthesis.cancel();
     }
 
+    // Генерация изображений
     async function make(){
         const inp = document.getElementById('i-art'); const btn = document.getElementById('go-art');
         if(!inp.value) return; btn.disabled = true; btn.innerText = "⏳ ГЕНЕРАЦИЯ...";
@@ -129,13 +151,14 @@
         } catch(e) { btn.disabled = false; btn.innerText = "🚀 СОЗДАТЬ КАРТИНКУ"; }
     }
 
+    // Работа чата с поддержкой кода
     async function send(){
         const inp = document.getElementById('i-chat'); const box = document.getElementById('chat-box');
         if(!inp.value) return; const m = inp.value;
         box.innerHTML += `<div class="msg u">${m}</div>`; inp.value=''; box.scrollTop=box.scrollHeight;
         try {
             const model = document.getElementById('m-chat').value;
-            const sys = "Ты - помощник 'ОТ ИГРУШКИ ДО ФУРЫ'. Твой босс - пользователь. Ты мастер в коде, КамАЗах и Dongfeng.";
+            const sys = "Ты - помощник 'ОТ ИГРУШКИ ДО ФУРЫ'. Твой босс - пользователь. Ты мастер в коде HTML/JS. Отвечай ТОЛЬКО текстом и кодом в блоках ```. Не генерируй картинки.";
             const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(sys + " Вопрос: " + m)}?model=${model}`);
             const t = await r.text();
             const ai = document.createElement('div'); ai.className='msg a';
