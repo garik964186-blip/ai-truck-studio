@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="ru" translate="no">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Studio: BOSS Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
@@ -24,53 +24,54 @@
         .global-controls { display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 8px; background: #000; padding: 8px; border-radius: 10px; margin-bottom: 5px; }
         select, .compact-btn { padding: 8px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 6px; font-size: 14px; cursor: pointer; }
         textarea, .chat-input-field { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; font-size: 14px; }
-        #chat-container { display: none; height: 320px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin: 10px 0; border: 1px solid #222; flex-direction: column; gap: 10px; }
+        #chat-container { display: none; height: 300px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin: 10px 0; border: 1px solid #222; flex-direction: column; gap: 10px; }
         .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 13px; line-height: 1.4; }
-        .message.user { align-self: flex-end; background: var(--accent-color); color: white; border-bottom-right-radius: 2px; }
-        .message.ai { align-self: flex-start; background: #222; border: 1px solid #333; border-bottom-left-radius: 2px; }
-        .input-area { display: flex; gap: 5px; margin-top: 0; }
-        .voice-btn-active { background: #ff0000 !important; animation: pulse 1.5s infinite; color: white !important; }
+        .message.user { align-self: flex-end; background: var(--accent-color); color: white; }
+        .message.ai { align-self: flex-start; background: #222; border: 1px solid #333; }
+        .input-area { display: flex; gap: 5px; margin-top: 5px; }
+        .voice-btn-active { background: #ff0000 !important; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .img-wrapper { display: flex; flex-direction: column; gap: 5px; }
-        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; }
-        .save-btn { background: #333; color: #fff; font-size: 10px; text-align: center; padding: 6px; border-radius: 5px; text-decoration: none; border: 1px solid #444; }
+        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
+        .save-btn { background: #333; color: #fff; font-size: 10px; text-align: center; padding: 5px; border-radius: 5px; text-decoration: none; }
     </style>
 </head>
-<body onclick="unlockAudio()">
+<body>
 <div class="container">
     <div class="header">
-        <img src="1768422265866.jpg" class="banner-img">
+        <img src="1768422265866.jpg" class="banner-img" alt="Banner">
         <h1><a href="https://youtube.com/@blip_blip" target="_blank">ОТ ИГРУШКИ ДО ФУРЫ</a></h1>
     </div>
+
     <div class="tabs">
         <button id="btn-tab-art" class="tab-btn active" onclick="switchMainTab('art')">🎨 АРТ</button>
         <button id="btn-tab-chat" class="tab-btn" onclick="switchMainTab('chat')">💬 ЧАТ</button>
     </div>
+
     <div id="tab-art" class="tab-content active">
         <div class="global-controls">
             <select id="model-select">
-                <option value="flux">🚛 (Pro)</option>
+                <option value="flux-pro">🚛 (Pro)</option>
                 <option value="flux-realism">📸 (Real)</option>
-                <option value="any-dark">🦊 (Art)</option>
             </select>
             <button class="compact-btn" onclick="downloadAll()">📥</button>
             <button class="compact-btn" onclick="clearBoard()">🗑️</button>
         </div>
-        <textarea id="prompt-input" rows="3" placeholder="Опиши картинку..."></textarea>
-        <div class="input-area" style="margin-top: 8px;">
+        <textarea id="prompt-input" placeholder="Опиши картинку..."></textarea>
+        <div class="input-area">
             <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="width: 50%;">🎤 Голос</button>
             <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 50%;">❌ Сброс</button>
         </div>
-        <button id="gen-btn" onclick="generateImage()" style="width:100%; padding:16px; margin-top:10px; background:var(--accent-grad); color:white; border:none; border-radius:10px; font-weight:bold; font-size:16px;">🚀 ПОЕХАЛИ</button>
+        <button id="gen-btn" onclick="generateImage()" style="width:100%; padding:15px; margin-top:10px; background:var(--accent-grad); color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">🚀 ПОЕХАЛИ</button>
         <div id="image-container"></div>
     </div>
+
     <div id="tab-chat" class="tab-content">
         <div class="global-controls">
             <select id="chat-model-select">
                 <option value="openai">🤖 ChatGPT</option>
-                <option value="mistral">🌀 Mistral</option>
-                <option value="p1">⚡ Turbo</option>
+                <option value="llama">🦙 Llama 3</option>
             </select>
             <button class="compact-btn" onclick="stopSpeech()">🔇</button>
             <button class="compact-btn" onclick="clearChat()">🗑️</button>
@@ -79,64 +80,71 @@
         <div class="input-area">
             <button id="voice-chat-btn" class="compact-btn" onclick="runVoice('chat')">🎤</button>
             <input type="text" id="chat-input" class="chat-input-field" placeholder="Спроси..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()" class="compact-btn" style="background: var(--accent-color); min-width: 50px;">➤</button>
+            <button onclick="sendMessage()" class="compact-btn" style="background: var(--accent-color);">➤</button>
         </div>
     </div>
 </div>
 
 <script>
-    let audioUnlocked = false;
-    function unlockAudio() {
-        if (audioUnlocked) return;
-        const silence = new SpeechSynthesisUtterance('');
-        window.speechSynthesis.speak(silence);
-        audioUnlocked = true;
-    }
+    let currentRecognition = null;
 
     function switchMainTab(tab) {
         document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
         document.getElementById(`btn-tab-${tab}`).classList.add('active');
         document.getElementById(`tab-${tab}`).classList.add('active');
         stopSpeech();
+        if (currentRecognition) currentRecognition.stop();
     }
 
     function speak(text) {
         stopSpeech();
-        if (!window.speechSynthesis) return;
         const utterance = new SpeechSynthesisUtterance(text);
+        const voices = window.speechSynthesis.getVoices();
+        utterance.voice = voices.find(v => v.lang.startsWith('ru')) || voices[0];
         utterance.lang = 'ru-RU';
         utterance.rate = 1.0;
         window.speechSynthesis.speak(utterance);
     }
 
     function stopSpeech() { window.speechSynthesis.cancel(); }
+    
+    function clearChat() { 
+        document.getElementById('chat-container').innerHTML = ''; 
+        document.getElementById('chat-container').style.display = 'none';
+        stopSpeech();
+    }
 
     function runVoice(mode) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return;
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'ru-RU';
+        if (currentRecognition) currentRecognition.stop();
+
+        const rec = new SpeechRecognition();
+        rec.lang = 'ru-RU';
+        currentRecognition = rec;
+
         const btn = mode === 'art' ? document.getElementById('voice-art-btn') : document.getElementById('voice-chat-btn');
-        recognition.onstart = () => btn.classList.add('voice-btn-active');
-        recognition.onend = () => btn.classList.remove('voice-btn-active');
-        recognition.onresult = async (event) => {
-            const text = event.results[0][0].transcript;
+        rec.onstart = () => btn.classList.add('voice-btn-active');
+        rec.onend = () => { btn.classList.remove('voice-btn-active'); currentRecognition = null; };
+        
+        rec.onresult = async (e) => {
+            const txt = e.results[0][0].transcript;
             if (mode === 'art') {
-                document.getElementById('prompt-input').value = "⏳ " + text;
-                document.getElementById('prompt-input').value = await translate(text);
+                document.getElementById('prompt-input').value = "⏳ Перевод...";
+                document.getElementById('prompt-input').value = await translate(txt);
             } else {
-                document.getElementById('chat-input').value = text;
+                document.getElementById('chat-input').value = txt;
                 sendMessage();
             }
         };
-        recognition.start();
+        rec.start();
     }
 
-    async function translate(text) {
+    async function translate(t) {
         try {
-            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t&q=${encodeURIComponent(text)}`);
-            const data = await res.json(); return data[0][0][0];
-        } catch { return text; }
+            const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t&q=${encodeURIComponent(t)}`);
+            const d = await r.json(); return d[0][0][0];
+        } catch { return t; }
     }
 
     async function sendMessage() {
@@ -144,40 +152,37 @@
         const box = document.getElementById('chat-container');
         const model = document.getElementById('chat-model-select').value;
         if(!inp.value.trim()) return;
-        const msg = inp.value;
+        
+        const m = inp.value;
         box.style.display = 'flex';
-        box.innerHTML += `<div class="message user">${msg}</div>`;
+        box.innerHTML += `<div class="message user">${m}</div>`;
         inp.value = '';
         box.scrollTop = box.scrollHeight;
+
         try {
-            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=${model}`);
-            const text = await r.text();
-            box.innerHTML += `<div class="message ai">${marked.parse(text)}</div>`;
+            const r = await fetch(`https://text.pollinations.ai/Отвечай%20всегда%20на%20русском:%20${encodeURIComponent(m)}?model=${model}`);
+            const t = await r.text();
+            box.innerHTML += `<div class="message ai">${marked.parse(t)}</div>`;
             box.scrollTop = box.scrollHeight;
-            speak(text.replace(/[#*`]/g, ''));
-        } catch { box.innerHTML += `<div class="message ai">⚠️ Ошибка API</div>`; }
+            speak(t.replace(/[#*`]/g, ''));
+        } catch { box.innerHTML += `<div class="message ai">⚠️ Ошибка</div>`; }
     }
 
     async function generateImage() {
-        const prompt = document.getElementById('prompt-input').value;
-        const model = document.getElementById('model-select').value;
-        const btn = document.getElementById('gen-btn');
-        if (!prompt || prompt.includes("⏳")) return;
-        btn.innerText = "🚛 ГРУЗИМ...";
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*1e6)}&nologo=true`;
-        const img = new Image();
-        img.src = url;
-        img.onload = () => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'img-wrapper';
-            wrapper.innerHTML = `<img src="${url}" class="generated-img" onclick="window.open('${url}','_blank')"><a href="${url}" target="_blank" class="save-btn">💾 Сохранить</a>`;
-            document.getElementById('image-container').prepend(wrapper);
-            btn.innerText = "🚀 ПОЕХАЛИ";
-        };
+        const p = document.getElementById('prompt-input').value;
+        const m = document.getElementById('model-select').value;
+        if(!p || p.includes("⏳")) return;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?model=${m}&seed=${Math.floor(Math.random()*1e9)}&nologo=true`;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'img-wrapper';
+        wrapper.innerHTML = `<img src="${url}" class="generated-img" onclick="window.open('${url}','_blank')"><a href="${url}" target="_blank" class="save-btn">💾 Сохранить</a>`;
+        document.getElementById('image-container').prepend(wrapper);
     }
-    function clearChat() { document.getElementById('chat-container').innerHTML = ''; document.getElementById('chat-container').style.display = 'none'; stopSpeech(); }
+
     function clearBoard() { document.getElementById('image-container').innerHTML = ''; }
     function downloadAll() { document.querySelectorAll('.generated-img').forEach(i => window.open(i.src, '_blank')); }
+
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
 </script>
 </body>
 </html>
