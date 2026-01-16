@@ -43,7 +43,6 @@
         .input-wrapper { position: relative; display: flex; flex-direction: column; gap: 5px; }
         textarea { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; min-height: 80px; }
         
-        /* Кнопки управления текстом */
         .text-actions { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; }
         .voice-input-btn { background: #333; color: #fff; border: 1px solid #444; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
         .voice-input-btn.recording { background: var(--accent-color); animation: pulse 1.5s infinite; }
@@ -51,13 +50,23 @@
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* КНОПКА С АНИМАЦИЕЙ ГРУЗОВИКА */
+        /* КНОПКА С АНИМАЦИЕЙ ФУРЫ */
         .action-btn { 
             width: 100%; padding: 15px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; min-height: 55px;
         }
-        .truck-animation { position: absolute; left: -50px; top: 50%; transform: translateY(-50%); font-size: 24px; display: none; }
-        @keyframes drive { 0% { left: -50px; } 100% { left: 110%; } }
-        .loading .truck-animation { display: block; animation: drive 2s linear infinite; }
+        .truck-animation { 
+            position: absolute; 
+            left: -100px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            font-size: 30px; 
+            display: none; 
+        }
+        @keyframes drive { 
+            0% { left: -100px; } 
+            100% { left: 110%; } 
+        }
+        .loading .truck-animation { display: block; animation: drive 2.5s linear infinite; }
         .loading .btn-text { display: none; }
 
         #image-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; background: #08080a; padding: 15px; border-radius: 12px; border: 1px solid #333; min-height: 200px; margin-top: 15px; }
@@ -85,9 +94,9 @@
     <div id="tab-art" class="tab-content active">
         <div class="board-controls">
             <select id="model-select">
-                <option value="flux-pro">💎 Flux Pro (Лучший для фур)</option>
-                <option value="dalle-3">🎨 DALL-E 3</option>
-                <option value="flux-realism">📸 Realism</option>
+                <option value="flux-pro">🚛 Мощные ФУРЫ (Flux Pro)</option>
+                <option value="dalle-3">🦊 Животные и Арт (DALL-E 3)</option>
+                <option value="flux-realism">📸 Реальное ФОТО (Realism)</option>
             </select>
             <div class="btn-group">
                 <button class="clear-board-btn" onclick="downloadAll()">📥 СКАЧАТЬ ВСЁ</button>
@@ -110,7 +119,7 @@
         
         <button id="gen-btn" onclick="generateImage()" class="action-btn">
             <span class="btn-text">🚀 СОЗДАТЬ</span>
-            <span class="truck-animation">🚛</span>
+            <span class="truck-animation">🚛💨</span>
         </button>
         
         <div id="image-container"></div>
@@ -136,7 +145,6 @@
     function addPreset(text) { document.getElementById('prompt-input').value = text; }
     function clearTextInput() { document.getElementById('prompt-input').value = ''; }
 
-    // ГОЛОСОВОЙ ВВОД ДЛЯ ДОСКИ
     function startVoiceArt() {
         const btn = document.getElementById('voice-art-btn');
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -147,7 +155,6 @@
         recognition.start();
     }
 
-    // ГОЛОСОВОЙ ВВОД ДЛЯ ЧАТА
     function startVoiceChat() {
         const btn = document.getElementById('chat-voice-btn');
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -174,6 +181,7 @@
             container.prepend(newImg);
             btn.classList.remove('loading'); btn.disabled = false;
         };
+        img.onerror = () => { btn.classList.remove('loading'); btn.disabled = false; };
     }
 
     async function sendMessage() {
