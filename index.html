@@ -30,14 +30,12 @@
         
         textarea, .chat-input-field { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; font-size: 14px; }
         
-        /* Чат скрыт, пока пуст */
         #chat-container { display: none; height: 320px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin: 10px 0; border: 1px solid #222; flex-direction: column; gap: 10px; }
         .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 13px; line-height: 1.4; }
         .message.user { align-self: flex-end; background: var(--accent-color); color: white; border-bottom-right-radius: 2px; }
         .message.ai { align-self: flex-start; background: #222; border: 1px solid #333; border-bottom-left-radius: 2px; }
 
-        .input-area { display: flex; gap: 5px; margin-top: 0; } /* Микрофон вплотную */
-
+        .input-area { display: flex; gap: 5px; margin-top: 0; }
         .voice-btn-active { background: #ff0000 !important; animation: pulse 1.5s infinite; color: white !important; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
         
@@ -74,7 +72,7 @@
             <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="width: 50%;">🎤 Голос</button>
             <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 50%;">❌ Сброс</button>
         </div>
-        <button id="gen-btn" onclick="generateImage()" style="width:100%; padding:16px; margin-top:10px; background:var(--accent-grad); color:white; border:none; border-radius:10px; font-weight:bold; font-size:16px; cursor:pointer;">🚀 ПОЕХАЛИ</button>
+        <button id="gen-btn" onclick="generateImage()" style="width:100%; padding:16px; margin-top:10px; background:var(--accent-grad); color:white; border:none; border-radius:10px; font-weight:bold; font-size:16px;">🚀 ПОЕХАЛИ</button>
         <div id="image-container"></div>
     </div>
 
@@ -105,7 +103,6 @@
         stopSpeech();
     }
 
-    // Голосовой ответ
     function speak(text) {
         stopSpeech();
         if (!window.speechSynthesis) return;
@@ -115,24 +112,31 @@
     }
 
     function stopSpeech() { window.speechSynthesis.cancel(); }
-
     function clearChat() { 
-        const box = document.getElementById('chat-container');
-        box.innerHTML = ''; 
-        box.style.display = 'none';
-        stopSpeech();
+        document.getElementById('chat-container').innerHTML = ''; 
+        document.getElementById('chat-container').style.display = 'none'; 
+        stopSpeech(); 
     }
 
-    // Голосовой ввод
-    function runVoice(mode) {
+    let recognition;
+    function initSpeech() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'ru-RU';
+        if (!SpeechRecognition) return null;
+        if (!recognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ru-RU';
+            recognition.continuous = false;
+        }
+        return recognition;
+    }
+
+    function runVoice(mode) {
+        const rec = initSpeech();
+        if (!rec) return;
         const btn = mode === 'art' ? document.getElementById('voice-art-btn') : document.getElementById('voice-chat-btn');
-        recognition.onstart = () => btn.classList.add('voice-btn-active');
-        recognition.onend = () => btn.classList.remove('voice-btn-active');
-        recognition.onresult = async (event) => {
+        rec.onstart = () => btn.classList.add('voice-btn-active');
+        rec.onend = () => btn.classList.remove('voice-btn-active');
+        rec.onresult = async (event) => {
             const text = event.results[0][0].transcript;
             if (mode === 'art') {
                 document.getElementById('prompt-input').value = "⏳ " + text;
@@ -142,14 +146,13 @@
                 sendMessage();
             }
         };
-        recognition.start();
+        rec.start();
     }
 
     async function translate(text) {
         try {
             const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t&q=${encodeURIComponent(text)}`);
-            const data = await res.json();
-            return data[0][0][0];
+            const data = await res.json(); return data[0][0][0];
         } catch { return text; }
     }
 
@@ -158,22 +161,18 @@
         const box = document.getElementById('chat-container');
         const model = document.getElementById('chat-model-select').value;
         if(!inp.value.trim()) return;
-        
         const msg = inp.value;
-        box.style.display = 'flex'; // Показываем чат
+        box.style.display = 'flex';
         box.innerHTML += `<div class="message user">${msg}</div>`;
         inp.value = '';
         box.scrollTop = box.scrollHeight;
-
         try {
             const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=${model}`);
             const text = await r.text();
             box.innerHTML += `<div class="message ai">${marked.parse(text)}</div>`;
             box.scrollTop = box.scrollHeight;
-            speak(text.replace(/[#*`]/g, '')); // Озвучка ответа
-        } catch {
-            box.innerHTML += `<div class="message ai">⚠️ Ошибка API. Попробуй позже.</div>`;
-        }
+            speak(text.replace(/[#*`]/g, ''));
+        } catch { box.innerHTML += `<div class="message ai">⚠️ Ошибка API</div>`; }
     }
 
     async function generateImage() {
@@ -193,7 +192,6 @@
             btn.innerText = "🚀 ПОЕХАЛИ";
         };
     }
-
     function clearBoard() { document.getElementById('image-container').innerHTML = ''; }
     function downloadAll() { document.querySelectorAll('.generated-img').forEach(i => window.open(i.src, '_blank')); }
 </script>
