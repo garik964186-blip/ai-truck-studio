@@ -13,50 +13,40 @@
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
         .container { background: var(--card-bg); padding: 15px; border-radius: var(--border-radius); width: 100%; max-width: 600px; border: 1px solid #333; display: flex; flex-direction: column; }
-        
         .header { text-align: center; margin-bottom: 10px; }
         .banner-img { width: 100%; height: 100px; border-radius: 8px; border: 1px solid var(--accent-color); object-fit: cover; margin-bottom: 8px; }
         h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-size: 18px; }
-
         .tabs { display: flex; background: #000; padding: 3px; border-radius: 10px; margin-bottom: 10px; }
         .tab-btn { flex: 1; padding: 10px; background: transparent; border: none; color: #777; font-weight: bold; cursor: pointer; font-size: 13px; }
         .tab-btn.active { background: var(--accent-grad); color: white; border-radius: 7px; }
-
         .tab-content { display: none; flex-direction: column; }
         .tab-content.active { display: flex; }
-
         .global-controls { display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 8px; background: #000; padding: 8px; border-radius: 10px; margin-bottom: 5px; }
         select, .compact-btn { padding: 8px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 6px; font-size: 14px; cursor: pointer; }
-        
         textarea, .chat-input-field { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; font-size: 14px; }
-        
         #chat-container { display: none; height: 320px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin: 10px 0; border: 1px solid #222; flex-direction: column; gap: 10px; }
         .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 13px; line-height: 1.4; }
         .message.user { align-self: flex-end; background: var(--accent-color); color: white; border-bottom-right-radius: 2px; }
         .message.ai { align-self: flex-start; background: #222; border: 1px solid #333; border-bottom-left-radius: 2px; }
-
         .input-area { display: flex; gap: 5px; margin-top: 0; }
         .voice-btn-active { background: #ff0000 !important; animation: pulse 1.5s infinite; color: white !important; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
-        
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .img-wrapper { display: flex; flex-direction: column; gap: 5px; }
         .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; }
         .save-btn { background: #333; color: #fff; font-size: 10px; text-align: center; padding: 6px; border-radius: 5px; text-decoration: none; border: 1px solid #444; }
     </style>
 </head>
-<body>
+<body onclick="unlockAudio()">
 <div class="container">
     <div class="header">
         <img src="1768422265866.jpg" class="banner-img">
         <h1><a href="https://youtube.com/@blip_blip" target="_blank">ОТ ИГРУШКИ ДО ФУРЫ</a></h1>
     </div>
-
     <div class="tabs">
         <button id="btn-tab-art" class="tab-btn active" onclick="switchMainTab('art')">🎨 АРТ</button>
         <button id="btn-tab-chat" class="tab-btn" onclick="switchMainTab('chat')">💬 ЧАТ</button>
     </div>
-
     <div id="tab-art" class="tab-content active">
         <div class="global-controls">
             <select id="model-select">
@@ -75,7 +65,6 @@
         <button id="gen-btn" onclick="generateImage()" style="width:100%; padding:16px; margin-top:10px; background:var(--accent-grad); color:white; border:none; border-radius:10px; font-weight:bold; font-size:16px;">🚀 ПОЕХАЛИ</button>
         <div id="image-container"></div>
     </div>
-
     <div id="tab-chat" class="tab-content">
         <div class="global-controls">
             <select id="chat-model-select">
@@ -96,6 +85,14 @@
 </div>
 
 <script>
+    let audioUnlocked = false;
+    function unlockAudio() {
+        if (audioUnlocked) return;
+        const silence = new SpeechSynthesisUtterance('');
+        window.speechSynthesis.speak(silence);
+        audioUnlocked = true;
+    }
+
     function switchMainTab(tab) {
         document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
         document.getElementById(`btn-tab-${tab}`).classList.add('active');
@@ -108,35 +105,21 @@
         if (!window.speechSynthesis) return;
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'ru-RU';
+        utterance.rate = 1.0;
         window.speechSynthesis.speak(utterance);
     }
 
     function stopSpeech() { window.speechSynthesis.cancel(); }
-    function clearChat() { 
-        document.getElementById('chat-container').innerHTML = ''; 
-        document.getElementById('chat-container').style.display = 'none'; 
-        stopSpeech(); 
-    }
-
-    let recognition;
-    function initSpeech() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return null;
-        if (!recognition) {
-            recognition = new SpeechRecognition();
-            recognition.lang = 'ru-RU';
-            recognition.continuous = false;
-        }
-        return recognition;
-    }
 
     function runVoice(mode) {
-        const rec = initSpeech();
-        if (!rec) return;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'ru-RU';
         const btn = mode === 'art' ? document.getElementById('voice-art-btn') : document.getElementById('voice-chat-btn');
-        rec.onstart = () => btn.classList.add('voice-btn-active');
-        rec.onend = () => btn.classList.remove('voice-btn-active');
-        rec.onresult = async (event) => {
+        recognition.onstart = () => btn.classList.add('voice-btn-active');
+        recognition.onend = () => btn.classList.remove('voice-btn-active');
+        recognition.onresult = async (event) => {
             const text = event.results[0][0].transcript;
             if (mode === 'art') {
                 document.getElementById('prompt-input').value = "⏳ " + text;
@@ -146,7 +129,7 @@
                 sendMessage();
             }
         };
-        rec.start();
+        recognition.start();
     }
 
     async function translate(text) {
@@ -192,6 +175,7 @@
             btn.innerText = "🚀 ПОЕХАЛИ";
         };
     }
+    function clearChat() { document.getElementById('chat-container').innerHTML = ''; document.getElementById('chat-container').style.display = 'none'; stopSpeech(); }
     function clearBoard() { document.getElementById('image-container').innerHTML = ''; }
     function downloadAll() { document.querySelectorAll('.generated-img').forEach(i => window.open(i.src, '_blank')); }
 </script>
