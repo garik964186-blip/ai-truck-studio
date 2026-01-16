@@ -3,80 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ОТ ИГРУШКИ ДО ФУРЫ: AI Studio</title>
+    <title>AI Studio: ОТ ИГРУШКИ ДО ФУРЫ</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
-            --bg-color: #0b0b0e;
-            --card-bg: #16161a;
-            --text-color: #e0e0e0;
-            --accent-color: #ff0055;
-            --accent-grad: linear-gradient(135deg, #ff0055, #ff5500);
-            --chat-user-bg: #ff0055;
-            --chat-ai-bg: #2a2a2e;
-            --input-bg: #222226;
-            --border-radius: 16px;
+            --bg-color: #0b0b0e; --card-bg: #16161a; --text-color: #e0e0e0;
+            --accent-color: #ff0055; --accent-grad: linear-gradient(135deg, #ff0055, #ff5500);
+            --input-bg: #222226; --border-radius: 12px;
         }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; padding: 20px 10px; margin: 0; }
-        .container { background-color: var(--card-bg); padding: 25px; border-radius: var(--border-radius); box-shadow: 0 20px 70px rgba(0,0,0,0.8); width: 100%; max-width: 950px; border: 1px solid #333; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .banner-img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--accent-color); margin-bottom: 15px; box-shadow: 0 0 20px rgba(255, 0, 85, 0.2); object-fit: cover; }
-        h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-size: 28px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .container { background: var(--card-bg); padding: 15px; border-radius: var(--border-radius); width: 100%; max-width: 600px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
-        .tabs { display: flex; background: #000; padding: 5px; border-radius: 12px; margin-bottom: 20px; gap: 5px; }
-        .tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: #777; font-weight: 900; cursor: pointer; border-radius: 8px; transition: 0.3s; }
-        .tab-btn.active { background: var(--accent-grad); color: white; }
+        /* Компактный заголовок */
+        .header { text-align: center; margin-bottom: 15px; }
+        .banner-img { width: 100%; height: 120px; border-radius: 8px; border: 1px solid var(--accent-color); object-fit: cover; margin-bottom: 10px; }
+        h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-size: 20px; }
+        
+        /* Узкие вкладки */
+        .tabs { display: flex; background: #000; padding: 3px; border-radius: 10px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 8px; background: transparent; border: none; color: #777; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.3s; }
+        .tab-btn.active { background: var(--accent-grad); color: white; border-radius: 7px; }
+
         .tab-content { display: none; flex-direction: column; }
         .tab-content.active { display: flex; }
 
-        .board-controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        /* Компактные настройки */
+        .board-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         select {
-            width: 100%; padding: 14px; background: #222226; border: 2px solid var(--accent-color); color: white; border-radius: 10px; font-weight: bold; cursor: pointer; appearance: none;
+            padding: 10px; background: var(--input-bg); border: 1px solid var(--accent-color); color: white; border-radius: 8px; font-size: 12px; cursor: pointer; appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
-            background-repeat: no-repeat; background-position: right 15px center; background-size: 20px;
+            background-repeat: no-repeat; background-position: right 10px center; background-size: 16px;
         }
         
-        .btn-group { display: flex; gap: 10px; }
-        .presets { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
-        .preset-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; }
+        .compact-btn { background: #333; color: #ccc; padding: 8px; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: bold; }
         
-        .input-wrapper { position: relative; display: flex; flex-direction: column; gap: 5px; }
-        textarea { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; min-height: 80px; }
+        .presets { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px; }
+        .preset-btn { background: #222; border: 1px solid #444; color: #aaa; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 10px; white-space: nowrap; }
         
-        .text-actions { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; }
-        .voice-input-btn { background: #333; color: #fff; border: 1px solid #444; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        /* Поле ввода */
+        .input-wrapper { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+        textarea { width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; min-height: 60px; font-size: 14px; }
+        
+        .text-actions { display: flex; justify-content: space-between; align-items: center; }
+        .voice-input-btn { background: #333; color: #fff; border: 1px solid #444; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
         .voice-input-btn.recording { background: var(--accent-color); animation: pulse 1.5s infinite; }
-        .clear-text-btn { background: #333; color: #ff5500; border: 1px solid #444; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .clear-text-btn { color: #ff5500; background: none; border: none; cursor: pointer; font-size: 11px; font-weight: bold; }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* КНОПКА С АНИМАЦИЕЙ ФУРЫ */
+        /* Кнопка с фурой */
         .action-btn { 
-            width: 100%; padding: 15px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; min-height: 55px;
+            width: 100%; padding: 12px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; height: 45px;
         }
-        .truck-animation { 
-            position: absolute; 
-            left: -100px; 
-            top: 50%; 
-            transform: translateY(-50%); 
-            font-size: 30px; 
-            display: none; 
-        }
-        @keyframes drive { 
-            0% { left: -100px; } 
-            100% { left: 110%; } 
-        }
-        .loading .truck-animation { display: block; animation: drive 2.5s linear infinite; }
+        .truck-animation { position: absolute; left: -100px; top: 50%; transform: translateY(-50%); font-size: 24px; display: none; }
+        @keyframes drive { 0% { left: -100px; } 100% { left: 110%; } }
+        .loading .truck-animation { display: block; animation: drive 2s linear infinite; }
         .loading .btn-text { display: none; }
 
-        #image-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; background: #08080a; padding: 15px; border-radius: 12px; border: 1px solid #333; min-height: 200px; margin-top: 15px; }
-        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #222; }
-        .clear-board-btn { flex: 1; background: #333; color: #ccc; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; }
-        
-        #chat-container { height: 350px; overflow-y: auto; background: #0f0f12; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #333; }
-        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
-        .message.user { align-self: flex-end; background: var(--chat-user-bg); color: white; }
-        .message.ai { align-self: flex-start; background: var(--chat-ai-bg); color: #ddd; }
+        /* Галерея */
+        #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #222; cursor: pointer; }
+
+        /* Чат */
+        #chat-container { height: 250px; overflow-y: auto; background: #0f0f12; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #333; font-size: 13px; }
+        .message { max-width: 85%; padding: 8px 12px; border-radius: 10px; margin-bottom: 8px; line-height: 1.4; }
+        .message.user { align-self: flex-end; background: var(--accent-color); color: white; margin-left: auto; }
+        .message.ai { align-self: flex-start; background: #2a2a2e; color: #ddd; }
     </style>
 </head>
 <body>
@@ -94,26 +86,27 @@
     <div id="tab-art" class="tab-content active">
         <div class="board-controls">
             <select id="model-select">
-                <option value="flux-pro">🚛 Мощные ФУРЫ (Flux Pro)</option>
-                <option value="dalle-3">🦊 Животные и Арт (DALL-E 3)</option>
-                <option value="flux-realism">📸 Реальное ФОТО (Realism)</option>
+                <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
+                <option value="dalle-3">🦊 АРТ (DALL-E 3)</option>
+                <option value="flux-realism">📸 ФОТО (Realism)</option>
             </select>
-            <div class="btn-group">
-                <button class="clear-board-btn" onclick="downloadAll()">📥 СКАЧАТЬ ВСЁ</button>
-                <button class="clear-board-btn" onclick="clearBoard()">🗑️ ГАЛЕРЕЯ</button>
+            <div style="display:flex; gap:5px;">
+                <button class="compact-btn" style="flex:1" onclick="downloadAll()">📥 ВСЁ</button>
+                <button class="compact-btn" onclick="clearBoard()">🗑️</button>
             </div>
         </div>
         
         <div class="presets">
-            <button class="preset-btn" onclick="addPreset('YouTube thumbnail, powerful heavy truck on highway, cinematic, 8k')">🖼️ YouTube</button>
-            <button class="preset-btn" onclick="addPreset('luxury super car, futuristic design, neon city lights, 8k')">🏎️ Крутые тачки</button>
+            <button class="preset-btn" onclick="addPreset('YouTube thumbnail, powerful truck on highway, 8k')">🖼️ YouTube</button>
+            <button class="preset-btn" onclick="addPreset('luxury super car, futuristic, neon lights, 8k')">🏎️ Спорткары</button>
+            <button class="preset-btn" onclick="addPreset('big fluffy cat sitting on a truck, cinematic')">🐱 Кот на фуре</button>
         </div>
 
         <div class="input-wrapper">
-            <textarea id="prompt-input" placeholder="Опишите машину или надиктуйте голосом..."></textarea>
+            <textarea id="prompt-input" placeholder="Напиши или надиктуй..."></textarea>
             <div class="text-actions">
                 <button id="voice-art-btn" class="voice-input-btn" onclick="startVoiceArt()">🎤 ГОЛОС</button>
-                <button class="clear-text-btn" onclick="clearTextInput()">❌ СТЕРЕТЬ</button>
+                <button class="clear-text-btn" onclick="clearTextInput()">ОЧИСТИТЬ ❌</button>
             </div>
         </div>
         
@@ -128,9 +121,9 @@
     <div id="tab-chat" class="tab-content">
         <div id="chat-container"></div>
         <div style="display:flex; gap:5px;">
-            <button id="chat-voice-btn" class="voice-input-btn" onclick="startVoiceChat()" style="width:50px; justify-content:center;">🎤</button>
-            <input type="text" id="chat-input" style="flex:1; padding:12px; background:var(--input-bg); border:1px solid #333; color:white; border-radius:10px;" placeholder="Спросить..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()" style="width:50px; background:var(--accent-color); border:none; border-radius:10px; color:white; cursor:pointer">➤</button>
+            <button id="chat-voice-btn" class="compact-btn" onclick="startVoiceChat()" style="width:40px;">🎤</button>
+            <input type="text" id="chat-input" style="flex:1; padding:8px; background:var(--input-bg); border:1px solid #333; color:white; border-radius:8px; font-size:13px;" placeholder="Спросить..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <button onclick="sendMessage()" style="width:40px; background:var(--accent-color); border:none; border-radius:8px; color:white;">➤</button>
         </div>
     </div>
 </div>
@@ -147,22 +140,22 @@
 
     function startVoiceArt() {
         const btn = document.getElementById('voice-art-btn');
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.lang = 'ru-RU';
-        recognition.onstart = () => btn.classList.add('recording');
-        recognition.onend = () => btn.classList.remove('recording');
-        recognition.onresult = (e) => { document.getElementById('prompt-input').value = e.results[0][0].transcript; };
-        recognition.start();
+        const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        rec.lang = 'ru-RU';
+        rec.onstart = () => btn.classList.add('recording');
+        rec.onend = () => btn.classList.remove('recording');
+        rec.onresult = (e) => { document.getElementById('prompt-input').value = e.results[0][0].transcript; };
+        rec.start();
     }
 
     function startVoiceChat() {
         const btn = document.getElementById('chat-voice-btn');
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.lang = 'ru-RU';
-        recognition.onstart = () => btn.classList.add('recording');
-        recognition.onend = () => btn.classList.remove('recording');
-        recognition.onresult = (e) => { document.getElementById('chat-input').value = e.results[0][0].transcript; };
-        recognition.start();
+        const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        rec.lang = 'ru-RU';
+        rec.onstart = () => btn.style.background = '#ff0055';
+        rec.onend = () => btn.style.background = '#333';
+        rec.onresult = (e) => { document.getElementById('chat-input').value = e.results[0][0].transcript; };
+        rec.start();
     }
 
     async function generateImage() {
@@ -199,7 +192,7 @@
         box.scrollTop = box.scrollHeight;
     }
     
-    function clearBoard() { if(confirm("Очистить галерею?")) document.getElementById('image-container').innerHTML = ''; }
+    function clearBoard() { if(confirm("Очистить?")) document.getElementById('image-container').innerHTML = ''; }
     
     async function downloadAll() {
         const imgs = document.querySelectorAll('.generated-img');
