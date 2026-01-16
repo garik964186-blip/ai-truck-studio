@@ -33,7 +33,6 @@
 
         .board-controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
         
-        /* Исправленная кнопка выбора моделей - теперь она яркая */
         select {
             width: 100%;
             padding: 14px;
@@ -57,11 +56,15 @@
         
         #image-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; background: #08080a; padding: 15px; border-radius: 12px; border: 1px solid #333; min-height: 200px; margin-top: 15px; }
         .generated-img { width: 100%; border-radius: 8px; border: 1px solid #222; transition: 0.3s; }
-        .generated-img:hover { transform: scale(1.02); }
 
-        textarea, input[type="text"] { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; margin-bottom: 10px; box-sizing: border-box; }
+        textarea, input[type="text"] { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; }
+        
+        /* Кнопка очистки текста */
+        .clear-text-btn { background: #333; color: #ff5500; border: 1px solid #444; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 11px; margin-bottom: 10px; align-self: flex-end; font-weight: bold; }
+        .clear-text-btn:hover { background: #444; color: white; }
+
         .action-btn { width: 100%; padding: 15px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); }
-        .clear-btn { flex: 1; background: #333; color: #ccc; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; }
+        .clear-board-btn { flex: 1; background: #333; color: #ccc; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; }
         
         #chat-container { height: 350px; overflow-y: auto; background: #0f0f12; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #333; }
         .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
@@ -90,8 +93,8 @@
                 <option value="flux-realism">📸 Realism</option>
             </select>
             <div class="btn-group">
-                <button class="clear-btn" onclick="downloadAll()">📥 СКАЧАТЬ ВСЁ</button>
-                <button class="clear-btn" onclick="clearBoard()">🗑️ ОЧИСТИТЬ</button>
+                <button class="clear-board-btn" onclick="downloadAll()">📥 СКАЧАТЬ ВСЁ</button>
+                <button class="clear-board-btn" onclick="clearBoard()">🗑️ ГАЛЕРЕЯ</button>
             </div>
         </div>
         
@@ -101,6 +104,8 @@
         </div>
 
         <textarea id="prompt-input" rows="2" placeholder="Опишите машину или фуру..."></textarea>
+        <button class="clear-text-btn" onclick="clearTextInput()">❌ СТЕРЕТЬ ТЕКСТ</button>
+        
         <button id="gen-btn" onclick="generateImage()" class="action-btn">🚀 СОЗДАТЬ</button>
         
         <div id="image-container"></div>
@@ -124,6 +129,11 @@
     }
 
     function addPreset(text) { document.getElementById('prompt-input').value = text; }
+
+    // ФУНКЦИЯ ОЧИСТКИ ПОЛЯ ВВОДА
+    function clearTextInput() {
+        document.getElementById('prompt-input').value = '';
+    }
 
     async function generateImage() {
         const prompt = document.getElementById('prompt-input').value;
@@ -170,13 +180,13 @@
     }
 
     function startVoice() {
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        const recognition = new (window.SpeechRecognition || window.webkitRecognition)();
         recognition.lang = 'ru-RU';
         recognition.onresult = (e) => { document.getElementById('chat-input').value = e.results[0][0].transcript; };
         recognition.start();
     }
     
-    function clearBoard() { document.getElementById('image-container').innerHTML = ''; }
+    function clearBoard() { if(confirm("Очистить все созданные фото?")) document.getElementById('image-container').innerHTML = ''; }
     
     async function downloadAll() {
         const imgs = document.querySelectorAll('.generated-img');
