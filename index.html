@@ -45,15 +45,13 @@
         .message.ai { align-self: flex-start; background: #222; border: 1px solid #444; }
 
         .msg-actions { display: flex; gap: 5px; margin-top: 8px; border-top: 1px solid #333; padding-top: 5px; }
-        .mini-btn { padding: 6px 10px; font-size: 11px; background: #333; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
-        .mini-btn:hover { background: var(--accent-color); }
+        .mini-btn { padding: 6px 10px; font-size: 11px; background: #333; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
-        /* Уведомление вместо alert */
         #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--accent-grad); color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 1000; box-shadow: 0 5px 15px rgba(255,0,85,0.3); }
         #toast.show { opacity: 1; bottom: 50px; }
 
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
+        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -66,9 +64,16 @@
 
     <div class="global-controls">
         <select id="model-select">
-            <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
-            <option value="dalle-3">🦊 АРТ (DALL-E 3)</option>
-            <option value="flux-realism">📸 ФОТО (Realism)</option>
+            <optgroup label="🖼️ РИСОВАНИЕ">
+                <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
+                <option value="dalle-3">🦊 АРТ (DALL-E 3)</option>
+                <option value="flux-realism">📸 ФОТО (Realism)</option>
+            </optgroup>
+            <optgroup label="💬 УМНЫЙ ЧАТ">
+                <option value="openai" selected>🤖 GPT-4o (Умный)</option>
+                <option value="gemini">♊ Gemini (Быстрый)</option>
+                <option value="claude">🎭 Claude (Творческий)</option>
+            </optgroup>
         </select>
         <button class="compact-btn" onclick="downloadAll()">📥 ВСЁ</button>
         <button class="compact-btn" onclick="clearBoard()">🗑️</button>
@@ -80,13 +85,13 @@
     </div>
 
     <div id="tab-art" class="tab-content active">
-        <textarea id="prompt-input" placeholder="Напиши на русском..."></textarea>
+        <textarea id="prompt-input" placeholder="Опиши машину..."></textarea>
         <div style="display:flex; justify-content: space-between; margin-top: 8px;">
             <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="width: 48%;">🎤 ГОЛОС</button>
             <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 48%;">ОЧИСТИТЬ ❌</button>
         </div>
         <button id="gen-btn" onclick="generateImage()" class="action-btn">
-            <span class="btn-text">🚀 СОЗДАТЬ</span>
+            <span class="btn-text">🚀 СОЗДАТЬ КАРТИНКУ</span>
             <span class="truck-animation">🚛💨</span>
         </button>
         <div id="image-container"></div>
@@ -96,7 +101,7 @@
         <div id="chat-container"></div>
         <div style="display:flex; gap:5px;">
             <button id="voice-chat-btn" class="compact-btn" onclick="runVoice('chat')">🎤</button>
-            <input type="text" id="chat-input" class="chat-input-field" placeholder="Спроси..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <input type="text" id="chat-input" class="chat-input-field" placeholder="Спроси у выбранной нейросети..." onkeypress="if(event.key==='Enter') sendMessage()">
             <button onclick="sendMessage()" class="compact-btn" style="background: var(--accent-color);">➤</button>
         </div>
     </div>
@@ -160,14 +165,22 @@
     async function generateImage() {
         const inputEl = document.getElementById('prompt-input');
         let prompt = inputEl.value;
-        const model = document.getElementById('model-select').value;
+        let model = document.getElementById('model-select').value;
         const btn = document.getElementById('gen-btn');
-        if (!prompt || prompt === "Перевожу...") return;
-        btn.classList.add('loading'); btn.disabled = true;
-        if (/[а-яА-Я]/.test(prompt)) {
-            const translated = await translateText(prompt);
-            prompt = translated;
+
+        // Если выбрана текстовая модель на доске - предупреждаем
+        if (['openai', 'gemini', 'claude'].includes(model)) {
+            alert("Босс, выбери модель для КАРТИНОК (Flux или DALL-E)!");
+            return;
         }
+
+        if (!prompt) return;
+        btn.classList.add('loading'); btn.disabled = true;
+        
+        if (/[а-яА-Я]/.test(prompt)) {
+            prompt = await translateText(prompt);
+        }
+        
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*9999)}&nologo=true`;
         const img = new Image(); img.src = url;
         img.onload = () => {
@@ -183,6 +196,13 @@
     async function sendMessage() {
         const input = document.getElementById('chat-input');
         const box = document.getElementById('chat-container');
+        let model = document.getElementById('model-select').value;
+        
+        // Если выбрана модель для картинок в чате - принудительно ставим умный чат
+        if (['flux-pro', 'dalle-3', 'flux-realism'].includes(model)) {
+            model = 'openai';
+        }
+
         if(!input.value) return;
         const msg = input.value;
         box.innerHTML += `<div class="message user">${msg}</div>`;
@@ -190,8 +210,7 @@
         box.scrollTop = box.scrollHeight;
         
         try {
-            // Для чата всегда используем openai или search
-            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=openai`);
+            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=${model}`);
             const text = await r.text();
             
             const aiMsg = document.createElement('div');
@@ -213,7 +232,7 @@
         }
     }
 
-    function clearBoard() { if(confirm("Очистить все картинки?")) document.getElementById('image-container').innerHTML = ''; }
+    function clearBoard() { if(confirm("Очистить?")) document.getElementById('image-container').innerHTML = ''; }
     function downloadAll() {
         document.querySelectorAll('.generated-img').forEach((img, i) => {
             const a = document.createElement('a'); a.href = img.src; a.download = `art_${i}.jpg`;
