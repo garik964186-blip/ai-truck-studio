@@ -31,7 +31,6 @@
         
         textarea, .chat-input-field { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; font-size: 14px; }
         
-        /* Кнопка голоса с анимацией */
         .voice-btn-active { background: #ff0000 !important; animation: mic-pulse 1.5s infinite; color: white !important; }
         @keyframes mic-pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
 
@@ -100,27 +99,40 @@
         document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
         document.getElementById(`btn-tab-${tab}`).classList.add('active');
         document.getElementById(`tab-${tab}`).classList.add('active');
+        if(tab !== 'chat') window.speechSynthesis.cancel(); // Остановить речь при уходе из чата
     }
 
-    // УНИВЕРСАЛЬНЫЙ ГОЛОСОВОЙ ДВИЖОК
+    // СИНТЕЗ РЕЧИ (ОТВЕТ ГОЛОСОМ)
+    function speak(text) {
+        // Очищаем текст от Markdown-символов (*, #, `)
+        const cleanText = text.replace(/[*#`_]/g, '');
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'ru-RU';
+        
+        // Пытаемся найти более качественный русский голос
+        const voices = window.speechSynthesis.getVoices();
+        const ruVoice = voices.find(v => v.lang.includes('ru'));
+        if (ruVoice) utterance.voice = ruVoice;
+
+        window.speechSynthesis.speak(utterance);
+    }
+
     function runVoice(mode) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            alert("Босс, твой браузер не поддерживает голос. Попробуй Chrome.");
+            alert("Босс, браузер не поддерживает голос.");
             return;
         }
 
         const recognition = new SpeechRecognition();
         recognition.lang = 'ru-RU';
-        recognition.interimResults = false;
         const btn = mode === 'art' ? document.getElementById('voice-art-btn') : document.getElementById('voice-chat-btn');
 
-        recognition.onstart = () => btn.classList.add('voice-btn-active');
-        recognition.onend = () => btn.classList.remove('voice-btn-active');
-        recognition.onerror = (event) => {
-            btn.classList.remove('voice-btn-active');
-            if(event.error === 'not-allowed') alert("Нужно разрешить доступ к микрофону в настройках браузера!");
+        recognition.onstart = () => {
+            btn.classList.add('voice-btn-active');
+            window.speechSynthesis.cancel(); // Прерываем старую речь, если начали говорить сами
         };
+        recognition.onend = () => btn.classList.remove('voice-btn-active');
 
         recognition.onresult = async (event) => {
             const text = event.results[0][0].transcript;
@@ -134,7 +146,6 @@
                 sendMessage();
             }
         };
-
         recognition.start();
     }
 
@@ -167,7 +178,6 @@
             container.prepend(newImg);
             btn.classList.remove('loading'); btn.disabled = false;
         };
-        img.onerror = () => { btn.classList.remove('loading'); btn.disabled = false; };
     }
 
     async function sendMessage() {
@@ -178,22 +188,32 @@
         box.innerHTML += `<div class="message user">${msg}</div>`;
         input.value = '';
         box.scrollTop = box.scrollHeight;
+        
         try {
             const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=openai`);
             const text = await r.text();
             box.innerHTML += `<div class="message ai">${marked.parse(text)}</div>`;
-        } catch(e) { box.innerHTML += `<div class="message ai">Ошибка связи.</div>`; }
-        box.scrollTop = box.scrollHeight;
+            box.scrollTop = box.scrollHeight;
+            
+            // ОЗВУЧКА ОТВЕТА
+            speak(text);
+            
+        } catch(e) { 
+            box.innerHTML += `<div class="message ai">Ошибка связи.</div>`; 
+        }
     }
 
     function clearBoard() { if(confirm("Очистить доску?")) document.getElementById('image-container').innerHTML = ''; }
     
     function downloadAll() {
         document.querySelectorAll('.generated-img').forEach((img, i) => {
-            const a = document.createElement('a'); a.href = img.src; a.download = `truck_art_${i}.jpg`;
+            const a = document.createElement('a'); a.href = img.src; a.download = `art_${i}.jpg`;
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
         });
     }
+
+    // Предзагрузка голосов для мобилок
+    window.speechSynthesis.getVoices();
 </script>
 </body>
 </html>
