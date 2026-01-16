@@ -11,14 +11,12 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; overflow-x: hidden; }
         
-        /* Контейнер */
         .container { max-width: 500px; margin: 0 auto; background: var(--card); padding: 12px; border-radius: 20px; border: 1px solid #333; min-height: 95vh; display: flex; flex-direction: column; position: relative; }
         
         .header { text-align: center; }
         .banner-img { width: 100%; border-radius: 15px; border: 1px solid var(--accent); height: 160px; object-fit: cover; background: #000; }
         .main-title { color: var(--accent); font-weight: 900; font-size: 20px; margin: 15px 0; display: block; text-transform: uppercase; }
 
-        /* Вкладки */
         .tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #000; padding: 5px; border-radius: 15px; }
         .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: #666; font-weight: bold; cursor: pointer; border-radius: 10px; font-size: 14px; transition: 0.3s; }
         .tab-btn.active { background: linear-gradient(135deg, #ff0055, #ff5500); color: white; }
@@ -26,7 +24,6 @@
         .content { display: none; flex-direction: column; flex-grow: 1; }
         .content.active { display: flex; }
 
-        /* Управление */
         .controls { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 10px; }
         select, .btn-s { padding: 12px; background: #25252b; border: 1px solid #444; color: white; border-radius: 12px; font-size: 13px; outline: none; }
         
@@ -37,50 +34,38 @@
         .mic.active { background: var(--accent); animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0px rgba(255, 0, 85, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(255, 0, 85, 0); } }
 
-        /* Чат */
         #chat-box { flex-grow: 1; height: 400px; overflow-y: auto; background: #08080a; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; }
         .msg { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; position: relative; word-wrap: break-word; }
         .msg.u { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
         .msg.a { align-self: flex-start; background: #2a2a2e; border: 1px solid #38383d; color: #eee; border-bottom-left-radius: 4px; width: 95%; }
         
-        pre { background: #1a1a1e; padding: 10px; border-radius: 8px; overflow-x: auto; font-family: monospace; color: #aaffaa; margin: 10px 0; }
-
         .gen-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #ff0055, #ff5500); border: none; border-radius: 15px; color: white; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* Галерея и увеличение */
+        .gen-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
         #imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
         .img-wrap { display: flex; flex-direction: column; gap: 8px; background: #111; padding: 5px; border-radius: 14px; border: 1px solid #222; }
         
-        .gen-img { 
-            width: 100%; 
-            border-radius: 10px; 
-            display: block; 
-            border: 1px solid #333; 
-            cursor: zoom-in; 
-            transition: 0.3s; 
-        }
+        .gen-img { width: 100%; border-radius: 10px; display: block; border: 1px solid #333; cursor: zoom-in; transition: 0.3s; }
 
-        /* Стиль для увеличенной картинки */
+        /* Увеличение картинки */
         .gen-img.zoomed {
             position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%) scale(1.1);
+            transform: translate(-50%, -50%) scale(1.0);
             width: 95vw;
             max-width: 480px;
-            height: auto;
             z-index: 9999;
             border: 2px solid var(--accent);
-            box-shadow: 0 0 50px rgba(0,0,0,1);
+            box-shadow: 0 0 100px rgba(0,0,0,1);
             cursor: zoom-out;
         }
 
-        /* Оверлей (затемнение фона) */
         #overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.9);
             z-index: 9998;
         }
 
@@ -134,7 +119,6 @@
 </div>
 
 <script>
-    // Логика увеличения
     function toggleImageZoom(img) {
         const overlay = document.getElementById('overlay');
         if (img.classList.contains('zoomed')) {
@@ -187,20 +171,42 @@
     }
 
     async function make(){
-        const inp = document.getElementById('i-art'); let p = inp.value; if(!p) return;
-        const btn = document.getElementById('go-art'); btn.disabled=true; btn.innerText="⏳ ГЕНЕРАЦИЯ...";
-        if(/[а-я]/.test(p)) p = await trans(p);
-        const seed = Math.floor(Math.random() * 1000000);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?model=${document.getElementById('m-art').value}&seed=${seed}&nologo=true`;
-        
-        const wrap = document.createElement('div');
-        wrap.className = 'img-wrap';
-        // Добавлен вызов функции toggleImageZoom при клике
-        wrap.innerHTML = `<img src="${url}" class="gen-img" onclick="toggleImageZoom(this)"><a href="${url}" download="art_${seed}.jpg" target="_blank" class="dl-btn">📥 СКАЧАТЬ</a>`;
-        
-        document.getElementById('imgs').prepend(wrap);
-        btn.disabled=false; btn.innerText="🚀 СОЗДАТЬ КАРТИНКУ";
-        inp.value = '';
+        const inp = document.getElementById('i-art');
+        const btn = document.getElementById('go-art');
+        let p = inp.value;
+        if(!p) return;
+
+        btn.disabled = true;
+        btn.innerText = "⏳ ГЕНЕРАЦИЯ...";
+
+        try {
+            if(/[а-я]/.test(p)) p = await trans(p);
+            const seed = Math.floor(Math.random() * 1000000);
+            const model = document.getElementById('m-art').value;
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?model=${model}&seed=${seed}&nologo=true`;
+            
+            // Ждем загрузки картинки перед тем как разблокировать кнопку
+            const img = new Image();
+            img.src = url;
+            img.onload = () => {
+                const wrap = document.createElement('div');
+                wrap.className = 'img-wrap';
+                wrap.innerHTML = `<img src="${url}" class="gen-img" onclick="toggleImageZoom(this)"><a href="${url}" download="art_${seed}.jpg" target="_blank" class="dl-btn">📥 СКАЧАТЬ</a>`;
+                document.getElementById('imgs').prepend(wrap);
+                
+                btn.disabled = false;
+                btn.innerText = "🚀 СОЗДАТЬ КАРТИНКУ";
+                inp.value = '';
+            };
+            img.onerror = () => {
+                btn.disabled = false;
+                btn.innerText = "🚀 СОЗДАТЬ КАРТИНКУ";
+                alert("Ошибка загрузки изображения");
+            };
+        } catch(e) {
+            btn.disabled = false;
+            btn.innerText = "🚀 СОЗДАТЬ КАРТИНКУ";
+        }
     }
 
     async function send(){
