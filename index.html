@@ -14,7 +14,8 @@
         .container { max-width: 500px; margin: 0 auto; background: var(--card); padding: 12px; border-radius: 20px; border: 1px solid #333; min-height: 95vh; display: flex; flex-direction: column; }
         
         .header { text-align: center; }
-        .banner-img { width: 100%; border-radius: 15px; border: 1px solid var(--accent); max-height: 140px; object-fit: cover; background: #000; }
+        /* Исправленный стиль для баннера */
+        .banner-img { width: 100%; border-radius: 15px; border: 1px solid var(--accent); height: 160px; object-fit: cover; background: #000; }
         .main-title { color: var(--accent); font-weight: 900; font-size: 20px; margin: 15px 0; display: block; text-transform: uppercase; }
 
         .tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #000; padding: 5px; border-radius: 15px; }
@@ -39,12 +40,7 @@
         .msg.u { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
         .msg.a { align-self: flex-start; background: #2a2a2e; border: 1px solid #38383d; color: #eee; border-bottom-left-radius: 4px; width: 95%; }
         
-        .msg.a table { width: 100%; border-collapse: collapse; display: block; overflow-x: auto; margin: 10px 0; border-radius: 8px; }
-        .msg.a td, .msg.a th { border: 1px solid #444; padding: 8px; font-size: 12px; text-align: left; }
-        
-        /* Стиль для ASCII-арта в чате */
-        .msg.a pre { background: #1a1a1e; padding: 10px; border-radius: 8px; overflow-x: auto; font-family: monospace; color: #aaffaa; }
-
+        pre { background: #1a1a1e; padding: 10px; border-radius: 8px; overflow-x: auto; font-family: monospace; color: #aaffaa; margin: 10px 0; }
 
         .gen-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #ff0055, #ff5500); border: none; border-radius: 15px; color: white; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
         
@@ -57,7 +53,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <img src="https://i.postimg.cc/mD9t7mS3/1000130841.jpg" class="banner-img" alt="Banner">
+        <img src="1768422265866.jpg" class="banner-img" alt="Banner">
         <div class="main-title">ОТ ИГРУШКИ ДО ФУРЫ</div>
     </div>
     
@@ -69,9 +65,9 @@
     <div id="art" class="content active">
         <div class="controls">
             <select id="m-art">
-                <option value="flux-pro">🚛 Мощные ФУРЫ (Flux Pro)</option>
-                <option value="dalle-3">🦊 Животные и Арт (DALL-E 3)</option>
-                <option value="realism">📸 Реальное ФОТО (Realism)</option>
+                <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
+                <option value="dalle-3">🦊 АРТ (DALL-E 3)</option>
+                <option value="realism">📸 ФОТО (Realism)</option>
             </select>
             <button class="btn-s" onclick="clr()">🗑️</button>
         </div>
@@ -154,39 +150,14 @@
         if(!inp.value) return; const m = inp.value;
         box.innerHTML += `<div class="msg u">${m}</div>`; inp.value=''; box.scrollTop=box.scrollHeight;
         
-        let responseText;
-        // Проверяем, хочет ли пользователь "нарисовать" текстовое изображение
-        const drawKeywords = ["нарисуй", "сделай арт", "изобрази", "покажи рисунок"];
-        const isDrawingRequest = drawKeywords.some(keyword => m.toLowerCase().includes(keyword));
-
-        if (isDrawingRequest) {
-            // Здесь можно добавить более сложную логику для разных ASCII-артов
-            // Пока что для примера, просто возвращаем котика или что-то еще
-            if (m.toLowerCase().includes("кот") || m.toLowerCase().includes("котик")) {
-                responseText = `Конечно! Вот вам милый котик:\n\n\`\`\`\n/\\_/\\\n( o.o )\n > ^ <\n\`\`\``;
-            } else if (m.toLowerCase().includes("сердце") || m.toLowerCase().includes("любовь")) {
-                responseText = `Вот сердечко для вас:\n\n\`\`\`\n  _  _\n / \\/ \\\n \\    /\n  \\  /\n   \\/\n\`\`\``;
-            } else if (m.toLowerCase().includes("звезда")) {
-                responseText = `Вот сияющая звезда:\n\n\`\`\`\n  /\\\n <**>\n  \\/\n\`\`\``;
-            }
-             else {
-                responseText = `Я не могу генерировать настоящие графические изображения, но могу подарить вам небольшое ASCII-искусство. Как вам такой котик?\n\n\`\`\`\n/\\_/\\\n( o.o )\n > ^ <\n\`\`\`\n\nЕсли хотите что-то конкретное — скажите, и я постараюсь нарисовать (текстом) именно то, что возникает у вас в голове!`;
-            }
-            // Markdown.parse автоматически обработает ```` для pre-форматирования
+        try {
+            const model = document.getElementById('m-chat').value;
+            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(m)}?model=${model}`);
+            const t = await r.text();
             const ai = document.createElement('div'); ai.className='msg a';
-            ai.innerHTML = marked.parse(responseText);
-            box.appendChild(ai); box.scrollTop=box.scrollHeight; speak(responseText);
-
-        } else {
-            // Отправляем запрос в AI-модель как обычно
-            try {
-                const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(m)}?model=${document.getElementById('m-chat').value}`);
-                const t = await r.text();
-                const ai = document.createElement('div'); ai.className='msg a';
-                ai.innerHTML = marked.parse(t);
-                box.appendChild(ai); box.scrollTop=box.scrollHeight; speak(t);
-            } catch(e){ box.innerHTML += `<div class="msg a">Ошибка связи.</div>`; }
-        }
+            ai.innerHTML = marked.parse(t);
+            box.appendChild(ai); box.scrollTop=box.scrollHeight; speak(t);
+        } catch(e){ box.innerHTML += `<div class="msg a">Ошибка связи.</div>`; }
     }
     function clr(){ if(confirm("Очистить галерею?")) document.getElementById('imgs').innerHTML=''; }
 </script>
