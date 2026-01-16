@@ -13,30 +13,8 @@
         
         .container { max-width: 500px; margin: 0 auto; background: var(--card); padding: 12px; border-radius: 20px; border: 1px solid #333; min-height: 95vh; display: flex; flex-direction: column; }
         
-        .header { text-align: center; position: relative; }
-        
-        /* Стили для картинки с поддержкой увеличения */
-        .banner-img { 
-            width: 100%; 
-            border-radius: 15px; 
-            border: 1px solid var(--accent); 
-            height: 160px; 
-            object-fit: cover; 
-            background: #000; 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-            cursor: zoom-in;
-            z-index: 10;
-        }
-
-        /* Класс, который будет добавляться при клике */
-        .banner-img.zoomed {
-            height: 350px; /* Увеличиваем высоту */
-            object-fit: contain; /* Чтобы картинка была видна полностью */
-            cursor: zoom-out;
-            transform: scale(1.02);
-            box-shadow: 0 10px 30px rgba(255, 0, 85, 0.3);
-        }
-
+        .header { text-align: center; }
+        .banner-img { width: 100%; border-radius: 15px; border: 1px solid var(--accent); height: 160px; object-fit: cover; background: #000; }
         .main-title { color: var(--accent); font-weight: 900; font-size: 20px; margin: 15px 0; display: block; text-transform: uppercase; }
 
         .tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #000; padding: 5px; border-radius: 15px; }
@@ -65,16 +43,50 @@
 
         .gen-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #ff0055, #ff5500); border: none; border-radius: 15px; color: white; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
         
+        /* Галерея */
         #imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
         .img-wrap { display: flex; flex-direction: column; gap: 8px; background: #111; padding: 5px; border-radius: 14px; border: 1px solid #222; }
-        .gen-img { width: 100%; border-radius: 10px; display: block; border: 1px solid #333; }
+        
+        /* Стили для сгенерированных картинок */
+        .gen-img { 
+            width: 100%; 
+            border-radius: 10px; 
+            display: block; 
+            border: 1px solid #333; 
+            cursor: zoom-in; 
+            transition: transform 0.3s ease, position 0.3s ease; 
+        }
+
+        /* Эффект увеличения для сгенерированной картинки */
+        .gen-img.zoomed-gallery {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1.5);
+            width: 90vw;
+            max-width: 450px;
+            z-index: 9999;
+            box-shadow: 0 0 100px rgba(0,0,0,0.9);
+            border: 2px solid var(--accent);
+            cursor: zoom-out;
+        }
+
+        /* Затемнение фона при увеличении */
+        .overlay-active::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 9998;
+        }
+
         .dl-btn { width: 100%; padding: 10px; background: #25252b; border: 1px solid #444; color: #fff; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: bold; text-align: center; text-decoration: none; display: block; }
     </style>
 </head>
-<body>
+<body id="body-main">
 <div class="container">
     <div class="header">
-        <img src="1768422265866.jpg" id="main-banner" class="banner-img" alt="Banner" onclick="toggleZoom()">
+        <img src="1768422265866.jpg" class="banner-img" alt="Banner">
         <div class="main-title">ОТ ИГРУШКИ ДО ФУРЫ</div>
     </div>
     
@@ -115,10 +127,10 @@
 </div>
 
 <script>
-    // Функция для увеличения картинки
-    function toggleZoom() {
-        const img = document.getElementById('main-banner');
-        img.classList.toggle('zoomed');
+    // Функция переключения увеличения для картинок из галереи
+    function zoomImg(el) {
+        el.classList.toggle('zoomed-gallery');
+        document.getElementById('body-main').classList.toggle('overlay-active');
     }
 
     function tab(t){
@@ -165,7 +177,8 @@
         
         const wrap = document.createElement('div');
         wrap.className = 'img-wrap';
-        wrap.innerHTML = `<img src="${url}" class="gen-img" onclick="this.classList.toggle('zoomed-gallery')"><a href="${url}" download="art_${seed}.jpg" target="_blank" class="dl-btn">📥 СКАЧАТЬ</a>`;
+        // Здесь добавлена функция zoomImg(this) при клике
+        wrap.innerHTML = `<img src="${url}" class="gen-img" onclick="zoomImg(this)"><a href="${url}" download="art_${seed}.jpg" target="_blank" class="dl-btn">📥 СКАЧАТЬ</a>`;
         
         document.getElementById('imgs').prepend(wrap);
         btn.disabled=false; btn.innerText="🚀 СОЗДАТЬ КАРТИНКУ";
