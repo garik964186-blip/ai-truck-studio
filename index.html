@@ -54,7 +54,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <img src="https://raw.githubusercontent.com/garik964186-blip/garik964186-blip.github.io/main/1000130702.png" class="banner-img" alt="От игрушки до фуры">
+        <img src="1000130702.png" class="banner-img" alt="От игрушки до фуры">
         <h1><a>ОТ ИГРУШКИ ДО ФУРЫ</a></h1>
     </div>
     <div class="tabs">
@@ -149,4 +149,44 @@
 
     function removeSingleImage(url, btn) {
         let saved = JSON.parse(localStorage.getItem('setka_gallery') || '[]');
-        localStorage.
+        localStorage.setItem('setka_gallery', JSON.stringify(saved.filter(item => item !== url)));
+        btn.parentElement.remove();
+    }
+
+    function clearBoard() { if(confirm("Удалить всё?")) { localStorage.removeItem('setka_gallery'); document.getElementById('image-container').innerHTML = ''; } }
+
+    function startVoice() {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'ru-RU';
+        recognition.onstart = () => document.getElementById('voice-btn').classList.add('recording');
+        recognition.onend = () => document.getElementById('voice-btn').classList.remove('recording');
+        recognition.onresult = (e) => document.getElementById('chat-input').value = e.results[0][0].transcript;
+        recognition.start();
+    }
+
+    let history = [];
+    async function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const box = document.getElementById('chat-container');
+        const model = document.getElementById('chat-model-select').value;
+        if(!input.value) return;
+        const msg = input.value;
+        box.innerHTML += `<div class="message user">${msg}</div>`;
+        input.value = ''; history.push({role:"user", content:msg});
+        const aiDiv = document.createElement('div'); aiDiv.className="message ai";
+        aiDiv.innerHTML=`<span class="model-badge">${model}</span>...`;
+        box.appendChild(aiDiv); box.scrollTop = box.scrollHeight;
+        try {
+            const r = await fetch('https://text.pollinations.ai/', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({messages:history, model:model})
+            });
+            const text = await r.text();
+            aiDiv.innerHTML = `<span class="model-badge">${model}</span>` + marked.parse(text);
+            history.push({role:"assistant", content:text});
+        } catch(e) { aiDiv.innerText = "Ошибка."; }
+        box.scrollTop = box.scrollHeight;
+    }
+</script>
+</body>
+</html>
