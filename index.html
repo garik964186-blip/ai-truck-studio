@@ -12,56 +12,43 @@
             --input-bg: #222226; --border-radius: 12px;
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
-        .container { background: var(--card-bg); padding: 15px; border-radius: var(--border-radius); width: 100%; max-width: 600px; border: 1px solid #333; display: flex; flex-direction: column; }
-        
-        .header { text-align: center; margin-bottom: 10px; }
-        .banner-img { width: 100%; height: 100px; border-radius: 8px; border: 1px solid var(--accent-color); object-fit: cover; margin-bottom: 8px; }
+        .container { background: var(--card-bg); padding: 15px; border-radius: var(--border-radius); width: 100%; max-width: 600px; border: 1px solid #333; display: flex; flex-direction: column; height: 95vh; }
+        .header { text-align: center; margin-bottom: 10px; flex-shrink: 0; }
+        .banner-img { width: 100%; height: 80px; border-radius: 8px; border: 1px solid var(--accent-color); object-fit: cover; }
         h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-size: 18px; }
-
-        .global-controls { display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 8px; margin-bottom: 12px; background: #000; padding: 8px; border-radius: 10px; border: 1px solid #222; }
-
-        .tabs { display: flex; background: #000; padding: 3px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #222; }
-        .tab-btn { flex: 1; padding: 10px; background: transparent; border: none; color: #777; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.3s; }
+        .global-controls { display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 8px; margin-bottom: 12px; background: #000; padding: 8px; border-radius: 10px; }
+        .tabs { display: flex; background: #000; padding: 3px; border-radius: 10px; margin-bottom: 15px; flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 10px; background: transparent; border: none; color: #777; font-weight: bold; cursor: pointer; font-size: 13px; }
         .tab-btn.active { background: var(--accent-grad); color: white; border-radius: 7px; }
-
-        .tab-content { display: none; flex-direction: column; }
+        .tab-content { display: none; flex-direction: column; flex-grow: 1; overflow: hidden; }
         .tab-content.active { display: flex; }
-
-        select, .compact-btn { padding: 8px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 6px; font-size: 12px; cursor: pointer; }
-        
-        /* ОДНОТИПНЫЙ БЛОК ВВОДА */
-        .input-wrapper { display: flex; align-items: flex-end; gap: 8px; background: var(--input-bg); padding: 8px; border-radius: 12px; border: 1px solid #333; margin-top: 5px; }
-        .input-wrapper textarea { flex: 1; border: none; background: transparent; color: white; min-height: 30px; max-height: 150px; padding: 5px; resize: none; font-size: 14px; outline: none; }
-        
-        .icon-btn { width: 38px; height: 38px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #333; color: white; flex-shrink: 0; transition: 0.2s; }
-        .icon-btn:active { transform: scale(0.9); }
-        .voice-active { background: #ff0000 !important; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } }
-
-        #chat-container, #image-container { height: 380px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #222; }
+        select, .compact-btn { padding: 8px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 6px; font-size: 12px; }
+        #chat-container, #image-container { flex-grow: 1; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #222; }
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
-        
-        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 14px; margin-bottom: 10px; }
+        .input-wrapper { display: flex; align-items: flex-end; gap: 8px; background: var(--input-bg); padding: 8px; border-radius: 12px; flex-shrink: 0; }
+        textarea { flex: 1; border: none; background: transparent; color: white; min-height: 30px; max-height: 100px; padding: 5px; resize: none; outline: none; }
+        .icon-btn { width: 40px; height: 40px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #333; color: white; }
+        .message { max-width: 90%; padding: 10px; border-radius: 10px; font-size: 14px; margin-bottom: 10px; line-height: 1.4; }
         .message.user { align-self: flex-end; background: var(--accent-color); color: white; margin-left: auto; }
         .message.ai { align-self: flex-start; background: #222; border: 1px solid #444; }
-
-        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; }
-
-        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--accent-grad); color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; opacity: 0; transition: 0.3s; z-index: 1000; }
+        .generated-img { width: 100%; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .generated-img:hover { transform: scale(1.02); }
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--accent-grad); color: white; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: 0.3s; z-index: 1000; pointer-events: none; }
         #toast.show { opacity: 1; bottom: 50px; }
+        .voice-active { background: #ff0000 !important; box-shadow: 0 0 10px #ff0000; }
     </style>
 </head>
 <body>
-<div id="toast">ТЕКСТ СКОПИРОВАН, БОСС! 📋</div>
+<div id="toast">ГОТОВО, БОСС! 📋</div>
 <div class="container">
     <div class="header">
-        <img src="1768422265866.jpg" class="banner-img">
+        <img src="1768422265866.jpg" class="banner-img" onerror="this.src='https://via.placeholder.com/600x100?text=TRUCK+STUDIO'">
         <h1><a href="https://youtube.com/@blip_blip?si=A5X-r6r16M9vYc_P" target="_blank">ОТ ИГРУШКИ ДО ФУРЫ</a></h1>
     </div>
 
     <div class="global-controls">
         <select id="model-select"></select>
-        <button class="compact-btn" onclick="downloadAll()">📥 ВСЁ</button>
+        <button class="compact-btn" onclick="downloadAll()">📥</button>
         <button class="compact-btn" onclick="clearBoard()">🗑️</button>
     </div>
 
@@ -74,7 +61,7 @@
         <div id="image-container"></div>
         <div class="input-wrapper">
             <button id="voice-art-btn" class="icon-btn" onclick="runVoice('art')">🎤</button>
-            <textarea id="prompt-input" placeholder="Что нарисовать?" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+            <textarea id="prompt-input" placeholder="Опиши фуру или арт..."></textarea>
             <button onclick="generateImage()" class="icon-btn" style="background: var(--accent-grad);">🚀</button>
         </div>
     </div>
@@ -83,105 +70,93 @@
         <div id="chat-container"></div>
         <div class="input-wrapper">
             <button id="voice-chat-btn" class="icon-btn" onclick="runVoice('chat')">🎤</button>
-            <textarea id="chat-input" placeholder="Спроси нейросеть..." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+            <textarea id="chat-input" placeholder="Спроси нейросеть..."></textarea>
             <button onclick="sendMessage()" class="icon-btn" style="background: var(--accent-color);">➤</button>
         </div>
     </div>
 </div>
 
 <script>
-    const imageModels = `<option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option><option value="dalle-3">🦊 АРТ (DALL-E 3)</option><option value="flux-realism">📸 ФОТО (Realism)</option>`;
-    const textModels = `<option value="openai">🤖 GPT-4o (Умный)</option><option value="gemini">♊ Gemini (Быстрый)</option><option value="claude">🎭 Claude (Творческий)</option>`;
+    const imageModels = `<option value="flux">🚛 ФУРЫ (Flux)</option><option value="dalle-3">🦊 АРТ (DALL-E 3)</option>`;
+    const textModels = `<option value="openai">🤖 GPT-4o</option><option value="gemini">♊ Gemini</option><option value="claude">🎭 Claude</option>`;
 
-    function updateModels(tab) { document.getElementById('model-select').innerHTML = tab === 'art' ? imageModels : textModels; }
-    updateModels('art');
+    function showToast(text) {
+        const t = document.getElementById('toast');
+        t.innerText = text; t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2000);
+    }
 
     function switchMainTab(tab) {
         document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
         document.getElementById(`btn-tab-${tab}`).classList.add('active');
         document.getElementById(`tab-${tab}`).classList.add('active');
-        updateModels(tab);
+        document.getElementById('model-select').innerHTML = tab === 'art' ? imageModels : textModels;
     }
+    switchMainTab('art');
 
-    async function translateText(text) {
+    async function translate(text) {
         if (!/[а-яА-Я]/.test(text)) return text;
         try {
             const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`);
             const data = await res.json();
             return data[0][0][0];
-        } catch (e) { return text; }
-    }
-
-    function speak(text) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text.replace(/[*#`_]/g, ''));
-        utterance.lang = 'ru-RU';
-        utterance.rate = 1.2;
-        window.speechSynthesis.speak(utterance);
+        } catch { return text; }
     }
 
     function runVoice(mode) {
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Rec) return alert("Голос не поддерживается");
+        const recognition = new Rec();
         recognition.lang = 'ru-RU';
-        const btn = mode === 'art' ? document.getElementById('voice-art-btn') : document.getElementById('voice-chat-btn');
+        const btn = document.getElementById(`voice-${mode}-btn`);
         recognition.onstart = () => btn.classList.add('voice-active');
         recognition.onend = () => btn.classList.remove('voice-active');
-        recognition.onresult = (event) => {
-            const result = event.results[0][0].transcript;
-            const input = mode === 'art' ? document.getElementById('prompt-input') : document.getElementById('chat-input');
-            input.value = result;
-            input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px';
+        recognition.onresult = (e) => {
+            const val = e.results[0][0].transcript;
+            const inp = document.getElementById(mode === 'art' ? 'prompt-input' : 'chat-input');
+            inp.value = val;
             mode === 'art' ? generateImage() : sendMessage();
         };
         recognition.start();
     }
 
     async function generateImage() {
-        const input = document.getElementById('prompt-input');
-        if (!input.value) return;
-        const raw = input.value;
-        input.value = "Перевожу и рисую...";
-        const translated = await translateText(raw);
-        const model = document.getElementById('model-select').value;
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(translated)}?model=${model}&seed=${Math.floor(Math.random()*9999)}&nologo=true`;
-        
-        const img = new Image(); img.src = url;
-        img.onload = () => {
-            const container = document.getElementById('image-container');
-            const newImg = document.createElement('img');
-            newImg.src = url; newImg.className = 'generated-img';
-            newImg.onclick = () => window.open(url, '_blank');
-            container.prepend(newImg);
-            input.value = ''; input.style.height = '30px';
-        };
+        const inp = document.getElementById('prompt-input');
+        if (!inp.value) return;
+        const query = await translate(inp.value);
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(query)}?model=${document.getElementById('model-select').value}&seed=${Math.random()}`;
+        const container = document.getElementById('image-container');
+        const img = document.createElement('img');
+        img.src = url; img.className = 'generated-img';
+        img.onclick = () => window.open(url, '_blank');
+        container.prepend(img);
+        inp.value = '';
     }
 
     async function sendMessage() {
-        const input = document.getElementById('chat-input');
+        const inp = document.getElementById('chat-input');
         const box = document.getElementById('chat-container');
-        if(!input.value) return;
-        const msg = input.value;
-        box.innerHTML += `<div class="message user">${msg}</div>`;
-        input.value = ''; input.style.height = '30px';
-        box.scrollTop = box.scrollHeight;
+        if (!inp.value) return;
+        const text = inp.value;
+        box.innerHTML += `<div class="message user">${text}</div>`;
+        inp.value = ''; box.scrollTop = box.scrollHeight;
+        
         try {
-            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=${document.getElementById('model-select').value}`);
-            const text = await r.text();
+            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(text)}?model=${document.getElementById('model-select').value}`);
+            const response = await r.text();
             const aiMsg = document.createElement('div');
             aiMsg.className = 'message ai';
-            aiMsg.innerHTML = marked.parse(text);
-            aiMsg.innerHTML += `<div style="margin-top:8px; display:flex; gap:5px;"><button class="compact-btn" onclick="speak(\`${text.replace(/`/g,"")}\`)">🔊</button><button class="compact-btn" onclick="navigator.clipboard.writeText(\`${text.replace(/`/g,"")}\`); document.getElementById('toast').classList.add('show'); setTimeout(()=>document.getElementById('toast').classList.remove('show'),2000)">📋</button></div>`;
+            aiMsg.innerHTML = marked.parse(response);
+            aiMsg.innerHTML += `<br><button class="compact-btn" onclick="navigator.clipboard.writeText(\`${response.replace(/`/g,"'")}\`); showToast('СКОПИРОВАНО, БОСС!')">📋</button>`;
             box.appendChild(aiMsg);
             box.scrollTop = box.scrollHeight;
-            speak(text);
-        } catch(e) { box.innerHTML += `<div class="message ai">Ошибка.</div>`; }
+        } catch { box.innerHTML += `<div class="message ai">Ошибка связи.</div>`; }
     }
 
-    function clearBoard() { if(confirm("Очистить?")) document.getElementById('image-container').innerHTML = ''; }
+    function clearBoard() { if(confirm("Очистить всё?")) { document.getElementById('image-container').innerHTML = ''; document.getElementById('chat-container').innerHTML = ''; } }
     function downloadAll() {
         document.querySelectorAll('.generated-img').forEach((img, i) => {
-            const a = document.createElement('a'); a.href = img.src; a.download = `art_${i}.jpg`;
-            a.click();
+            const a = document.createElement('a'); a.href = img.src; a.download = `truck_art_${i}.jpg`; a.click();
         });
     }
 </script>
