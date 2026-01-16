@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI Studio: BOSS Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
@@ -26,25 +26,24 @@
         .tab-content.active { display: flex; }
 
         .global-controls { display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 8px; background: #000; padding: 8px; border-radius: 10px; margin-bottom: 5px; }
-        select, .compact-btn { padding: 8px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 6px; font-size: 14px; }
+        select, .compact-btn { padding: 8px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 6px; font-size: 14px; cursor: pointer; }
         
         textarea, .chat-input-field { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; font-size: 14px; }
         
-        /* Чат скрыт по умолчанию */
-        #chat-container { display: none; height: 300px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin: 10px 0; border: 1px solid #222; flex-direction: column; gap: 10px; }
-        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 13px; }
-        .message.user { align-self: flex-end; background: var(--accent-color); color: white; }
-        .message.ai { align-self: flex-start; background: #222; border: 1px solid #333; }
+        #chat-container { display: none; height: 320px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin: 10px 0; border: 1px solid #222; flex-direction: column; gap: 10px; }
+        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 13px; line-height: 1.4; }
+        .message.user { align-self: flex-end; background: var(--accent-color); color: white; border-bottom-right-radius: 2px; }
+        .message.ai { align-self: flex-start; background: #222; border: 1px solid #333; border-bottom-left-radius: 2px; }
 
-        .input-area { display: flex; gap: 5px; margin-top: 0; } /* Микрофон вплотную */
+        .input-area { display: flex; gap: 5px; margin-top: 0; }
 
-        .voice-btn-active { background: #ff0000 !important; animation: pulse 1.5s infinite; }
+        .voice-btn-active { background: #ff0000 !important; animation: pulse 1.5s infinite; color: white !important; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
         
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .img-wrapper { display: flex; flex-direction: column; gap: 5px; }
         .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; }
-        .save-btn { background: #333; color: #fff; font-size: 10px; text-align: center; padding: 5px; border-radius: 5px; text-decoration: none; }
+        .save-btn { background: #333; color: #fff; font-size: 10px; text-align: center; padding: 6px; border-radius: 5px; text-decoration: none; border: 1px solid #444; }
     </style>
 </head>
 <body>
@@ -62,18 +61,19 @@
     <div id="tab-art" class="tab-content active">
         <div class="global-controls">
             <select id="model-select">
-                <option value="flux-pro">🚛 (Pro)</option>
+                <option value="flux">🚛 (Pro)</option>
                 <option value="flux-realism">📸 (Real)</option>
+                <option value="any-dark">🦊 (Art)</option>
             </select>
             <button class="compact-btn" onclick="downloadAll()">📥</button>
             <button class="compact-btn" onclick="clearBoard()">🗑️</button>
         </div>
-        <textarea id="prompt-input" placeholder="Опиши картинку..."></textarea>
-        <div class="input-area">
+        <textarea id="prompt-input" rows="3" placeholder="Опиши картинку..."></textarea>
+        <div class="input-area" style="margin-top: 8px;">
             <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="width: 50%;">🎤 Голос</button>
             <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 50%;">❌ Сброс</button>
         </div>
-        <button id="gen-btn" onclick="generateImage()" style="width:100%; padding:15px; margin-top:10px; background:var(--accent-grad); color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">🚀 ПОЕХАЛИ</button>
+        <button id="gen-btn" onclick="generateImage()" style="width:100%; padding:16px; margin-top:10px; background:var(--accent-grad); color:white; border:none; border-radius:10px; font-weight:bold; font-size:16px; cursor:pointer;">🚀 ПОЕХАЛИ</button>
         <div id="image-container"></div>
     </div>
 
@@ -81,7 +81,8 @@
         <div class="global-controls">
             <select id="chat-model-select">
                 <option value="openai">🤖 ChatGPT</option>
-                <option value="llama">🦙 Llama 3</option>
+                <option value="mistral">🌀 Mistral</option>
+                <option value="p1">⚡ Turbo</option>
             </select>
             <button class="compact-btn" onclick="stopSpeech()">🔇</button>
             <button class="compact-btn" onclick="clearChat()">🗑️</button>
@@ -90,7 +91,7 @@
         <div class="input-area">
             <button id="voice-chat-btn" class="compact-btn" onclick="runVoice('chat')">🎤</button>
             <input type="text" id="chat-input" class="chat-input-field" placeholder="Спроси..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()" class="compact-btn" style="background: var(--accent-color);">➤</button>
+            <button onclick="sendMessage()" class="compact-btn" style="background: var(--accent-color); min-width: 50px;">➤</button>
         </div>
     </div>
 </div>
@@ -105,76 +106,91 @@
 
     function speak(text) {
         stopSpeech();
+        if (!window.speechSynthesis) return;
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'ru-RU';
+        utterance.rate = 1.0;
         window.speechSynthesis.speak(utterance);
     }
 
     function stopSpeech() { window.speechSynthesis.cancel(); }
+
     function clearChat() { 
-        document.getElementById('chat-container').innerHTML = ''; 
-        document.getElementById('chat-container').style.display = 'none';
+        const box = document.getElementById('chat-container');
+        box.innerHTML = ''; box.style.display = 'none';
         stopSpeech();
     }
 
     function runVoice(mode) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return;
-        const rec = new SpeechRecognition();
-        rec.lang = 'ru-RU';
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'ru-RU';
         const btn = mode === 'art' ? document.getElementById('voice-art-btn') : document.getElementById('voice-chat-btn');
-        rec.onstart = () => btn.classList.add('voice-btn-active');
-        rec.onend = () => btn.classList.remove('voice-btn-active');
-        rec.onresult = async (e) => {
-            const txt = e.results[0][0].transcript;
+        recognition.onstart = () => btn.classList.add('voice-btn-active');
+        recognition.onend = () => btn.classList.remove('voice-btn-active');
+        recognition.onresult = async (event) => {
+            const text = event.results[0][0].transcript;
             if (mode === 'art') {
-                document.getElementById('prompt-input').value = "⏳ Перевод...";
-                document.getElementById('prompt-input').value = await translate(txt);
+                document.getElementById('prompt-input').value = "⏳ " + text;
+                const translated = await translate(text);
+                document.getElementById('prompt-input').value = translated;
             } else {
-                document.getElementById('chat-input').value = txt;
+                document.getElementById('chat-input').value = text;
                 sendMessage();
             }
         };
-        rec.start();
+        recognition.start();
     }
 
-    async function translate(t) {
+    async function translate(text) {
         try {
-            const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t&q=${encodeURIComponent(t)}`);
-            const d = await r.json(); return d[0][0][0];
-        } catch { return t; }
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t&q=${encodeURIComponent(text)}`);
+            const data = await res.json();
+            return data[0][0][0];
+        } catch { return text; }
     }
 
     async function sendMessage() {
         const inp = document.getElementById('chat-input');
         const box = document.getElementById('chat-container');
         const model = document.getElementById('chat-model-select').value;
-        if(!inp.value) return;
+        if(!inp.value.trim()) return;
         
-        const m = inp.value;
+        const msg = inp.value;
         box.style.display = 'flex';
-        box.innerHTML += `<div class="message user">${m}</div>`;
+        box.innerHTML += `<div class="message user">${msg}</div>`;
         inp.value = '';
         box.scrollTop = box.scrollHeight;
 
         try {
-            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(m)}?model=${model}`);
-            const t = await r.text();
-            box.innerHTML += `<div class="message ai">${marked.parse(t)}</div>`;
+            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=${model}`);
+            const text = await r.text();
+            box.innerHTML += `<div class="message ai">${marked.parse(text)}</div>`;
             box.scrollTop = box.scrollHeight;
-            speak(t.replace(/[#*`]/g, ''));
-        } catch { box.innerHTML += `<div class="message ai">⚠️ Ошибка</div>`; }
+            speak(text.replace(/[#*`]/g, ''));
+        } catch {
+            box.innerHTML += `<div class="message ai">⚠️ Ошибка. Попробуй другую модель.</div>`;
+        }
     }
 
     async function generateImage() {
-        const p = document.getElementById('prompt-input').value;
-        const m = document.getElementById('model-select').value;
-        if(!p || p.includes("⏳")) return;
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?model=${m}&seed=${Math.floor(Math.random()*1e6)}&nologo=true`;
-        const wrapper = document.createElement('div');
-        wrapper.className = 'img-wrapper';
-        wrapper.innerHTML = `<img src="${url}" class="generated-img" onclick="window.open('${url}','_blank')"><a href="${url}" target="_blank" class="save-btn">💾 Сохранить</a>`;
-        document.getElementById('image-container').prepend(wrapper);
+        const prompt = document.getElementById('prompt-input').value;
+        const model = document.getElementById('model-select').value;
+        const btn = document.getElementById('gen-btn');
+        if (!prompt || prompt.includes("⏳")) return;
+        btn.disabled = true; btn.innerText = "🚛 ГРУЗИМ...";
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*1e6)}&nologo=true`;
+        const img = new Image();
+        img.src = url;
+        img.onload = () => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'img-wrapper';
+            wrapper.innerHTML = `<img src="${url}" class="generated-img" onclick="window.open('${url}','_blank')"><a href="${url}" target="_blank" class="save-btn">💾 Сохранить</a>`;
+            document.getElementById('image-container').prepend(wrapper);
+            btn.disabled = false; btn.innerText = "🚀 ПОЕХАЛИ";
+        };
+        img.onerror = () => { btn.disabled = false; btn.innerText = "🚀 ПОЕХАЛИ"; };
     }
 
     function clearBoard() { document.getElementById('image-container').innerHTML = ''; }
