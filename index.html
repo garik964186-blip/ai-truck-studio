@@ -13,43 +13,31 @@
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
         .container { background: var(--card-bg); padding: 15px; border-radius: var(--border-radius); width: 100%; max-width: 600px; border: 1px solid #333; display: flex; flex-direction: column; }
-        
         .header { text-align: center; margin-bottom: 10px; }
         .banner-img { width: 100%; height: 100px; border-radius: 8px; border: 1px solid var(--accent-color); object-fit: cover; margin-bottom: 8px; }
         h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-size: 20px; }
-
         .global-controls { display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 8px; margin-bottom: 12px; background: #000; padding: 8px; border-radius: 10px; border: 1px solid #222; }
-
         .tabs { display: flex; background: #000; padding: 3px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #222; }
         .tab-btn { flex: 1; padding: 10px; background: transparent; border: none; color: #777; font-weight: bold; cursor: pointer; font-size: 13px; }
         .tab-btn.active { background: var(--accent-grad); color: white; border-radius: 7px; }
-
         .tab-content { display: none; flex-direction: column; }
         .tab-content.active { display: flex; }
-
         select, .compact-btn { padding: 8px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 6px; font-size: 12px; cursor: pointer; }
-        
         textarea, .chat-input-field { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; font-size: 14px; }
-        
         .voice-btn-active { background: #ff0000 !important; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } }
-
         .action-btn { width: 100%; padding: 12px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; margin-top: 10px; }
         .truck-animation { position: absolute; left: -100px; top: 50%; transform: translateY(-50%) scaleX(-1); font-size: 24px; display: none; }
         @keyframes drive { 0% { left: -100px; } 100% { left: 110%; } }
         .loading .truck-animation { display: block; animation: drive 2s linear infinite; }
-
         #chat-container { height: 350px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #222; display: flex; flex-direction: column; gap: 12px; }
         .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 14px; line-height: 1.4; position: relative; }
         .message.user { align-self: flex-end; background: var(--accent-color); color: white; }
         .message.ai { align-self: flex-start; background: #222; border: 1px solid #444; }
-
         .msg-actions { display: flex; gap: 5px; margin-top: 8px; border-top: 1px solid #333; padding-top: 5px; }
         .mini-btn { padding: 6px 10px; font-size: 11px; background: #333; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-
-        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--accent-grad); color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 1000; box-shadow: 0 5px 15px rgba(255,0,85,0.3); }
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--accent-grad); color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 1000; }
         #toast.show { opacity: 1; bottom: 50px; }
-
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; }
     </style>
@@ -61,20 +49,17 @@
         <img src="1768422265866.jpg" class="banner-img">
         <h1><a href="https://youtube.com/@blip_blip?si=A5X-r6r16M9vYc_P" target="_blank">ОТ ИГРУШКИ ДО ФУРЫ</a></h1>
     </div>
-
     <div class="global-controls">
         <select id="model-select"></select>
         <button class="compact-btn" onclick="downloadAll()">📥 ВСЁ</button>
         <button class="compact-btn" onclick="clearBoard()">🗑️</button>
     </div>
-
     <div class="tabs">
         <button id="btn-tab-art" class="tab-btn active" onclick="switchMainTab('art')">🎨 ДОСКА</button>
         <button id="btn-tab-chat" class="tab-btn" onclick="switchMainTab('chat')">💬 ЧАТ</button>
     </div>
-
     <div id="tab-art" class="tab-content active">
-        <textarea id="prompt-input" placeholder="Опиши машину..."></textarea>
+        <textarea id="prompt-input" placeholder="Опиши машину (переведу сам)..."></textarea>
         <div style="display:flex; justify-content: space-between; margin-top: 8px;">
             <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="width: 48%;">🎤 ГОЛОС</button>
             <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 48%;">ОЧИСТИТЬ ❌</button>
@@ -85,7 +70,6 @@
         </button>
         <div id="image-container"></div>
     </div>
-
     <div id="tab-chat" class="tab-content">
         <div id="chat-container"></div>
         <div style="display:flex; gap:5px;">
@@ -97,37 +81,26 @@
 </div>
 
 <script>
-    const imageModels = `
-        <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
-        <option value="dalle-3">🦊 АРТ (DALL-E 3)</option>
-        <option value="flux-realism">📸 ФОТО (Realism)</option>
-    `;
+    const imageModels = `<option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option><option value="dalle-3">🦊 АРТ (DALL-E 3)</option><option value="flux-realism">📸 ФОТО (Realism)</option>`;
+    const textModels = `<option value="openai">🤖 GPT-4o (Умный)</option><option value="gemini">♊ Gemini (Быстрый)</option><option value="claude">🎭 Claude (Творческий)</option>`;
 
-    const textModels = `
-        <option value="openai">🤖 GPT-4o (Умный)</option>
-        <option value="gemini">♊ Gemini (Быстрый)</option>
-        <option value="claude">🎭 Claude (Творческий)</option>
-    `;
-
-    function updateModels(tab) {
-        const select = document.getElementById('model-select');
-        select.innerHTML = tab === 'art' ? imageModels : textModels;
-    }
-
-    // Инициализация моделей при загрузке
+    function updateModels(tab) { document.getElementById('model-select').innerHTML = tab === 'art' ? imageModels : textModels; }
     updateModels('art');
-
-    function showToast() {
-        const t = document.getElementById('toast');
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2000);
-    }
 
     function switchMainTab(tab) {
         document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
         document.getElementById(`btn-tab-${tab}`).classList.add('active');
         document.getElementById(`tab-${tab}`).classList.add('active');
-        updateModels(tab); // МЕНЯЕМ МОДЕЛИ ПРИ КЛИКЕ
+        updateModels(tab);
+    }
+
+    async function translateText(text) {
+        if (!/[а-яА-Я]/.test(text)) return text;
+        try {
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`);
+            const data = await res.json();
+            return data[0][0][0];
+        } catch (e) { return text; }
     }
 
     function speak(text) {
@@ -136,19 +109,10 @@
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = 'ru-RU';
         utterance.rate = 1.3;
-        utterance.pitch = 0.85; 
         const voices = window.speechSynthesis.getVoices();
         const male = voices.find(v => v.lang.includes('ru') && (v.name.includes('Male') || v.name.includes('Dmitry')));
         if (male) utterance.voice = male;
         window.speechSynthesis.speak(utterance);
-    }
-
-    async function translateText(text) {
-        try {
-            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`);
-            const data = await res.json();
-            return data[0][0][0];
-        } catch (e) { return text; }
     }
 
     function runVoice(mode) {
@@ -162,7 +126,9 @@
         recognition.onresult = async (event) => {
             const result = event.results[0][0].transcript;
             if (mode === 'art') {
-                document.getElementById('prompt-input').value = result;
+                document.getElementById('prompt-input').value = "Перевожу...";
+                const translated = await translateText(result);
+                document.getElementById('prompt-input').value = translated;
                 generateImage();
             } else {
                 document.getElementById('chat-input').value = result;
@@ -177,9 +143,12 @@
         let prompt = inputEl.value;
         const model = document.getElementById('model-select').value;
         const btn = document.getElementById('gen-btn');
-        if (!prompt) return;
+        if (!prompt || prompt === "Перевожу...") return;
         btn.classList.add('loading'); btn.disabled = true;
-        if (/[а-яА-Я]/.test(prompt)) prompt = await translateText(prompt);
+        
+        prompt = await translateText(prompt);
+        inputEl.value = prompt;
+
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*9999)}&nologo=true`;
         const img = new Image(); img.src = url;
         img.onload = () => {
@@ -209,10 +178,7 @@
             aiMsg.innerHTML = marked.parse(text);
             const actions = document.createElement('div');
             actions.className = 'msg-actions';
-            actions.innerHTML = `
-                <button class="mini-btn" onclick="speak(\`${text.replace(/`/g, "\\`").replace(/'/g, "\\'")}\`)">🔊 ПОВТОР</button>
-                <button class="mini-btn" onclick="navigator.clipboard.writeText(\`${text.replace(/`/g, "\\`").replace(/'/g, "\\'")}\`); showToast();">📋 КОПИРОВАТЬ</button>
-            `;
+            actions.innerHTML = `<button class="mini-btn" onclick="speak(\`${text.replace(/`/g, "\\`").replace(/'/g, "\\'")}\`)">🔊 ПОВТОР</button><button class="mini-btn" onclick="navigator.clipboard.writeText(\`${text.replace(/`/g, "\\`").replace(/'/g, "\\'")}\`); document.getElementById('toast').classList.add('show'); setTimeout(()=>document.getElementById('toast').classList.remove('show'),2000);">📋 КОПИРОВАТЬ</button>`;
             aiMsg.appendChild(actions);
             box.appendChild(aiMsg);
             box.scrollTop = box.scrollHeight;
