@@ -13,9 +13,30 @@
         
         .container { max-width: 500px; margin: 0 auto; background: var(--card); padding: 12px; border-radius: 20px; border: 1px solid #333; min-height: 95vh; display: flex; flex-direction: column; }
         
-        .header { text-align: center; }
-        /* Исправленный стиль для баннера */
-        .banner-img { width: 100%; border-radius: 15px; border: 1px solid var(--accent); height: 160px; object-fit: cover; background: #000; }
+        .header { text-align: center; position: relative; }
+        
+        /* Стили для картинки с поддержкой увеличения */
+        .banner-img { 
+            width: 100%; 
+            border-radius: 15px; 
+            border: 1px solid var(--accent); 
+            height: 160px; 
+            object-fit: cover; 
+            background: #000; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            cursor: zoom-in;
+            z-index: 10;
+        }
+
+        /* Класс, который будет добавляться при клике */
+        .banner-img.zoomed {
+            height: 350px; /* Увеличиваем высоту */
+            object-fit: contain; /* Чтобы картинка была видна полностью */
+            cursor: zoom-out;
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(255, 0, 85, 0.3);
+        }
+
         .main-title { color: var(--accent); font-weight: 900; font-size: 20px; margin: 15px 0; display: block; text-transform: uppercase; }
 
         .tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #000; padding: 5px; border-radius: 15px; }
@@ -53,7 +74,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <img src="1768422265866.jpg" class="banner-img" alt="Banner">
+        <img src="1768422265866.jpg" id="main-banner" class="banner-img" alt="Banner" onclick="toggleZoom()">
         <div class="main-title">ОТ ИГРУШКИ ДО ФУРЫ</div>
     </div>
     
@@ -94,6 +115,12 @@
 </div>
 
 <script>
+    // Функция для увеличения картинки
+    function toggleZoom() {
+        const img = document.getElementById('main-banner');
+        img.classList.toggle('zoomed');
+    }
+
     function tab(t){
         document.querySelectorAll('.tab-btn, .content').forEach(e=>e.classList.remove('active'));
         document.getElementById('b-'+t).classList.add('active');
@@ -138,7 +165,7 @@
         
         const wrap = document.createElement('div');
         wrap.className = 'img-wrap';
-        wrap.innerHTML = `<img src="${url}" class="gen-img"><a href="${url}" download="art_${seed}.jpg" target="_blank" class="dl-btn">📥 СКАЧАТЬ</a>`;
+        wrap.innerHTML = `<img src="${url}" class="gen-img" onclick="this.classList.toggle('zoomed-gallery')"><a href="${url}" download="art_${seed}.jpg" target="_blank" class="dl-btn">📥 СКАЧАТЬ</a>`;
         
         document.getElementById('imgs').prepend(wrap);
         btn.disabled=false; btn.innerText="🚀 СОЗДАТЬ КАРТИНКУ";
