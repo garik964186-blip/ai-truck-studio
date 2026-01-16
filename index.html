@@ -12,11 +12,11 @@
         
         .container { max-width: 500px; margin: 0 auto; background: var(--card); padding: 12px; border-radius: 20px; border: 1px solid #333; min-height: 95vh; display: flex; flex-direction: column; }
         
-        /* Обложка с твоего GitHub */
+        .header { text-align: center; margin-bottom: 10px; }
         .banner-wrap { width: 100%; height: 140px; border-radius: 15px; overflow: hidden; border: 1px solid var(--accent); background: #000; }
         .banner-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         
-        .main-title { color: var(--accent); font-weight: 900; font-size: 20px; margin: 15px 0; text-align: center; text-transform: uppercase; }
+        .main-title { color: var(--accent); font-weight: 900; font-size: 20px; margin: 15px 0; text-transform: uppercase; }
 
         .tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #000; padding: 5px; border-radius: 15px; }
         .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: #666; font-weight: bold; cursor: pointer; border-radius: 10px; }
@@ -29,18 +29,20 @@
         textarea, .field { flex: 1; background: none; border: none; color: white; font-size: 16px; resize: none; }
         
         #chat-box { flex-grow: 1; height: 380px; overflow-y: auto; background: #08080a; border-radius: 15px; padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 15px; border: 1px solid #222; }
-        .msg { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; word-wrap: break-word; cursor: pointer; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; word-wrap: break-word; cursor: pointer; position: relative; }
         .msg.u { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
         .msg.a { align-self: flex-start; background: #2a2a2e; border: 1px solid #38383d; border-bottom-left-radius: 4px; width: 95%; }
 
-        .mic { width: 48px; height: 48px; border-radius: 12px; border: none; background: #333; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
-        .mic.active { background: var(--accent); animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .mic { width: 48px; height: 48px; border-radius: 12px; border: none; background: #333; color: white; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .mic.active { background: var(--accent); animation: flash 1s infinite; }
+        @keyframes flash { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
         #menu { display: none; position: fixed; background: #25252b; border: 1px solid #444; border-radius: 12px; z-index: 9999; min-width: 190px; }
         .menu-item { padding: 15px; color: white; font-size: 14px; border-bottom: 1px solid #333; cursor: pointer; }
 
         .gen-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #ff0055, #ff5500); border: none; border-radius: 15px; color: white; font-weight: 900; cursor: pointer; }
+        #imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .img-wrap { border-radius: 14px; overflow: hidden; border: 1px solid #333; }
     </style>
 </head>
 <body oncontextmenu="return false;" onclick="hideMenu()">
@@ -48,7 +50,7 @@
 <div class="container">
     <div class="header">
         <div class="banner-wrap">
-            <img src="1000130841.jpg" class="banner-img" alt="ОТ ИГРУШКИ ДО ФУРЫ">
+            <img src="./1000130841.jpg" class="banner-img" onerror="this.src='https://i.postimg.cc/mD9t7mS3/1000130841.jpg'">
         </div>
         <div class="main-title">ОТ ИГРУШКИ ДО ФУРЫ</div>
     </div>
@@ -71,7 +73,7 @@
         <div id="chat-box"></div>
         <div class="input-box">
             <button id="mic-chat" class="mic" onclick="voice('chat')">🎤</button>
-            <input id="i-chat" class="field" type="text" placeholder="Спроси..." onkeypress="if(event.key==='Enter') send()">
+            <input id="i-chat" class="field" type="text" placeholder="Задай вопрос..." onkeypress="if(event.key==='Enter') send()">
             <button onclick="send()" class="mic" style="background:var(--accent)">➤</button>
         </div>
     </div>
@@ -92,8 +94,11 @@
 
     function stopAudio() { window.speechSynthesis.cancel(); }
 
-    function setupInteraction(el, type, data) {
-        el.onclick = () => { if(type === 'chat') stopAudio(); };
+    function setupEvents(el, type, data) {
+        el.onclick = (e) => { 
+            e.stopPropagation();
+            if(type === 'chat') stopAudio(); 
+        };
         el.oncontextmenu = (e) => { e.preventDefault(); showMenu(e, type, data); };
         el.ontouchstart = (e) => { pressTimer = setTimeout(() => showMenu(e.touches[0], type, data), 700); };
         el.ontouchend = () => clearTimeout(pressTimer);
@@ -103,9 +108,9 @@
         currentData = data;
         const m = document.getElementById('menu');
         m.innerHTML = type === 'chat' ? 
-            `<div class="menu-item" onclick="copyD()">📋 Скопировать</div>
-             <div class="menu-item" onclick="speak(currentData)">🔊 Повторить</div>` :
-            `<div class="menu-item" onclick="window.open(currentData, '_blank')">📥 Открыть оригинал</div>`;
+            `<div class="menu-item" onclick="copyD()">📋 Копировать текст</div>
+             <div class="menu-item" onclick="speak(currentData)">🔊 Повторить звук</div>` :
+            `<div class="menu-item" onclick="window.open(currentData, '_blank')">📥 Скачать оригинал</div>`;
         m.style.display = 'block';
         m.style.left = Math.min(e.pageX, window.innerWidth - 200) + 'px';
         m.style.top = Math.min(e.pageY, window.innerHeight - 150) + 'px';
@@ -120,33 +125,30 @@
         u.lang = 'ru-RU'; window.speechSynthesis.speak(u);
     }
 
-    // Голос с принудительным запросом прав
-    async function voice(m){
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const rec = new SR();
-            rec.lang = 'ru-RU';
-            const btn = document.getElementById('mic-'+m);
-            
-            rec.onstart = () => btn.classList.add('active');
-            rec.onend = () => { btn.classList.remove('active'); stream.getTracks().forEach(t => t.stop()); };
-            rec.onresult = (e) => {
-                const v = e.results[0][0].transcript;
-                if(m === 'art') { document.getElementById('i-art').value = v; make(); }
-                else { document.getElementById('i-chat').value = v; send(); }
-            };
-            rec.start();
-        } catch(e) { alert("Босс, дай разрешение на микрофон в браузере!"); }
+    function voice(m){
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if(!SR) return alert("Голос не поддерживается");
+        const rec = new SR();
+        rec.lang = 'ru-RU';
+        const btn = document.getElementById('mic-'+m);
+        
+        rec.onstart = () => btn.classList.add('active');
+        rec.onend = () => btn.classList.remove('active');
+        rec.onresult = (e) => {
+            const v = e.results[0][0].transcript;
+            if(m === 'art') { document.getElementById('i-art').value = v; make(); }
+            else { document.getElementById('i-chat').value = v; send(); }
+        };
+        rec.start();
     }
 
     async function make(){
         const inp = document.getElementById('i-art'); if(!inp.value) return;
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(inp.value)}?nologo=true`;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(inp.value)}?nologo=true&seed=${Math.random()}`;
         const wrap = document.createElement('div');
         wrap.className = 'img-wrap';
-        wrap.innerHTML = `<img src="${url}" style="width:100%">`;
-        setupInteraction(wrap, 'img', url);
+        wrap.innerHTML = `<img src="${url}" style="width:100%; display:block;">`;
+        setupEvents(wrap, 'img', url);
         document.getElementById('imgs').prepend(wrap);
         inp.value = '';
     }
@@ -159,15 +161,17 @@
         
         let res;
         if (m.toLowerCase().includes("нарисуй")) {
-            res = "```\n  _  _\n / \\/ \\\n \\    /\n  \\  /\n   \\/\n```\n(Это плоский 2D арт)"; 
+            res = "```\n /\\_/\\ \n( o.o )\n > ^ < \n```\n(2D Арт готов)";
         } else {
-            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(m)}`);
-            res = await r.text();
+            try {
+                const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(m)}`);
+                res = await r.text();
+            } catch(e) { res = "Сбой сети."; }
         }
         
         const ai = document.createElement('div'); ai.className = 'msg a';
         ai.innerHTML = marked.parse(res);
-        setupInteraction(ai, 'chat', res);
+        setupEvents(ai, 'chat', res);
         box.appendChild(ai); box.scrollTop = box.scrollHeight; speak(res);
     }
 </script>
