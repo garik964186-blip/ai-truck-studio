@@ -40,22 +40,24 @@
         .loading .truck-animation { display: block; animation: drive 2s linear infinite; }
 
         #chat-container { height: 350px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #222; display: flex; flex-direction: column; gap: 12px; }
-        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 14px; line-height: 1.4; position: relative; cursor: pointer; }
+        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 14px; line-height: 1.4; position: relative; }
         .message.user { align-self: flex-end; background: var(--accent-color); color: white; }
         .message.ai { align-self: flex-start; background: #222; border: 1px solid #444; }
 
         .msg-actions { display: flex; gap: 5px; margin-top: 8px; border-top: 1px solid #333; padding-top: 5px; }
-        .mini-btn { padding: 4px 8px; font-size: 10px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .mini-btn { padding: 6px 10px; font-size: 11px; background: #333; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        .mini-btn:hover { background: var(--accent-color); }
 
-        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--accent-grad); color: white; padding: 10px 20px; border-radius: 20px; font-size: 12px; font-weight: bold; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 1000; }
+        /* Уведомление вместо alert */
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--accent-grad); color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 1000; box-shadow: 0 5px 15px rgba(255,0,85,0.3); }
         #toast.show { opacity: 1; bottom: 50px; }
 
         #image-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; }
+        .generated-img { width: 100%; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
     </style>
 </head>
 <body>
-<div id="toast">Текст скопирован, Босс! 📋</div>
+<div id="toast">ТЕКСТ СКОПИРОВАН, БОСС! 📋</div>
 <div class="container">
     <div class="header">
         <img src="1768422265866.jpg" class="banner-img">
@@ -65,8 +67,8 @@
     <div class="global-controls">
         <select id="model-select">
             <option value="flux-pro">🚛 ФУРЫ (Flux Pro)</option>
-            <option value="openai">🤖 УМНЫЙ ЧАТ (GPT-4o)</option>
             <option value="dalle-3">🦊 АРТ (DALL-E 3)</option>
+            <option value="flux-realism">📸 ФОТО (Realism)</option>
         </select>
         <button class="compact-btn" onclick="downloadAll()">📥 ВСЁ</button>
         <button class="compact-btn" onclick="clearBoard()">🗑️</button>
@@ -78,7 +80,7 @@
     </div>
 
     <div id="tab-art" class="tab-content active">
-        <textarea id="prompt-input" placeholder="Опиши машину или надиктуй..."></textarea>
+        <textarea id="prompt-input" placeholder="Напиши на русском..."></textarea>
         <div style="display:flex; justify-content: space-between; margin-top: 8px;">
             <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="width: 48%;">🎤 ГОЛОС</button>
             <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 48%;">ОЧИСТИТЬ ❌</button>
@@ -136,7 +138,7 @@
 
     function runVoice(mode) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return alert("Голос не поддерживается.");
+        if (!SpeechRecognition) return;
         const recognition = new SpeechRecognition();
         recognition.lang = 'ru-RU';
         const btn = mode === 'art' ? document.getElementById('voice-art-btn') : document.getElementById('voice-chat-btn');
@@ -145,9 +147,7 @@
         recognition.onresult = async (event) => {
             const result = event.results[0][0].transcript;
             if (mode === 'art') {
-                document.getElementById('prompt-input').value = "Перевожу...";
-                const translated = await translateText(result);
-                document.getElementById('prompt-input').value = translated;
+                document.getElementById('prompt-input').value = result;
                 generateImage();
             } else {
                 document.getElementById('chat-input').value = result;
@@ -165,9 +165,8 @@
         if (!prompt || prompt === "Перевожу...") return;
         btn.classList.add('loading'); btn.disabled = true;
         if (/[а-яА-Я]/.test(prompt)) {
-            inputEl.value = "Перевожу...";
-            prompt = await translateText(prompt);
-            inputEl.value = prompt;
+            const translated = await translateText(prompt);
+            prompt = translated;
         }
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.floor(Math.random()*9999)}&nologo=true`;
         const img = new Image(); img.src = url;
@@ -184,35 +183,37 @@
     async function sendMessage() {
         const input = document.getElementById('chat-input');
         const box = document.getElementById('chat-container');
-        const model = document.getElementById('model-select').value;
         if(!input.value) return;
         const msg = input.value;
         box.innerHTML += `<div class="message user">${msg}</div>`;
         input.value = '';
         box.scrollTop = box.scrollHeight;
+        
         try {
-            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=${model}`);
+            // Для чата всегда используем openai или search
+            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}?model=openai`);
             const text = await r.text();
+            
             const aiMsg = document.createElement('div');
             aiMsg.className = 'message ai';
             aiMsg.innerHTML = marked.parse(text);
-            aiMsg.onclick = () => {
-                if(aiMsg.querySelector('.msg-actions')) return;
-                const actions = document.createElement('div');
-                actions.className = 'msg-actions';
-                actions.innerHTML = `
-                    <button class="mini-btn" onclick="speak(\`${text.replace(/`/g, "\\`")}\`); event.stopPropagation();">🔊 ПОВТОР</button>
-                    <button class="mini-btn" onclick="navigator.clipboard.writeText(\`${text.replace(/`/g, "\\`")}\`); showToast(); event.stopPropagation();">📋 КОПИРОВАТЬ</button>
-                `;
-                aiMsg.appendChild(actions);
-            };
+            
+            const actions = document.createElement('div');
+            actions.className = 'msg-actions';
+            actions.innerHTML = `
+                <button class="mini-btn" onclick="speak(\`${text.replace(/`/g, "\\`").replace(/'/g, "\\'")}\`)">🔊 ПОВТОР</button>
+                <button class="mini-btn" onclick="navigator.clipboard.writeText(\`${text.replace(/`/g, "\\`").replace(/'/g, "\\'")}\`); showToast();">📋 КОПИРОВАТЬ</button>
+            `;
+            aiMsg.appendChild(actions);
             box.appendChild(aiMsg);
             box.scrollTop = box.scrollHeight;
             speak(text);
-        } catch(e) { box.innerHTML += `<div class="message ai">Ошибка связи.</div>`; }
+        } catch(e) { 
+            box.innerHTML += `<div class="message ai">Ошибка связи. Попробуй еще раз.</div>`; 
+        }
     }
 
-    function clearBoard() { if(confirm("Очистить?")) document.getElementById('image-container').innerHTML = ''; }
+    function clearBoard() { if(confirm("Очистить все картинки?")) document.getElementById('image-container').innerHTML = ''; }
     function downloadAll() {
         document.querySelectorAll('.generated-img').forEach((img, i) => {
             const a = document.createElement('a'); a.href = img.src; a.download = `art_${i}.jpg`;
