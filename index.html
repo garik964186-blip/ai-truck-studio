@@ -16,11 +16,18 @@
         
         .header { text-align: center; margin-bottom: 10px; }
         .banner-img { width: 100%; height: 100px; border-radius: 8px; border: 1px solid var(--accent-color); object-fit: cover; margin-bottom: 8px; }
-        h1 a { font-weight: 900; text-transform: uppercase; background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-size: 20px; }
+        
+        h1 { margin: 0; line-height: 1.2; }
+        h1 a { 
+            font-weight: 900; text-transform: uppercase; background: var(--accent-grad); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+            text-decoration: none; font-size: 22px; transition: 0.3s;
+        }
+        h1 a:hover { filter: brightness(1.2); }
 
-        .global-controls { display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 8px; margin-bottom: 15px; background: #000; padding: 8px; border-radius: 10px; }
+        .global-controls { display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 8px; margin-bottom: 15px; background: #000; padding: 8px; border-radius: 10px; border: 1px solid #222; }
 
-        .tabs { display: flex; background: #000; padding: 3px; border-radius: 10px; margin-bottom: 15px; }
+        .tabs { display: flex; background: #000; padding: 3px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #222; }
         .tab-btn { flex: 1; padding: 10px; background: transparent; border: none; color: #777; font-weight: bold; cursor: pointer; font-size: 13px; }
         .tab-btn.active { background: var(--accent-grad); color: white; border-radius: 7px; }
 
@@ -31,17 +38,19 @@
         
         textarea, .chat-input-field { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; resize: none; font-size: 14px; }
         
-        .voice-btn-active { background: #ff0000 !important; animation: mic-pulse 1.5s infinite; color: white !important; }
-        @keyframes mic-pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
+        .voice-btn-active { background: #ff0000 !important; animation: pulse 1.5s infinite; color: white !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } }
 
         .action-btn { width: 100%; padding: 12px; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; background: var(--accent-grad); position: relative; overflow: hidden; margin-top: 10px; }
+        
+        /* Исправленная фура: едет кабиной вправо */
         .truck-animation { position: absolute; left: -100px; top: 50%; transform: translateY(-50%) scaleX(-1); font-size: 24px; display: none; }
         @keyframes drive { 0% { left: -100px; } 100% { left: 110%; } }
         .loading .truck-animation { display: block; animation: drive 2s linear infinite; }
         .loading .btn-text { display: none; }
 
         #chat-container { height: 300px; overflow-y: auto; background: #0b0b0e; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #222; display: flex; flex-direction: column; gap: 10px; }
-        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 13px; }
+        .message { max-width: 85%; padding: 10px; border-radius: 10px; font-size: 13px; line-height: 1.4; }
         .message.user { align-self: flex-end; background: var(--accent-color); color: white; }
         .message.ai { align-self: flex-start; background: #222; border: 1px solid #333; }
 
@@ -72,7 +81,7 @@
     </div>
 
     <div id="tab-art" class="tab-content active">
-        <textarea id="prompt-input" placeholder="Нажми 'Голос' и говори..."></textarea>
+        <textarea id="prompt-input" placeholder="Надиктуй запрос..."></textarea>
         <div style="display:flex; justify-content: space-between; margin-top: 8px;">
             <button id="voice-art-btn" class="compact-btn" onclick="runVoice('art')" style="width: 48%;">🎤 ГОЛОС</button>
             <button class="compact-btn" onclick="document.getElementById('prompt-input').value = ''" style="width: 48%;">ОЧИСТИТЬ ❌</button>
@@ -99,58 +108,53 @@
         document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
         document.getElementById(`btn-tab-${tab}`).classList.add('active');
         document.getElementById(`tab-${tab}`).classList.add('active');
-        if(tab !== 'chat') window.speechSynthesis.cancel(); // Остановить речь при уходе из чата
+        if(tab !== 'chat') window.speechSynthesis.cancel();
     }
 
-    // СИНТЕЗ РЕЧИ (ОТВЕТ ГОЛОСОМ)
+    // БОДРАЯ ОЗВУЧКА
     function speak(text) {
-        // Очищаем текст от Markdown-символов (*, #, `)
-        const cleanText = text.replace(/[*#`_]/g, '');
+        window.speechSynthesis.cancel();
+        const cleanText = text.replace(/[*#`_]/g, '').trim();
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = 'ru-RU';
+        utterance.rate = 1.3; // Ускоренный темп для живости
         
-        // Пытаемся найти более качественный русский голос
         const voices = window.speechSynthesis.getVoices();
-        const ruVoice = voices.find(v => v.lang.includes('ru'));
-        if (ruVoice) utterance.voice = ruVoice;
+        const bestVoice = voices.find(v => v.lang.includes('ru') && v.name.includes('Google')) || voices.find(v => v.lang.includes('ru'));
+        if (bestVoice) utterance.voice = bestVoice;
 
         window.speechSynthesis.speak(utterance);
     }
 
+    // УНИВЕРСАЛЬНЫЙ ГОЛОСОВОЙ ВВОД
     function runVoice(mode) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Босс, браузер не поддерживает голос.");
-            return;
-        }
+        if (!SpeechRecognition) return alert("Браузер не поддерживает голос.");
 
         const recognition = new SpeechRecognition();
         recognition.lang = 'ru-RU';
         const btn = mode === 'art' ? document.getElementById('voice-art-btn') : document.getElementById('voice-chat-btn');
 
-        recognition.onstart = () => {
-            btn.classList.add('voice-btn-active');
-            window.speechSynthesis.cancel(); // Прерываем старую речь, если начали говорить сами
-        };
+        recognition.onstart = () => { btn.classList.add('voice-btn-active'); window.speechSynthesis.cancel(); };
         recognition.onend = () => btn.classList.remove('voice-btn-active');
 
         recognition.onresult = async (event) => {
-            const text = event.results[0][0].transcript;
+            const result = event.results[0][0].transcript;
             if (mode === 'art') {
                 document.getElementById('prompt-input').value = "Перевожу...";
-                const translated = await translateText(text);
+                const translated = await translateText(result);
                 document.getElementById('prompt-input').value = translated;
-                generateImage();
+                generateImage(); // АВТО-СТАРТ ГЕНЕРАЦИИ
             } else {
-                document.getElementById('chat-input').value = text;
-                sendMessage();
+                document.getElementById('chat-input').value = result;
+                sendMessage(); // АВТО-ОТПРАВКА В ЧАТ
             }
         };
         recognition.start();
     }
 
     async function translateText(text) {
-        let cleanText = text.replace(/(сгенерируй|нарисуй|создай|покажи|плиз|слушай)/gi, '').trim();
+        const cleanText = text.replace(/(сгенерируй|нарисуй|создай|покажи|плиз|слушай)/gi, '').trim();
         try {
             const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t&q=${encodeURIComponent(cleanText)}`);
             const data = await res.json();
@@ -165,7 +169,7 @@
         if (!prompt || prompt === "Перевожу...") return;
         
         btn.classList.add('loading'); btn.disabled = true;
-        const seed = Math.floor(Math.random() * 1000000);
+        const seed = Math.floor(Math.random() * 9999999); // РАНДОМНЫЙ СИД
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${seed}&nologo=true&width=1024&height=1024`;
         
         const img = new Image();
@@ -178,6 +182,7 @@
             container.prepend(newImg);
             btn.classList.remove('loading'); btn.disabled = false;
         };
+        img.onerror = () => { btn.classList.remove('loading'); btn.disabled = false; };
     }
 
     async function sendMessage() {
@@ -194,16 +199,11 @@
             const text = await r.text();
             box.innerHTML += `<div class="message ai">${marked.parse(text)}</div>`;
             box.scrollTop = box.scrollHeight;
-            
-            // ОЗВУЧКА ОТВЕТА
-            speak(text);
-            
-        } catch(e) { 
-            box.innerHTML += `<div class="message ai">Ошибка связи.</div>`; 
-        }
+            speak(text); // ОТВЕТ ГОЛОСОМ
+        } catch(e) { box.innerHTML += `<div class="message ai">Ошибка связи.</div>`; }
     }
 
-    function clearBoard() { if(confirm("Очистить доску?")) document.getElementById('image-container').innerHTML = ''; }
+    function clearBoard() { if(confirm("Очистить?")) document.getElementById('image-container').innerHTML = ''; }
     
     function downloadAll() {
         document.querySelectorAll('.generated-img').forEach((img, i) => {
@@ -211,8 +211,6 @@
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
         });
     }
-
-    // Предзагрузка голосов для мобилок
     window.speechSynthesis.getVoices();
 </script>
 </body>
