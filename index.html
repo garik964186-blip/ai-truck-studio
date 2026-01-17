@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ULTRA — FULL POWER</title>
+    <title>ULTRA — LIVE COVER</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        :root { --paper: #f4e4bc; --ink: #2c241a; --accent: #8b0000; }
+        :root { --paper: #f4e4bc; --ink: #2c241a; --accent: #8b0000; --gold: #d4af37; }
         body, html { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         
         .viewport { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; perspective: 2500px; }
@@ -20,27 +20,42 @@
         .back { transform: rotateY(180deg); background: #e8d5a7; box-shadow: inset 20px 0 40px rgba(0,0,0,0.2); }
         .flipped { transform: rotateY(-170deg) skewY(-1deg); }
 
-        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; }
-        .ai-selector { width: 90%; background: #fff9e6; border: 1px solid var(--ink); padding: 8px; border-radius: 5px; font-weight: bold; }
-        
-        .scroll-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; touch-action: pan-y; }
-        
-        /* КНОПКА МИКРОФОНА */
-        .mic-btn { background: #eee; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; color: #555; transition: 0.3s; }
+        /* ОБЛОЖКА С ВИДЕО */
+        .cover-front { 
+            background: #2a0000; 
+            border: 8px double var(--gold); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start;
+            padding-top: 20px;
+        }
+        .video-container {
+            width: 85%;
+            height: 60%;
+            margin-top: 20px;
+            border: 3px solid var(--gold);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background: #000;
+            overflow: hidden;
+            position: relative;
+        }
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .cover-title { color: var(--gold); margin-top: 20px; text-align: center; text-shadow: 2px 2px 4px #000; }
+
+        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .input-bar { padding: 10px; background: rgba(0,0,0,0.05); display: flex; gap: 8px; align-items: center; }
+        .field { flex: 1; background: #fff; border: 1px solid #ccc; padding: 12px; border-radius: 25px; outline: none; }
+        .mic-btn { background: #eee; border-radius: 50%; width: 45px; height: 45px; border: none; cursor: pointer; }
         .mic-active { color: var(--accent); box-shadow: 0 0 10px var(--accent); }
 
-        .input-bar { padding: 10px; background: rgba(0,0,0,0.05); display: flex; gap: 8px; border-top: 1px solid rgba(0,0,0,0.1); align-items: center; }
-        .field { flex: 1; background: #fff; border: 1px solid #ccc; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; }
-
-        /* АЛЬБОМ И ФОТО */
-        .photo-frame { background: white; padding: 8px 8px 25px 8px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); cursor: zoom-in; }
-        .photo-frame img { width: 100%; border-radius: 2px; }
-
-        /* МОДАЛЬНОЕ ОКНО ДЛЯ ПРОСМОТРА */
-        #viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
-        #viewer img { max-width: 95%; max-height: 95%; border: 3px solid white; box-shadow: 0 0 30px rgba(255,255,255,0.2); }
-
-        .cover-front { background: linear-gradient(135deg, #4b0000 0%, #2a0000 100%); color: #d4af37; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border: 8px double #d4af37; }
+        #viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; }
+        #v-img { position: absolute; max-width: 90%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
     </style>
 </head>
 <body>
@@ -50,20 +65,11 @@
         
         <div class="page" id="p3" style="z-index: 1;">
             <div class="front paper-sheet">
-                <div class="header">
-                    <select id="model-select" class="ai-selector">
-                        <option value="openai">🔮 GPT-4o (Мудрец)</option>
-                        <option value="mistral">🌪️ Mistral (Быстрый)</option>
-                        <option value="searchgpt">🔍 Search (Поиск)</option>
-                    </select>
-                </div>
-                <div id="hub-box" class="scroll-area">
-                    <div class="msg"><b>Система:</b> Микрофон включен. Можете диктовать или писать.</div>
-                </div>
+                <div class="header">МАГИЧЕСКИЙ ЧАТ</div>
+                <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
-                    <button onclick="startMic('i-hub')" class="mic-btn" id="mic-hub"><i class="fas fa-microphone"></i></button>
-                    <input type="text" id="i-hub" class="field" placeholder="Ваш вопрос..." onkeypress="if(event.key==='Enter') sendHubMessage()">
-                    <button onclick="sendHubMessage()" style="color:var(--accent); border:none; background:none; font-size:22px;"><i class="fas fa-paper-plane"></i></button>
+                    <button onclick="startMic('i-hub', sendHubMessage)" class="mic-btn"><i class="fas fa-microphone"></i></button>
+                    <input type="text" id="i-hub" class="field" placeholder="Спроси...">
                 </div>
             </div>
             <div class="back"></div>
@@ -71,12 +77,11 @@
 
         <div class="page" id="p2" style="z-index: 2;">
             <div class="front paper-sheet">
-                <div class="header">📜 АЛЬБОМ ЭСКИЗОВ</div>
+                <div class="header">ЭСКИЗЫ</div>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
-                    <button onclick="startMic('i-art')" class="mic-btn" id="mic-art"><i class="fas fa-microphone"></i></button>
-                    <input type="text" id="i-art" class="field" placeholder="Что нарисовать?">
-                    <button onclick="genArt()" style="background:var(--accent); color:white; border:none; padding:10px 15px; border-radius:20px;"><i class="fas fa-magic"></i></button>
+                    <button onclick="startMic('i-art', genArt)" class="mic-btn"><i class="fas fa-microphone"></i></button>
+                    <input type="text" id="i-art" class="field" placeholder="Нарисуй...">
                 </div>
             </div>
             <div class="back"></div>
@@ -84,10 +89,16 @@
 
         <div class="page" id="p1" style="z-index: 3;">
             <div class="front cover-front">
-                <i class="fas fa-bolt" style="font-size: 60px; margin-bottom: 20px;"></i>
-                <h1 style="margin:0;">ULTRA AI</h1>
-                <p>ГОЛОС И ГРАФИКА</p>
-                <div style="margin-top: 40px; font-style: italic;">Листните...</div>
+                <div class="video-container">
+                    <video autoplay loop muted playsinline>
+                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="cover-title">
+                    <h1 style="margin:5px 0;">ULTRA</h1>
+                    <p style="font-style:italic;">КНИГА БОССА</p>
+                    <div style="margin-top:20px; font-size:12px; opacity:0.7;">Листни для входа...</div>
+                </div>
             </div>
             <div class="back"></div>
         </div>
@@ -95,66 +106,53 @@
     </div>
 </div>
 
-<div id="viewer" onclick="this.style.display='none'">
-    <img id="v-img" src="">
-</div>
+<div id="viewer" onclick="this.style.display='none'"><img id="v-img" src=""></div>
 
 <script>
     let startX = 0, currentStep = 1;
 
-    // ЛОГИКА СВАЙПА
     document.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
     document.addEventListener('touchend', e => {
         let diff = startX - e.changedTouches[0].clientX;
-        if (Math.abs(diff) > 60) {
+        if (Math.abs(diff) > 70) {
             if (diff > 0 && currentStep < 3) { document.getElementById('p' + currentStep).classList.add('flipped'); currentStep++; }
             else if (diff < 0 && currentStep > 1) { currentStep--; document.getElementById('p' + currentStep).classList.remove('flipped'); }
         }
     });
 
-    // ГОЛОСОВОЙ ВВОД (Микрофон)
-    function startMic(targetId) {
+    function startMic(targetId, callback) {
         const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Speech) return alert("Микрофон не поддерживается в этом браузере.");
+        if (!Speech) return;
         const rec = new Speech();
         rec.lang = 'ru-RU';
-        rec.onstart = () => document.querySelectorAll('.mic-btn').forEach(b => b.classList.add('mic-active'));
         rec.onresult = (e) => {
             document.getElementById(targetId).value = e.results[0][0].transcript;
-            document.querySelectorAll('.mic-btn').forEach(b => b.classList.remove('mic-active'));
+            callback();
         };
         rec.start();
     }
 
-    // ЧАТ С НЕЙРОСЕТЯМИ
     async function sendHubMessage() {
+        const val = document.getElementById('i-hub').value; if(!val) return;
+        document.getElementById('i-hub').value = '';
         const box = document.getElementById('hub-box');
-        const input = document.getElementById('i-hub');
-        const model = document.getElementById('model-select').value;
-        const val = input.value; if(!val) return;
-        input.value = '';
-        box.innerHTML = `<div class="msg"><b>Вы:</b> ${val}</div>` + box.innerHTML;
-        const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${model}`);
+        box.innerHTML = `<div><b>Вы:</b> ${val}</div>` + box.innerHTML;
+        const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}`);
         const data = await res.text();
-        box.innerHTML = `<div class="msg"><b>AI:</b> ${marked.parse(data)}</div>` + box.innerHTML;
+        box.innerHTML = `<div><b>AI:</b> ${marked.parse(data)}</div>` + box.innerHTML;
     }
 
-    // ГЕНЕРАЦИЯ И ПРОСМОТР
     function genArt() {
-        const input = document.getElementById('i-art');
-        const box = document.getElementById('imgs-box');
-        if(!input.value) return;
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(input.value)}?nologo=true&seed=${Math.random()}`;
+        const val = document.getElementById('i-art').value; if(!val) return;
+        document.getElementById('i-art').value = '';
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(val)}?nologo=true`;
         const frame = document.createElement('div');
-        frame.className = 'photo-frame';
-        frame.onclick = () => {
-            document.getElementById('v-img').src = url;
-            document.getElementById('viewer').style.display = 'flex';
-        };
-        frame.innerHTML = `<img src="${url}"><div style="text-align:center;font-size:12px;margin-top:5px;">${input.value} (Нажми, чтобы увеличить)</div>`;
-        box.insertBefore(frame, box.firstChild);
-        input.value = '';
+        frame.style.background = 'white'; frame.style.padding = '10px';
+        frame.innerHTML = `<img src="${url}" style="width:100%" onclick="showFull('${url}')"><p>${val}</p>`;
+        document.getElementById('imgs-box').insertBefore(frame, document.getElementById('imgs-box').firstChild);
     }
+
+    function showFull(url) { document.getElementById('v-img').src = url; document.getElementById('viewer').style.display = 'block'; }
 </script>
 </body>
 </html>
