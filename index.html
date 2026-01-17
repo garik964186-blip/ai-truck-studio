@@ -51,7 +51,7 @@
                     <option value="system">🗣 Системный (Робот)</option>
                 </select>
                 <div id="status-chat" class="status-bar" onclick="manualSpeakInit()">
-                    <span style="color:red; text-decoration: underline; cursor:pointer;">📢 Нажми для звука</span>
+                    <span id="sound-btn" style="color:red; text-decoration: underline; cursor:pointer;">📢 Нажми сюда для звука</span>
                 </div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -117,8 +117,8 @@
         unlockAudio();
         const a = new Audio('https://www.soundjay.com/buttons/sounds/button-50.mp3');
         a.play().then(() => {
-            document.getElementById('status-chat').innerText = "✅ Звук активен";
-            setTimeout(() => { document.getElementById('status-chat').innerText = ""; }, 2000);
+            document.getElementById('status-chat').innerHTML = "<span style='color:green'>✅ Звук активен</span>";
+            setTimeout(() => { document.getElementById('sound-btn').style.display = 'none'; }, 1500);
         });
     }
 
@@ -136,13 +136,12 @@
             return;
         }
 
-        st.innerHTML = "🔊 Книга говорит...";
         const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean)}`;
         const a = new Audio(url);
         a.play().catch(() => {
-            st.innerHTML = `<span style="color:red; cursor:pointer;" onclick="manualSpeakInit()">📢 Нажми сюда для звука</span>`;
+            document.getElementById('sound-btn').style.display = 'inline';
+            document.getElementById('sound-btn').innerText = "📢 Нажми для звука";
         });
-        a.onended = () => st.innerText = "";
     }
 
     async function sendMsg() {
@@ -176,12 +175,8 @@
         try {
             const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
             const td = await tr.json();
-            const translated = td.responseData.translatedText;
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(translated)}?model=${m}&nologo=true&seed=${Date.now()}`;
-            
-            b.insertAdjacentHTML('afterbegin', `<div style="background:#fff; padding:10px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
-                <img src="${url}" style="width:100%;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
-                <p style="text-align:center; font-size:12px; margin-top:5px;">${txt}</p></div>`);
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(td.responseData.translatedText)}?model=${m}&nologo=true&seed=${Date.now()}`;
+            b.insertAdjacentHTML('afterbegin', `<div style="background:#fff; padding:10px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1);"><img src="${url}" style="width:100%;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''"><p style="text-align:center; font-size:12px; margin-top:5px;">${txt}</p></div>`);
         } catch(e) { document.getElementById('status-art').innerText = "Ошибка"; }
     }
 
@@ -197,7 +192,7 @@
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!R) return;
         const r = new R(); r.lang = 'ru-RU';
-        r.onstart = () => document.getElementById(bId).style.color = 'red';
+        r.onstart = () => { document.getElementById(bId).style.color = 'red'; manualSpeakInit(); };
         r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
         r.onend = () => document.getElementById(bId).style.color = 'inherit';
         r.start();
