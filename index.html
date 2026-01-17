@@ -11,38 +11,44 @@
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         .viewport { width: 100vw; height: 100dvh; perspective: 2500px; position: relative; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; }
+        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.9s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; }
         .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
         .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; overflow: hidden; }
         .back { transform: rotateY(180deg); background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-170deg) skewY(-1deg); pointer-events: none !important; z-index: 10 !important; }
+        
+        /* Обложка */
         .cover-front { background: #2b0000; border: 10px double var(--gold); display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
-        .v-box { width: 100%; height: 70%; background: #000; border-bottom: 4px solid var(--gold); position: relative; overflow: hidden; }
+        .v-box { width: 100%; height: 72%; background: #000; border-bottom: 4px solid var(--gold); position: relative; overflow: hidden; }
         .v-box video { width: 100%; height: 100%; object-fit: cover; }
-        .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; }
+        .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; text-shadow: 1px 1px 2px #000; }
+        
+        /* Интерфейс */
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
-        .ai-select { width: 92%; background: #fff9e6; border: 1px solid var(--ink); margin: 4px auto; padding: 8px; border-radius: 8px; font-family: inherit; font-weight: bold; display: block; font-size: 13px; }
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-        .input-bar { padding: 10px; background: rgba(0,0,0,0.08); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+        .ai-select { width: 92%; background: #fff; border: 1px solid var(--ink); margin: 4px auto; padding: 10px; border-radius: 8px; font-family: inherit; font-weight: bold; display: block; font-size: 14px; color: var(--ink); }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .input-bar { padding: 10px; background: rgba(0,0,0,0.08); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; }
-        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; }
-        .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
-        .status-msg { font-size: 11px; text-align: center; color: var(--accent); height: 14px; margin-top: 2px; font-weight: bold; }
+        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 14px; border-radius: 25px; outline: none; font-size: 16px; }
+        .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); transition: 0.2s; }
+        .btn:active { transform: scale(0.9); opacity: 0.7; }
+        .status-msg { font-size: 11px; text-align: center; color: var(--accent); height: 14px; margin-top: 2px; font-weight: bold; letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
 
-<div class="viewport" onclick="initAudio()">
+<div class="viewport" onclick="unlockAudio()">
     <div class="book">
+        
         <div class="page" id="p3" style="z-index: 1;">
             <div class="front paper-sheet">
                 <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
                 <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Умный)</option>
-                    <option value="deepseek">DeepSeek R1 (Логика)</option>
-                    <option value="llama">Llama 3.3 (Быстрая)</option>
-                    <option value="qwen">Qwen 2.5 (Технический)</option>
-                    <option value="mistral">Mistral (Творческий)</option>
+                    <option value="openai">GPT-4o (Самый умный)</option>
+                    <option value="deepseek">DeepSeek R1 (Логика/Рассуждения)</option>
+                    <option value="llama">Llama 3.3 (Мощная/Быстрая)</option>
+                    <option value="qwen">Qwen 2.5 (Технический эксперт)</option>
+                    <option value="mistral">Mistral (Творческий подход)</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
                     <option value="system">🗣 Системный голос</option>
@@ -66,10 +72,10 @@
             <div class="front paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
                 <select id="art-model" class="ai-select">
-                    <option value="flux">💎 Flux.1 (Лучший)</option>
-                    <option value="flux-realism">📸 Realism (Фото)</option>
-                    <option value="any-dark">🌑 AnyDark (Стиль)</option>
-                    <option value="turbo">⚡ Turbo (Быстро)</option>
+                    <option value="flux">💎 Flux.1 (Максимальная детализация)</option>
+                    <option value="flux-realism">📸 Realism (Фотографическое качество)</option>
+                    <option value="any-dark">🌑 AnyDark (Кинематографичный стиль)</option>
+                    <option value="turbo">⚡ Turbo (Мгновенная генерация)</option>
                 </select>
                 <div id="status-art" class="status-msg"></div>
                 <div id="imgs-box" class="scroll-area"></div>
@@ -92,117 +98,126 @@
                     </video>
                 </div>
                 <div class="c-text">
-                    <p style="font-size:2em; font-weight:bold; letter-spacing:3px; margin:0;">НАША КНИГА</p>
-                    <p style="opacity: 0.6; font-size: 14px;">Босс, добро пожаловать</p>
-                    <div style="margin-top:15px; font-size:12px; opacity:0.6;">⬅ СМАХНИ ВЛЕВО</div>
+                    <p style="font-size:2.2em; font-weight:bold; letter-spacing:4px; margin:0;">НАША КНИГА</p>
+                    <p style="opacity: 0.8; font-size: 15px; font-style: italic; margin: 5px 0;">AI Edition • Boss Mode</p>
+                    <div style="margin-top:20px; font-size:12px; opacity:0.6; animation: slide 2s infinite;">⬅ СМАХНИ ДЛЯ СТАРТА</div>
                 </div>
             </div>
             <div class="back"></div>
         </div>
+
     </div>
 </div>
 
 <script>
     const synth = window.speechSynthesis;
     let currentStep = 1;
-    let audioInitialized = false;
+    let audioReady = false;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    // Нужно для разблокировки звука на смартфонах
-    function initAudio() {
-        if (!audioInitialized) {
+    // Разблокировка звука
+    function unlockAudio() {
+        if (!audioReady) {
             const silent = new SpeechSynthesisUtterance('');
             synth.speak(silent);
             flipSound.play().catch(() => {});
-            audioInitialized = true;
-            console.log("Звук инициализирован");
+            audioReady = true;
+            console.log("Аудиосистема готова, Босс!");
         }
     }
 
-    // --- ЛИСТАЛКА ---
+    // Листание страниц
     let startX = 0;
     document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
-        let d = startX - e.changedTouches[0].clientX;
-        if (Math.abs(d) > 80) {
+        let diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 80) {
             synth.cancel();
-            if (d > 0 && currentStep < 3) { 
+            if (diff > 0 && currentStep < 3) { 
                 flipSound.play(); document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
-            } else if (d < 0 && currentStep > 1) { 
+            } else if (diff < 0 && currentStep > 1) { 
                 currentStep--; document.getElementById('p'+currentStep).classList.remove('flipped'); 
             }
         }
     });
 
-    // --- ГОЛОС ---
-    function speak(text) {
+    // Озвучка
+    function speakText(text) {
         synth.cancel();
-        const engine = document.getElementById('voice-engine').value;
+        const voiceType = document.getElementById('voice-engine').value;
         const cleanText = text.replace(/[#*`_{}]/g, '').replace(/https?:\/\/\S+/g, 'ссылка').trim();
         
-        const ut = new SpeechSynthesisUtterance(cleanText);
-        ut.lang = 'ru-RU';
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'ru-RU';
 
-        if (engine !== 'system') {
-            document.getElementById('status-chat').innerText = `🗣 Эмуляция голоса ${engine.toUpperCase()}`;
-            // Если воркер Piper еще не подключен, меняем параметры системного для отличия
-            ut.pitch = (engine === 'denis') ? 0.5 : 1.5;
-            ut.rate = 0.9;
+        if (voiceType !== 'system') {
+            document.getElementById('status-chat').innerText = `🎙 Говорит ${voiceType.toUpperCase()} (System-Sim)`;
+            utterance.pitch = (voiceType === 'denis') ? 0.6 : 1.4; // Денис басистее, Ирина выше
+            utterance.rate = 0.95;
         }
 
-        synth.speak(ut);
-        ut.onend = () => document.getElementById('status-chat').innerText = "";
+        synth.speak(utterance);
+        utterance.onend = () => document.getElementById('status-chat').innerText = "";
     }
 
-    // --- ЧАТ ---
+    // Отправка в чат
     async function sendMsg() {
-        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
-        if(!i.value) return;
-        const v = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px;opacity:0.6;text-align:right"><b>Вы:</b> ${v}</div>`);
+        const inp = document.getElementById('i-hub'), box = document.getElementById('hub-box'), mdl = document.getElementById('chat-model').value;
+        if(!inp.value) return;
+        const prompt = inp.value; inp.value = '';
+        box.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:12px;opacity:0.6;text-align:right;font-size:0.9em;"><b>Вы:</b> ${prompt}</div>`);
         
-        document.getElementById('status-chat').innerText = "Книга думает...";
+        document.getElementById('status-chat').innerText = "Книга открывает тайны...";
         try {
-            const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
+            const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${mdl}`);
             const data = await res.text();
             const div = document.createElement('div');
-            div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
+            div.style.cssText = "border-bottom:1px solid rgba(0,0,0,0.1); padding-bottom:15px; margin-bottom:20px; cursor:pointer;";
             div.innerHTML = `<b>AI:</b> ${marked.parse(data)}`;
-            div.onclick = () => speak(data);
-            b.insertAdjacentElement('afterbegin', div);
-            speak(data);
+            div.onclick = () => speakText(data);
+            box.insertAdjacentElement('afterbegin', div);
+            speakText(data);
         } catch (e) {
-            document.getElementById('status-chat').innerText = "Ошибка связи";
+            document.getElementById('status-chat').innerText = "Ошибка магического канала";
         }
     }
 
-    // --- АРТ ---
+    // Генерация артов
     async function genArt() {
-        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
-        if(!i.value) return;
-        const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Рисую эскиз...";
+        const inp = document.getElementById('i-art'), box = document.getElementById('imgs-box'), mdl = document.getElementById('art-model').value;
+        if(!inp.value) return;
+        const prompt = inp.value; inp.value = '';
+        document.getElementById('status-art').innerText = "Чернильное колдовство...";
         
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(txt)}?model=${m}&nologo=true&seed=${Date.now()}`;
-        const card = `
-            <div style="background:#fff; padding:10px; box-shadow:0 5px 15px rgba(0,0,0,0.2); margin-bottom:20px; transform:rotate(${Math.random()*4-2}deg)">
-                <img src="${url}" style="width:100%" onload="document.getElementById('status-art').innerText=''">
-                <p style="text-align:center; font-size:14px; color:#333; margin-top:10px;">${txt}</p>
+        const seed = Date.now();
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${mdl}&nologo=true&seed=${seed}&width=800&height=1000`;
+        
+        const frame = `
+            <div style="background:#fff; padding:12px; box-shadow:0 8px 20px rgba(0,0,0,0.3); margin-bottom:25px; transform:rotate(${Math.random()*6-3}deg); border:1px solid #ddd;">
+                <img src="${url}" style="width:100%; border-radius:2px;" onload="document.getElementById('status-art').innerText=''">
+                <p style="text-align:center; font-size:13px; color:#444; margin-top:12px; font-family:serif;">«${prompt}»</p>
             </div>`;
-        b.insertAdjacentHTML('afterbegin', card);
+        box.insertAdjacentHTML('afterbegin', frame);
     }
 
-    // --- МИКРОФОН ---
-    function startMic(id, cb, bId) {
-        initAudio(); // Разблокируем звук при нажатии на микрофон
-        const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Rec) return alert("Голосовой ввод не поддерживается");
-        const r = new Rec(); r.lang = 'ru-RU';
-        r.onstart = () => document.getElementById(bId).style.color = 'red';
-        r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
-        r.onend = () => document.getElementById(bId).style.color = 'inherit';
-        r.start();
+    // Голосовой ввод
+    function startMic(targetId, callback, btnId) {
+        unlockAudio();
+        const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Speech) return alert("Голос не поддерживается в этом браузере");
+        
+        const rec = new Speech();
+        rec.lang = 'ru-RU';
+        rec.onstart = () => document.getElementById(btnId).style.color = 'red';
+        rec.onresult = (e) => { document.getElementById(targetId).value = e.results[0][0].transcript; callback(); };
+        rec.onend = () => document.getElementById(btnId).style.color = 'inherit';
+        rec.start();
     }
 </script>
+
+<style>
+    @keyframes slide { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-10px); } }
+</style>
+
 </body>
-</html>
+</html></html>
