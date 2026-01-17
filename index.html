@@ -105,7 +105,7 @@
 </div>
 
 <script>
-    let step = 1, pz = null, audioReady = false, currentAudio = null;
+    let step = 1, pz = null, audioReady = false, currentAudio = null, isPaused = false;
     let chatHistory = [];
     const synth = window.speechSynthesis;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
@@ -126,21 +126,33 @@
 
         if (eng === 'system') {
             if (synth.speaking) {
-                if (synth.paused) { synth.resume(); document.getElementById('status-chat').innerText = "▶️ Продолжаем"; } 
-                else { synth.pause(); document.getElementById('status-chat').innerText = "⏸ Пауза"; }
+                if (isPaused) {
+                    synth.resume();
+                    isPaused = false;
+                    document.getElementById('status-chat').innerText = "▶️ Продолжаем";
+                } else {
+                    synth.pause();
+                    isPaused = true;
+                    document.getElementById('status-chat').innerText = "⏸ Пауза";
+                }
                 return;
             }
             synth.cancel();
+            isPaused = false;
             const u = new SpeechSynthesisUtterance(clean);
             u.lang = 'ru-RU';
-            u.onend = () => document.getElementById('status-chat').innerText = "";
-            u.onerror = () => document.getElementById('status-chat').innerText = "";
+            u.onend = () => { document.getElementById('status-chat').innerText = ""; isPaused = false; };
             synth.speak(u);
             document.getElementById('status-chat').innerText = "📢 Читаю...";
         } else {
             if (currentAudio && !currentAudio.ended) {
-                if (currentAudio.paused) { currentAudio.play(); document.getElementById('status-chat').innerText = "▶️ Продолжаем"; } 
-                else { currentAudio.pause(); document.getElementById('status-chat').innerText = "⏸ Пауза"; }
+                if (currentAudio.paused) {
+                    currentAudio.play();
+                    document.getElementById('status-chat').innerText = "▶️ Продолжаем";
+                } else {
+                    currentAudio.pause();
+                    document.getElementById('status-chat').innerText = "⏸ Пауза";
+                }
                 return;
             }
             if (currentAudio) { currentAudio.pause(); }
@@ -155,9 +167,9 @@
     async function sendMsg() {
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
-        
-        // СБРОС СТАТУСА ПРИ НОВОМ СООБЩЕНИИ
+
         synth.cancel();
+        isPaused = false;
         if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
         document.getElementById('status-chat').innerText = "";
 
