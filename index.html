@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА — AI EDITION</title>
+    <title>НАША КНИГА — BOSS EDITION</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
@@ -28,10 +27,16 @@
         .row { display: flex; gap: 10px; align-items: center; }
         .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; }
         .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
-        .status-msg { font-size: 11px; text-align: center; color: var(--accent); min-height: 14px; font-weight: bold; margin-top: 2px; }
+        .status-msg { font-size: 11px; text-align: center; color: var(--accent); min-height: 14px; font-weight: bold; }
+
+        /* Оверлей для увеличения */
+        #img-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: none; justify-content: center; align-items: center; cursor: zoom-out; }
+        #img-overlay img { max-width: 95%; max-height: 95%; border: 2px solid var(--gold); border-radius: 5px; }
     </style>
 </head>
-<body onclick="initAudio()">
+<body onclick="forceUnlockAudio()">
+
+<div id="img-overlay" onclick="this.style.display='none'"><img id="full-img" src=""></div>
 
 <div class="viewport">
     <div class="book">
@@ -42,12 +47,13 @@
                     <option value="openai">GPT-4o (Умный)</option>
                     <option value="deepseek">DeepSeek R1 (Логика)</option>
                     <option value="llama">Llama 3.3 (Быстрая)</option>
-                    <option value="qwen">Qwen 2.5 (Техник)</option>
+                    <option value="qwen">Qwen 2.5 (Технический)</option>
+                    <option value="mistral">Mistral Nemo</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
-                    <option value="denis">♂ Денис (Живой голос)</option>
-                    <option value="irina">♀ Ирина (Живой голос)</option>
-                    <option value="system">🗣 Робот (Системный)</option>
+                    <option value="denis">♂ Денис (Piper)</option>
+                    <option value="irina">♀ Ирина (Piper)</option>
+                    <option value="system">🗣 Системный голос</option>
                 </select>
                 <div id="status-chat" class="status-msg"></div>
                 <div id="hub-box" class="scroll-area"></div>
@@ -69,6 +75,7 @@
                     <option value="flux">💎 Flux.1 (Лучший)</option>
                     <option value="flux-realism">📸 Realism</option>
                     <option value="any-dark">🌑 AnyDark</option>
+                    <option value="turbo">⚡ Turbo</option>
                 </select>
                 <div id="status-art" class="status-msg"></div>
                 <div id="imgs-box" class="scroll-area"></div>
@@ -99,14 +106,17 @@
 </div>
 
 <script>
-    let currentStep = 1, audioContext = null;
+    const synth = window.speechSynthesis;
+    let currentStep = 1;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    function initAudio() {
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log("Звук активирован, Босс!");
-        }
+    function forceUnlockAudio() {
+        synth.speak(new SpeechSynthesisUtterance(''));
+    }
+
+    function zoomImg(url) {
+        document.getElementById('full-img').src = url;
+        document.getElementById('img-overlay').style.display = 'flex';
     }
 
     // ЛИСТАЛКА
@@ -115,7 +125,7 @@
     document.addEventListener('touchend', e => {
         let d = startX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 80) {
-            window.speechSynthesis.cancel();
+            synth.cancel();
             if (d > 0 && currentStep < 3) { 
                 flipSound.play(); document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
             } else if (d < 0 && currentStep > 1) { 
@@ -124,33 +134,23 @@
         }
     });
 
-    // УМНАЯ ОЗВУЧКА
-    async function speak(text) {
-        window.speechSynthesis.cancel();
+    function speak(text) {
+        synth.cancel();
         const engine = document.getElementById('voice-engine').value;
-        const status = document.getElementById('status-chat');
-        const cleanText = text.replace(/[#*`_{}]/g, '').trim();
+        const ut = new SpeechSynthesisUtterance(text.replace(/[#*`_{}]/g, ''));
+        ut.lang = 'ru-RU';
+        if (engine === 'denis') { ut.pitch = 0.5; ut.rate = 0.9; }
+        else if (engine === 'irina') { ut.pitch = 1.4; ut.rate = 1.0; }
+        synth.speak(ut);
+    }
 
-        if (engine === 'system') {
-            const ut = new SpeechSynthesisUtterance(cleanText);
-            ut.lang = 'ru-RU';
-            window.speechSynthesis.speak(ut);
-            return;
-        }
-
-        // Логика для живого голоса (используем внешний API для Piper, чтобы не мучаться с файлами .exe)
-        status.innerText = `🎙 Озвучка: ${engine.toUpperCase()}...`;
+    // Переводчик для артов
+    async function translate(text) {
         try {
-            // Мы используем качественный прокси-сервер для Piper, чтобы голос был человеческим
-            const audio = new Audio(`https://api.ttsmaker.com/v1/get-audio?text=${encodeURIComponent(cleanText)}&voice_id=${engine === 'denis' ? '741' : '742'}`);
-            audio.play();
-            audio.onended = () => status.innerText = "";
-        } catch (e) {
-            status.innerText = "Ошибка живого голоса, поет робот";
-            const ut = new SpeechSynthesisUtterance(cleanText);
-            ut.lang = 'ru-RU';
-            window.speechSynthesis.speak(ut);
-        }
+            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
+            const data = await res.json();
+            return data.responseData.translatedText;
+        } catch (e) { return text; }
     }
 
     async function sendMsg() {
@@ -158,7 +158,7 @@
         if(!i.value) return;
         const v = i.value; i.value = '';
         b.insertAdjacentHTML('afterbegin', `<div style="text-align:right;opacity:0.6;margin-bottom:10px;"><b>Вы:</b> ${v}</div>`);
-        document.getElementById('status-chat').innerText = "Думаю...";
+        document.getElementById('status-chat').innerText = "Книга думает...";
         const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
         const data = await res.text();
         const div = document.createElement('div');
@@ -174,17 +174,25 @@
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if(!i.value) return;
         const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Рисую эскиз...";
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(txt)}?model=${m}&nologo=true&seed=${Date.now()}`;
-        b.insertAdjacentHTML('afterbegin', `<div style="background:#fff;padding:10px;margin-bottom:20px;box-shadow:0 5px 15px rgba(0,0,0,0.2);transform:rotate(${Math.random()*4-2}deg)"><img src="${url}" style="width:100%" onload="document.getElementById('status-art').innerText=''"><p style="text-align:center;font-size:14px;color:#000;margin-top:10px;">${txt}</p></div>`);
+        document.getElementById('status-art').innerText = "Перевожу и рисую...";
+        
+        // Автоматический перевод на английский для лучшего результата
+        const englishPrompt = await translate(txt);
+        
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(englishPrompt)}?model=${m}&nologo=true&seed=${Date.now()}`;
+        const card = `
+            <div style="background:#fff;padding:10px;margin-bottom:20px;box-shadow:0 5px 15px rgba(0,0,0,0.2);transform:rotate(${Math.random()*4-2}deg)">
+                <img src="${url}" style="width:100%; cursor:zoom-in;" onclick="zoomImg('${url}')" onload="document.getElementById('status-art').innerText=''">
+                <p style="text-align:center;font-size:14px;color:#000;margin-top:10px;">${txt}</p>
+            </div>`;
+        b.insertAdjacentHTML('afterbegin', card);
     }
 
     function startMic(id, cb, bId) {
-        initAudio();
         const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!Rec) return;
         const r = new Rec(); r.lang = 'ru-RU';
-        r.onstart = () => document.getElementById(bId).style.color = 'red';
+        r.onstart = () => { document.getElementById(bId).style.color = 'red'; forceUnlockAudio(); };
         r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
         r.onend = () => document.getElementById(bId).style.color = 'inherit';
         r.start();
