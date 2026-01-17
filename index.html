@@ -124,34 +124,26 @@
         const eng = document.getElementById('voice-engine').value;
         const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
 
-        // ЛОГИКА ПАУЗЫ / ПРОДОЛЖЕНИЯ
         if (eng === 'system') {
             if (synth.speaking) {
-                if (synth.paused) {
-                    synth.resume();
-                    document.getElementById('status-chat').innerText = "▶️ Продолжаем";
-                } else {
-                    synth.pause();
-                    document.getElementById('status-chat').innerText = "⏸ Пауза";
-                }
+                if (synth.paused) { synth.resume(); document.getElementById('status-chat').innerText = "▶️ Продолжаем"; } 
+                else { synth.pause(); document.getElementById('status-chat').innerText = "⏸ Пауза"; }
                 return;
             }
+            synth.cancel();
             const u = new SpeechSynthesisUtterance(clean);
             u.lang = 'ru-RU';
             u.onend = () => document.getElementById('status-chat').innerText = "";
+            u.onerror = () => document.getElementById('status-chat').innerText = "";
             synth.speak(u);
             document.getElementById('status-chat').innerText = "📢 Читаю...";
         } else {
             if (currentAudio && !currentAudio.ended) {
-                if (currentAudio.paused) {
-                    currentAudio.play();
-                    document.getElementById('status-chat').innerText = "▶️ Продолжаем";
-                } else {
-                    currentAudio.pause();
-                    document.getElementById('status-chat').innerText = "⏸ Пауза";
-                }
+                if (currentAudio.paused) { currentAudio.play(); document.getElementById('status-chat').innerText = "▶️ Продолжаем"; } 
+                else { currentAudio.pause(); document.getElementById('status-chat').innerText = "⏸ Пауза"; }
                 return;
             }
+            if (currentAudio) { currentAudio.pause(); }
             const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean.substring(0, 200))}`;
             currentAudio = new Audio(url);
             currentAudio.play();
@@ -163,6 +155,12 @@
     async function sendMsg() {
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
+        
+        // СБРОС СТАТУСА ПРИ НОВОМ СООБЩЕНИИ
+        synth.cancel();
+        if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+        document.getElementById('status-chat').innerText = "";
+
         const val = i.value; i.value = '';
         b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Вы: ${val}</div>`);
         document.getElementById('status-chat').innerText = "Книга думает...";
@@ -227,11 +225,8 @@
         if(document.getElementById('z-overlay').style.display === 'flex') return;
         let d = sX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 60) {
-            if (d > 0 && step < 3) { 
-                document.getElementById('p'+step).classList.add('flipped'); step++; flipSound.play(); 
-            } else if (d < 0 && step > 1) { 
-                step--; document.getElementById('p'+step).classList.remove('flipped'); flipSound.play(); 
-            }
+            if (d > 0 && step < 3) { document.getElementById('p'+step).classList.add('flipped'); step++; flipSound.play(); } 
+            else if (d < 0 && step > 1) { step--; document.getElementById('p'+step).classList.remove('flipped'); flipSound.play(); }
         }
     });
 </script>
