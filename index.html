@@ -105,8 +105,10 @@
 </div>
 
 <script>
-    let step = 1, pz = null, audioReady = false, currentAudio = null, isPaused = false;
+    let step = 1, pz = null, audioReady = false, currentAudio = null;
     let chatHistory = [];
+    let sentences = [], currentSentenceIndex = 0, isSpeaking = false, isPaused = false;
+    
     const synth = window.speechSynthesis;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
     marked.setOptions({ breaks: true, gfm: true });
@@ -119,59 +121,82 @@
         setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
     }
 
+    // СБРОС ГОЛОСА
+    function resetVoiceState() {
+        synth.cancel();
+        if (currentAudio) { currentAudio.pause(); }
+        isSpeaking = false;
+        isPaused = false;
+        document.getElementById('status-chat').innerText = "";
+    }
+
     async function speak(t) {
         wakeAudio();
         const eng = document.getElementById('voice-engine').value;
+
+        // Если уже читаем - переключаем Пауза/Продолжить
+        if (isSpeaking) {
+            if (!isPaused) {
+                synth.cancel();
+                if (currentAudio) currentAudio.pause();
+                isPaused = true;
+                document.getElementById('status-chat').innerText = "⏸ Пауза";
+            } else {
+                isPaused = false;
+                document.getElementById('status-chat').innerText = "▶️ Продолжаем";
+                if (eng === 'system') {
+                    playSystemFrom(currentSentenceIndex);
+                } else {
+                    if (currentAudio) currentAudio.play();
+                }
+            }
+            return;
+        }
+
+        // Новый запуск чтения
         const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
+        // Разбиваем текст на предложения для надежности
+        sentences = clean.match(/[^.!?]+[.!?]+/g) || [clean];
+        currentSentenceIndex = 0;
+        isSpeaking = true;
+        isPaused = false;
 
         if (eng === 'system') {
-            if (synth.speaking) {
-                if (isPaused) {
-                    synth.resume();
-                    isPaused = false;
-                    document.getElementById('status-chat').innerText = "▶️ Продолжаем";
-                } else {
-                    synth.pause();
-                    isPaused = true;
-                    document.getElementById('status-chat').innerText = "⏸ Пауза";
-                }
-                return;
-            }
-            synth.cancel();
-            isPaused = false;
-            const u = new SpeechSynthesisUtterance(clean);
-            u.lang = 'ru-RU';
-            u.onend = () => { document.getElementById('status-chat').innerText = ""; isPaused = false; };
-            synth.speak(u);
-            document.getElementById('status-chat').innerText = "📢 Читаю...";
+            playSystemFrom(0);
         } else {
-            if (currentAudio && !currentAudio.ended) {
-                if (currentAudio.paused) {
-                    currentAudio.play();
-                    document.getElementById('status-chat').innerText = "▶️ Продолжаем";
-                } else {
-                    currentAudio.pause();
-                    document.getElementById('status-chat').innerText = "⏸ Пауза";
-                }
-                return;
-            }
-            if (currentAudio) { currentAudio.pause(); }
-            const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean.substring(0, 200))}`;
-            currentAudio = new Audio(url);
-            currentAudio.play();
-            document.getElementById('status-chat').innerText = "📢 Читаю...";
-            currentAudio.onended = () => document.getElementById('status-chat').innerText = "";
+            playCloud(clean);
         }
+    }
+
+    function playSystemFrom(index) {
+        if (index >= sentences.length || isPaused) {
+            if (index >= sentences.length) resetVoiceState();
+            return;
+        }
+        currentSentenceIndex = index;
+        const u = new SpeechSynthesisUtterance(sentences[index]);
+        u.lang = 'ru-RU';
+        u.onend = () => {
+            if (!isPaused) playSystemFrom(index + 1);
+        };
+        u.onerror = () => resetVoiceState();
+        synth.speak(u);
+        document.getElementById('status-chat').innerText = "📢 Читаю...";
+    }
+
+    function playCloud(text) {
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(text.substring(0, 200))}`;
+        currentAudio = new Audio(url);
+        currentAudio.play();
+        document.getElementById('status-chat').innerText = "📢 Читаю...";
+        currentAudio.onended = () => resetVoiceState();
     }
 
     async function sendMsg() {
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
 
-        synth.cancel();
-        isPaused = false;
-        if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-        document.getElementById('status-chat').innerText = "";
+        resetVoiceState(); // Остановить голос при новом запросе
 
         const val = i.value; i.value = '';
         b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Вы: ${val}</div>`);
@@ -187,6 +212,7 @@
             let d = await r.text();
             chatHistory.push({ role: "assistant", content: d });
             if (chatHistory.length > 10) chatHistory.splice(0, 2);
+            
             const div = document.createElement('div');
             div.className = "ai-box";
             div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
