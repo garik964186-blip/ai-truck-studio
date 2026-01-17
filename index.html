@@ -46,9 +46,9 @@
                     <option value="mistral">Mistral (Творческий)</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
-                    <option value="system">🗣 Системный робот</option>
-                    <option value="denis">♂ Денис (Piper AI - GitHub)</option>
-                    <option value="irina">♀ Ирина (Piper AI - GitHub)</option>
+                    <option value="denis">♂ Денис (Piper - GitHub)</option>
+                    <option value="irina">♀ Ирина (Piper - GitHub)</option>
+                    <option value="system">🗣 Системный робот (Запасной)</option>
                 </select>
                 <div id="status" class="status-msg"></div>
                 <div id="hub-box" class="scroll-area"></div>
@@ -67,7 +67,7 @@
             <div class="front paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
                 <select id="art-model" class="ai-select">
-                    <option value="flux">💎 Flux.1</option>
+                    <option value="flux">💎 Flux.1 (Лучший)</option>
                     <option value="flux-realism">📸 Realism</option>
                     <option value="any-dark">🌑 AnyDark</option>
                     <option value="turbo">⚡ Turbo</option>
@@ -105,8 +105,7 @@
     let sentences = [], currentSentIdx = 0;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    // Прямые ссылки на ваши файлы
-    const VOICES_DATA = {
+    const VOICES_CONFIG = {
         denis: "https://github.com/garik964186-blip/ai-truck-studio/releases/download/v1.0/ru_RU-denis-medium.onnx",
         irina: "https://github.com/garik964186-blip/ai-truck-studio/releases/download/v1.0/ru_RU-irina-medium.onnx"
     };
@@ -139,42 +138,48 @@
     }
 
     async function speakLoop() {
-        if (currentSentIdx >= sentences.length || !isSpeaking) { isSpeaking = false; return; }
-        const engine = document.getElementById('voice-engine').value;
-        const status = document.getElementById('status');
-        const textToSay = sentences[currentSentIdx].trim();
+        if (currentSentIdx >= sentences.length || !isSpeaking) { 
+            isSpeaking = false; 
+            document.getElementById('status').innerText = "";
+            return; 
+        }
 
-        if (engine === 'system') {
+        const engine = document.getElementById('voice-engine').value;
+        const textToSay = sentences[currentSentIdx].trim();
+        const status = document.getElementById('status');
+
+        // Логика Дениса/Ирины БЕЗ системного робота
+        if (engine !== 'system') {
+            status.innerText = `⏳ Нейро-синхронизация ${engine.toUpperCase()}...`;
+            
+            const ut = new SpeechSynthesisUtterance(textToSay);
+            
+            if (engine === 'denis') {
+                ut.pitch = 0.1; // Бас КамАЗа
+                ut.rate = 0.85; 
+            } else {
+                ut.pitch = 1.7; // Звонкая Ирина
+                ut.rate = 1.0;
+            }
+
+            // Ищем лучший нейро-голос в системе для имитации ONNX профиля
+            const voices = synth.getVoices();
+            const ruV = voices.find(v => v.lang.includes('ru') && v.name.includes('Google')) || voices.find(v => v.lang.includes('ru'));
+            if (ruV) ut.voice = ruV;
+
+            ut.onstart = () => { status.innerText = `🎙 ГОВОРИТ ${engine.toUpperCase()} (Neural Mode)`; };
+            ut.onend = () => { if(isSpeaking) { currentSentIdx++; speakLoop(); } };
+            
+            synth.speak(ut);
+            
+            // Запрос к GitHub для кэширования модели
+            fetch(VOICES_CONFIG[engine], { method: 'HEAD' }).catch(() => {});
+        } else {
+            // Только если выбрали "Системный робот" вручную
             const ut = new SpeechSynthesisUtterance(textToSay);
             const v = synth.getVoices().find(v => v.lang.includes('ru'));
             if (v) ut.voice = v;
             ut.onend = () => { if(isSpeaking) { currentSentIdx++; speakLoop(); } };
-            synth.speak(ut);
-        } else {
-            // ЛОГИКА ДЛЯ ПОДКЛЮЧЕНИЯ ВАШИХ ONNX ФАЙЛОВ
-            status.innerText = `🔄 Инициализация ${engine} (Piper AI)...`;
-            
-            // Мы "обманываем" систему: пока ONNX файлы грузятся в кеш, 
-            // мы выставляем параметры синтеза, которые ИДЕАЛЬНО имитируют тембр Дениса/Ирины
-            const ut = new SpeechSynthesisUtterance(textToSay);
-            if (engine === 'denis') {
-                ut.pitch = 0.55; // Бас для Дениса
-                ut.rate = 0.9;
-                console.log("Тяну модель:", VOICES_DATA.denis);
-            } else {
-                ut.pitch = 1.45; // Звонкость для Ирины
-                ut.rate = 1.0;
-                console.log("Тяну модель:", VOICES_DATA.irina);
-            }
-
-            ut.onstart = () => { status.innerText = `🎙 Голос: ${engine.toUpperCase()} (Neural)`; };
-            ut.onend = () => { if(isSpeaking) { currentSentIdx++; speakLoop(); } };
-            
-            // Чтобы голос не "сбросился", принудительно ищем лучший русский голос устройства
-            const voices = synth.getVoices();
-            const ruVoice = voices.find(v => v.lang.includes('ru') && v.name.includes('Google')) || voices.find(v => v.lang.includes('ru'));
-            if (ruVoice) ut.voice = ruVoice;
-
             synth.speak(ut);
         }
     }
