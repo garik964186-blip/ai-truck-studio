@@ -45,8 +45,8 @@
                 <select id="chat-model" class="ai-select">
                     <option value="openai">GPT-4o (Умный)</option>
                     <option value="llama">Llama 3.3 (Мощная)</option>
-                    <option value="mistral-large">Mistral Large (Логика)</option>
-                    <option value="qwen-coder">Qwen (Код/Тех)</option>
+                    <option value="mistral-large">Mistral Large</option>
+                    <option value="qwen-coder">Qwen (Код)</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
                     <option value="system">🗣 Системный (Робот)</option>
@@ -106,7 +106,7 @@
 
 <script>
     let step = 1, pz = null, audioReady = false, currentAudio = null;
-    let chatHistory = []; // Память чата
+    let chatHistory = [];
     const synth = window.speechSynthesis;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
     marked.setOptions({ breaks: true, gfm: true });
@@ -124,25 +124,38 @@
         const eng = document.getElementById('voice-engine').value;
         const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
 
-        // Стоп, если уже говорит (эффект тапа)
-        if (synth.speaking || (currentAudio && !currentAudio.paused)) {
-            synth.cancel();
-            if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-            document.getElementById('status-chat').innerText = "🔇 Стоп";
-            setTimeout(() => { document.getElementById('status-chat').innerText = ""; }, 1000);
-            return;
-        }
-
-        document.getElementById('status-chat').innerText = "📢 Читаю...";
+        // ЛОГИКА ПАУЗЫ / ПРОДОЛЖЕНИЯ
         if (eng === 'system') {
+            if (synth.speaking) {
+                if (synth.paused) {
+                    synth.resume();
+                    document.getElementById('status-chat').innerText = "▶️ Продолжаем";
+                } else {
+                    synth.pause();
+                    document.getElementById('status-chat').innerText = "⏸ Пауза";
+                }
+                return;
+            }
             const u = new SpeechSynthesisUtterance(clean);
             u.lang = 'ru-RU';
             u.onend = () => document.getElementById('status-chat').innerText = "";
             synth.speak(u);
+            document.getElementById('status-chat').innerText = "📢 Читаю...";
         } else {
+            if (currentAudio && !currentAudio.ended) {
+                if (currentAudio.paused) {
+                    currentAudio.play();
+                    document.getElementById('status-chat').innerText = "▶️ Продолжаем";
+                } else {
+                    currentAudio.pause();
+                    document.getElementById('status-chat').innerText = "⏸ Пауза";
+                }
+                return;
+            }
             const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean.substring(0, 200))}`;
             currentAudio = new Audio(url);
             currentAudio.play();
+            document.getElementById('status-chat').innerText = "📢 Читаю...";
             currentAudio.onended = () => document.getElementById('status-chat').innerText = "";
         }
     }
@@ -151,10 +164,8 @@
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
-        
         b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Вы: ${val}</div>`);
-        document.getElementById('status-chat').innerText = "Книга помнит всё...";
-
+        document.getElementById('status-chat').innerText = "Книга думает...";
         chatHistory.push({ role: "user", content: val });
 
         try {
@@ -164,10 +175,8 @@
                 body: JSON.stringify({ messages: chatHistory, model: m })
             });
             let d = await r.text();
-            
             chatHistory.push({ role: "assistant", content: d });
-            if (chatHistory.length > 10) chatHistory.splice(0, 2); // Лимит памяти
-
+            if (chatHistory.length > 10) chatHistory.splice(0, 2);
             const div = document.createElement('div');
             div.className = "ai-box";
             div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
@@ -175,7 +184,7 @@
             b.insertAdjacentElement('afterbegin', div);
             document.getElementById('status-chat').innerText = "";
             speak(d);
-        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка связи"; }
+        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
     }
 
     async function genArt() {
