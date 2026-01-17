@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>МАГИЧЕСКАЯ КНИГА — BOSS EDITION</title>
+    <title>МАГИЧЕСКАЯ КНИГА</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
@@ -21,7 +21,7 @@
         .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; color: var(--ink); }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
         .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; }
-        .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
+        .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; padding: 5px; }
         .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
         .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px; border-radius: 25px; font-size: 16px; }
@@ -50,7 +50,9 @@
                     <option value="cloud">♂ Денис (Нейро-голос)</option>
                     <option value="system">🗣 Системный (Робот)</option>
                 </select>
-                <div id="status-chat" class="status-bar"></div>
+                <div id="status-chat" class="status-bar" onclick="manualSpeakInit()">
+                    <span style="color:red; text-decoration: underline; cursor:pointer;">📢 Нажми для звука</span>
+                </div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
@@ -70,7 +72,7 @@
                     <option value="flux-realism">📸 Фото-реализм</option>
                     <option value="flux-anime">🎎 Аниме-стиль</option>
                     <option value="flux-3d">🧊 3D Рендер</option>
-                    <option value="turbo">⚡ Быстрый набросок</option>
+                    <option value="turbo">⚡ Быстро</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
                 <div id="imgs-box" class="scroll-area"></div>
@@ -87,13 +89,12 @@
 
         <div class="page" id="p1" style="z-index: 3;">
             <div class="paper-sheet" style="background:#2b0000; border:10px double var(--gold);">
-                <video autoplay loop muted playsinline style="width:100%; height:70%; object-fit:cover; border-bottom:4px solid var(--gold);">
+                <video autoplay loop muted playsinline style="width:100%; height:75%; object-fit:cover; border-bottom:4px solid var(--gold);">
                     <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
                 </video>
                 <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold); text-align:center;">
-                    <h2>НАША КНИГА</h2>
-                    <p>BOSS EDITION</p>
-                    <div style="font-size:12px; opacity:0.6; margin-top:10px;">⬅ СМАХНИ ДЛЯ ЧТЕНИЯ</div>
+                    <h1 style="margin:0; letter-spacing:5px; font-size:28px;">НАША КНИГА</h1>
+                    <div style="font-size:12px; opacity:0.6; margin-top:15px;">⬅ СМАХНИ ВЛЕВО</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -110,6 +111,15 @@
         const u = new SpeechSynthesisUtterance('');
         synth.speak(u);
         audioUnlocked = true;
+    }
+
+    function manualSpeakInit() {
+        unlockAudio();
+        const a = new Audio('https://www.soundjay.com/buttons/sounds/button-50.mp3');
+        a.play().then(() => {
+            document.getElementById('status-chat').innerText = "✅ Звук активен";
+            setTimeout(() => { document.getElementById('status-chat').innerText = ""; }, 2000);
+        });
     }
 
     async function speak(t) {
@@ -130,7 +140,7 @@
         const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean)}`;
         const a = new Audio(url);
         a.play().catch(() => {
-            st.innerHTML = `<span style="color:red; cursor:pointer;" onclick="speak('${clean.replace(/'/g, "\\'")}')">📢 Нажми для звука</span>`;
+            st.innerHTML = `<span style="color:red; cursor:pointer;" onclick="manualSpeakInit()">📢 Нажми сюда для звука</span>`;
         });
         a.onended = () => st.innerText = "";
     }
