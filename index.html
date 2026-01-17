@@ -8,30 +8,38 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
     <style>
+        /* --- СТИЛИ КНИГИ --- */
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
+        
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 1500px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
+        
+        /* Страницы */
         .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; z-index: 1; }
         .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
-        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 18px; }
+        
+        /* Элементы интерфейса */
+        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
         .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; color: var(--ink); }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
         .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; transition: background 0.3s; }
         .ai-box:active { background: rgba(0,0,0,0.05); }
         .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 25px; font-weight: bold; padding: 5px; }
         .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+        
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
         .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px; border-radius: 25px; font-size: 16px; outline: none; }
         .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; width: 45px; }
-        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
         
-        /* Стили для Markdown */
+        /* Зум и Markdown */
+        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
         .ai-box table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
         .ai-box td, .ai-box th { border: 1px solid var(--ink); padding: 4px; }
+        .trash-btn { font-size: 16px; opacity: 0.5; cursor: pointer; border: none; background: none; }
     </style>
 </head>
 <body onclick="wakeAudio()">
@@ -43,9 +51,14 @@
 
 <div class="viewport">
     <div class="book">
+        
         <div class="page" id="p3">
             <div class="paper-sheet">
-                <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
+                <div class="header">
+                    <span style="width:20px"></span>
+                    🔮 МАГИЧЕСКИЙ ЧАТ
+                    <button class="trash-btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
+                </div>
                 <select id="chat-model" class="ai-select">
                     <option value="openai">GPT-4o (Умный)</option>
                     <option value="deepseek">DeepSeek R1 (Логика)</option>
@@ -99,7 +112,8 @@
                 </video>
                 <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold); text-align:center;">
                     <h1 style="margin:0; letter-spacing:5px; font-size:28px;">НАША КНИГА</h1>
-                    <div style="font-size:12px; opacity:0.6; margin-top:15px;">⬅ СМАХНИ ВЛЕВО, БОСС</div>
+                    <div style="font-size:12px; opacity:0.6; margin-top:15px;">BOSS EDITION</div>
+                    <div style="font-size:12px; opacity:0.6; margin-top:5px;">⬅ СМАХНИ ВЛЕВО</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -108,11 +122,17 @@
 </div>
 
 <script>
+    /* --- ЛОГИКА --- */
     let step = 1, pz = null, audioReady = false;
     const synth = window.speechSynthesis;
+    
+    // Звук перелистывания (короткий звук бумаги)
+    const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
 
-    // Настройка Markdown
     marked.setOptions({ breaks: true, gfm: true });
+
+    // Загрузка сохраненного чата при старте
+    window.addEventListener('load', loadChat);
 
     function wakeAudio() {
         if (audioReady) return;
@@ -123,7 +143,6 @@
         setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
     }
 
-    // Улучшенная озвучка (разбивка на части)
     async function speak(t) {
         wakeAudio();
         const eng = document.getElementById('voice-engine').value;
@@ -135,13 +154,11 @@
             chunks.forEach(text => {
                 const u = new SpeechSynthesisUtterance(text);
                 u.lang = 'ru-RU';
-                u.rate = 1.0;
                 synth.speak(u);
             });
             return;
         }
 
-        // Google TTS ограничение 200 символов - берем первую важную фразу для облака
         const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean.substring(0, 200))}`;
         const a = new Audio(url);
         a.play().catch(() => {
@@ -171,6 +188,10 @@
             div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
             div.onclick = () => speak(d);
             b.insertAdjacentElement('afterbegin', div);
+            
+            // СОХРАНЕНИЕ В ПАМЯТЬ
+            saveChat();
+
             document.getElementById('status-chat').innerText = "";
             speak(d);
         } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
@@ -181,7 +202,7 @@
         if (!i.value) return;
         let txt = i.value; i.value = '';
         
-        // Умная добавка для грузовиков (Босс любит КамАЗ и Dongfeng)
+        // ЛОГИКА БОССА (КАМАЗЫ)
         if (txt.toLowerCase().includes('камаз') || txt.toLowerCase().includes('грузовик') || txt.toLowerCase().includes('dongfeng')) {
             txt += ", realistic truck photography, 4k, cinematic lighting, shot on Osmo Action 5 Pro style";
         }
@@ -201,6 +222,30 @@
             
             b.insertAdjacentHTML('afterbegin', card);
         } catch(e) { document.getElementById('status-art').innerText = "Ошибка генерации"; }
+    }
+
+    /* --- ФУНКЦИИ ПАМЯТИ --- */
+    function saveChat() {
+        localStorage.setItem('boss_book_chat', document.getElementById('hub-box').innerHTML);
+    }
+
+    function loadChat() {
+        const saved = localStorage.getItem('boss_book_chat');
+        if (saved) {
+            document.getElementById('hub-box').innerHTML = saved;
+            // Восстанавливаем клики
+            document.querySelectorAll('.ai-box').forEach(box => {
+                const text = box.innerText.replace('AI:', '').trim();
+                box.onclick = () => speak(text);
+            });
+        }
+    }
+
+    function clearChat() {
+        if(confirm('Очистить историю чата, Босс?')) {
+            document.getElementById('hub-box').innerHTML = '';
+            localStorage.removeItem('boss_book_chat');
+        }
     }
 
     function runMic(id, cb, bId) {
@@ -224,16 +269,25 @@
         pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 });
     }
 
+    /* --- ПЕРЕЛИСТЫВАНИЕ СО ЗВУКОМ --- */
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
         if(document.getElementById('z-overlay').style.display === 'flex') return;
         let d = sX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 60) {
-            if (d > 0 && step < 3) { document.getElementById('p'+step).classList.add('flipped'); step++; }
-            else if (d < 0 && step > 1) { step--; document.getElementById('p'+step).classList.remove('flipped'); }
+            if (d > 0 && step < 3) { 
+                document.getElementById('p'+step).classList.add('flipped'); 
+                step++; 
+                flipSound.currentTime=0; flipSound.play(); 
+            }
+            else if (d < 0 && step > 1) { 
+                step--; 
+                document.getElementById('p'+step).classList.remove('flipped'); 
+                flipSound.currentTime=0; flipSound.play(); 
+            }
         }
     });
 </script>
 </body>
-                                                                                            </html>
+</html>
