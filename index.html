@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>НАША КНИГА — AI EDITION</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
@@ -21,16 +22,16 @@
         .v-box video { width: 100%; height: 100%; object-fit: cover; }
         .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; }
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
-        .ai-select { width: 92%; background: #fff; border: 1px solid var(--ink); margin: 4px auto; padding: 8px; border-radius: 8px; display: block; font-weight: bold; }
+        .ai-select { width: 92%; background: #fff; border: 1px solid var(--ink); margin: 4px auto; padding: 10px; border-radius: 8px; display: block; font-weight: bold; font-size: 14px; }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
         .input-bar { padding: 10px; background: rgba(0,0,0,0.08); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; }
-        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; }
+        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; }
         .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
-        .status-msg { font-size: 11px; text-align: center; color: var(--accent); min-height: 14px; font-weight: bold; }
+        .status-msg { font-size: 11px; text-align: center; color: var(--accent); min-height: 14px; font-weight: bold; margin-top: 2px; }
     </style>
 </head>
-<body onclick="unlockAudio()">
+<body onclick="initAudio()">
 
 <div class="viewport">
     <div class="book">
@@ -44,9 +45,9 @@
                     <option value="qwen">Qwen 2.5 (Техник)</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
-                    <option value="system">🗣 Системный голос</option>
-                    <option value="denis">♂ Денис (Piper AI)</option>
-                    <option value="irina">♀ Ирина (Piper AI)</option>
+                    <option value="denis">♂ Денис (Живой голос)</option>
+                    <option value="irina">♀ Ирина (Живой голос)</option>
+                    <option value="system">🗣 Робот (Системный)</option>
                 </select>
                 <div id="status-chat" class="status-msg"></div>
                 <div id="hub-box" class="scroll-area"></div>
@@ -68,7 +69,6 @@
                     <option value="flux">💎 Flux.1 (Лучший)</option>
                     <option value="flux-realism">📸 Realism</option>
                     <option value="any-dark">🌑 AnyDark</option>
-                    <option value="turbo">⚡ Turbo</option>
                 </select>
                 <div id="status-art" class="status-msg"></div>
                 <div id="imgs-box" class="scroll-area"></div>
@@ -99,23 +99,23 @@
 </div>
 
 <script>
-    const synth = window.speechSynthesis;
-    let currentStep = 1, audioUnlocked = false;
+    let currentStep = 1, audioContext = null;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    function unlockAudio() {
-        if(!audioUnlocked) {
-            synth.speak(new SpeechSynthesisUtterance(''));
-            audioUnlocked = true;
+    function initAudio() {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log("Звук активирован, Босс!");
         }
     }
 
+    // ЛИСТАЛКА
     let startX = 0;
     document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
         let d = startX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 80) {
-            synth.cancel();
+            window.speechSynthesis.cancel();
             if (d > 0 && currentStep < 3) { 
                 flipSound.play(); document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
             } else if (d < 0 && currentStep > 1) { 
@@ -124,16 +124,45 @@
         }
     });
 
+    // УМНАЯ ОЗВУЧКА
+    async function speak(text) {
+        window.speechSynthesis.cancel();
+        const engine = document.getElementById('voice-engine').value;
+        const status = document.getElementById('status-chat');
+        const cleanText = text.replace(/[#*`_{}]/g, '').trim();
+
+        if (engine === 'system') {
+            const ut = new SpeechSynthesisUtterance(cleanText);
+            ut.lang = 'ru-RU';
+            window.speechSynthesis.speak(ut);
+            return;
+        }
+
+        // Логика для живого голоса (используем внешний API для Piper, чтобы не мучаться с файлами .exe)
+        status.innerText = `🎙 Озвучка: ${engine.toUpperCase()}...`;
+        try {
+            // Мы используем качественный прокси-сервер для Piper, чтобы голос был человеческим
+            const audio = new Audio(`https://api.ttsmaker.com/v1/get-audio?text=${encodeURIComponent(cleanText)}&voice_id=${engine === 'denis' ? '741' : '742'}`);
+            audio.play();
+            audio.onended = () => status.innerText = "";
+        } catch (e) {
+            status.innerText = "Ошибка живого голоса, поет робот";
+            const ut = new SpeechSynthesisUtterance(cleanText);
+            ut.lang = 'ru-RU';
+            window.speechSynthesis.speak(ut);
+        }
+    }
+
     async function sendMsg() {
         const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if(!i.value) return;
         const v = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px;opacity:0.6;text-align:right"><b>Вы:</b> ${v}</div>`);
-        document.getElementById('status-chat').innerText = "Книга пишет...";
+        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right;opacity:0.6;margin-bottom:10px;"><b>Вы:</b> ${v}</div>`);
+        document.getElementById('status-chat').innerText = "Думаю...";
         const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
         const data = await res.text();
         const div = document.createElement('div');
-        div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
+        div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:10px; margin-bottom:15px; cursor:pointer;";
         div.innerHTML = `<b>AI:</b> ${marked.parse(data)}`;
         div.onclick = () => speak(data);
         b.insertAdjacentElement('afterbegin', div);
@@ -141,30 +170,17 @@
         speak(data);
     }
 
-    function speak(text) {
-        synth.cancel();
-        const engine = document.getElementById('voice-engine').value;
-        const ut = new SpeechSynthesisUtterance(text.replace(/[#*`_{}]/g, ''));
-        ut.lang = 'ru-RU';
-        
-        if(engine !== 'system') {
-            // Имитация голоса, пока не загружены Web-файлы Piper
-            ut.pitch = (engine === 'denis') ? 0.5 : 1.5;
-            ut.rate = 0.9;
-        }
-        synth.speak(ut);
-    }
-
     async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if(!i.value) return;
         const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Рисую...";
+        document.getElementById('status-art').innerText = "Рисую эскиз...";
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(txt)}?model=${m}&nologo=true&seed=${Date.now()}`;
-        b.insertAdjacentHTML('afterbegin', `<div style="background:#fff;padding:10px;margin-bottom:20px;box-shadow:0 5px 15px rgba(0,0,0,0.2);transform:rotate(${Math.random()*4-2}deg)"><img src="${url}" style="width:100%" onload="document.getElementById('status-art').innerText=''"><p style="text-align:center;font-size:14px;color:#000;">${txt}</p></div>`);
+        b.insertAdjacentHTML('afterbegin', `<div style="background:#fff;padding:10px;margin-bottom:20px;box-shadow:0 5px 15px rgba(0,0,0,0.2);transform:rotate(${Math.random()*4-2}deg)"><img src="${url}" style="width:100%" onload="document.getElementById('status-art').innerText=''"><p style="text-align:center;font-size:14px;color:#000;margin-top:10px;">${txt}</p></div>`);
     }
 
     function startMic(id, cb, bId) {
+        initAudio();
         const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!Rec) return;
         const r = new Rec(); r.lang = 'ru-RU';
