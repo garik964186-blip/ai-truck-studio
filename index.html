@@ -78,7 +78,7 @@
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <button onclick="startMic('i-art', genArt)" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
-                    <input type="text" id="i-art" class="field" placeholder="Нарисуй (авто-перевод)...">
+                    <input type="text" id="i-art" class="field" placeholder="Нарисуй по-русски...">
                     <button onclick="genArt()" class="btn" style="color:var(--accent)"><i class="fas fa-magic"></i></button>
                 </div>
             </div>
@@ -109,15 +109,18 @@
 <div id="viewer" onclick="this.style.display='none'"><img id="v-img" src="" style="max-width:95%; max-height:95%; border:3px solid #fff;"></div>
 
 <script>
-    let startX = 0, currentStep = 1, currentSpeechText = null;
+    let startX = 0, currentStep = 1;
+    let isSpeaking = false; // Флаг для контроля голоса
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/page-flip-01a.mp3');
 
-    // ПЕРЕЛИСТЫВАНИЕ С ОСТАНОВКОЙ ГОЛОСА
+    // ПЕРЕЛИСТЫВАНИЕ (С ПРИНУДИТЕЛЬНОЙ ОСТАНОВКОЙ ВСЕГО)
     document.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
     document.addEventListener('touchend', e => {
         let diff = startX - e.changedTouches[0].clientX;
         if (Math.abs(diff) > 100) {
-            window.speechSynthesis.cancel(); // Заткнуть AI при смене страницы
+            window.speechSynthesis.cancel(); // Гасим звук при свайпе
+            isSpeaking = false;
+            
             if (diff > 0 && currentStep < 3) { 
                 flipSound.play();
                 document.getElementById('p' + currentStep).classList.add('flipped'); 
@@ -131,26 +134,26 @@
         }
     });
 
-    // УПРАВЛЕНИЕ ГОЛОСОМ
-    function speak(text) {
-        window.speechSynthesis.cancel();
+    // УМНЫЙ ГОЛОС
+    function toggleVoice(text) {
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            // Если мы уже говорили этот текст, просто останавливаемся
+            if (isSpeaking) {
+                isSpeaking = false;
+                return;
+            }
+        }
+        
         const msg = new SpeechSynthesisUtterance();
         msg.text = text.replace(/[#*`_]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
         msg.lang = 'ru-RU';
+        msg.onend = () => { isSpeaking = false; };
+        
         window.speechSynthesis.speak(msg);
-        currentSpeechText = text;
+        isSpeaking = true;
     }
 
-    function toggleSpeak(text) {
-        if (window.speechSynthesis.speaking && currentSpeechText === text) {
-            window.speechSynthesis.cancel();
-            currentSpeechText = null;
-        } else {
-            speak(text);
-        }
-    }
-
-    // МИКРОФОН
     function startMic(id, cb) {
         const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!Speech) return;
@@ -167,7 +170,7 @@
         rec.start();
     }
 
-    // ЧАТ (УСКОРЕННЫЙ С ТАПОМ ПО СООБЩЕНИЮ)
+    // ЧАТ С УМНЫМ ТАПОМ
     async function sendMsg() {
         const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if(!i.value) return;
@@ -184,28 +187,33 @@
             msgDiv.innerHTML = `<b>AI:</b> ${marked.parse(data)}`;
             
             // ТАП — замолчать или заговорить снова
-            msgDiv.onclick = () => toggleSpeak(data);
+            msgDiv.onclick = (e) => {
+                e.stopPropagation();
+                toggleVoice(data);
+            };
             
             b.insertAdjacentElement('afterbegin', msgDiv);
-            speak(data);
+            toggleVoice(data); // Начинаем говорить сразу
         } catch(e) { 
             b.insertAdjacentHTML('afterbegin', "<div>Ошибка сети...</div>");
         }
     }
 
-    // ГЕНЕРАЦИЯ (АВТО-ПЕРЕВОД + УСКОРЕНИЕ)
+    // ГЕНЕРАЦИЯ БЕЗ ПОВТОРОВ (УНИКАЛЬНЫЙ SEED)
     async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if(!i.value) return;
         const rawText = i.value;
-        i.value = "Перевожу для нейросети...";
+        i.value = "Рисую новый эскиз...";
 
         try {
-            // Переводим на английский для лучшего качества
-            const transRes = await fetch(`https://text.pollinations.ai/prompt/Translate into English for image generation, return ONLY translation: ${encodeURIComponent(rawText)}?model=mistral`);
+            // Перевод
+            const transRes = await fetch(`https://text.pollinations.ai/prompt/Translate into English for AI art, return ONLY translation: ${encodeURIComponent(rawText)}?model=mistral`);
             const translated = await transRes.text();
             
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(translated)}?model=${m}&nologo=true&seed=${Math.random()}`;
+            // Генерируем Seed на основе времени, чтобы картинки НИКОГДА не повторялись
+            const uniqueSeed = Date.now() + Math.floor(Math.random() * 1000);
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(translated)}?model=${m}&nologo=true&seed=${uniqueSeed}&width=1024&height=1024`;
             
             const f = document.createElement('div');
             f.className = 'photo-frame';
