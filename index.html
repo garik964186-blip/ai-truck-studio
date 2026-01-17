@@ -21,7 +21,6 @@
         .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; color: var(--ink); }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
         .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; transition: background 0.3s; border-radius: 8px; padding: 8px; position: relative; }
-        .ai-box:active { background: rgba(0,0,0,0.05); }
         .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 25px; font-weight: bold; padding: 5px; }
         .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
@@ -44,20 +43,17 @@
         <div class="page" id="p3">
             <div class="paper-sheet">
                 <div class="header">
-                    <button class="trash-btn" onclick="toggleAudiobook()" id="audiobook-btn" title="Режим аудиокниги">
-                        <i class="fas fa-headphones"></i>
-                    </button>
+                    <button class="trash-btn" onclick="toggleAudiobook()" id="audiobook-btn"><i class="fas fa-headphones"></i></button>
                     🔮 МАГИЧЕСКИЙ ЧАТ
                     <button class="trash-btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
                 </div>
                 <select id="chat-model" class="ai-select">
                     <option value="openai">GPT-4o (Умный)</option>
                     <option value="deepseek">DeepSeek R1 (Логика)</option>
-                    <option value="llama">Llama 3.3 (Мощная)</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
+                    <option value="system">🗣 Системный (С паузой)</option>
                     <option value="cloud">♂ Денис (Нейро-голос)</option>
-                    <option value="system">🗣 Системный (Робот)</option>
                 </select>
                 <div id="status-chat" class="status-bar" onclick="wakeAudio()">
                     <span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для звука</span>
@@ -78,9 +74,6 @@
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
                 <select id="art-model" class="ai-select">
                     <option value="flux">💎 Flux.1 (Шедевр)</option>
-                    <option value="flux-realism">📸 Фото-реализм</option>
-                    <option value="flux-anime">🎎 Аниме-стиль</option>
-                    <option value="flux-3d">🧊 3D Рендер</option>
                     <option value="turbo">⚡ Быстро</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
@@ -104,7 +97,6 @@
                 <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold); text-align:center;">
                     <h1 style="margin:0; letter-spacing:5px; font-size:28px;">НАША КНИГА</h1>
                     <div style="font-size:12px; opacity:0.6; margin-top:15px;">BOSS EDITION</div>
-                    <div style="font-size:12px; opacity:0.6; margin-top:5px;">⬅ СМАХНИ ВЛЕВО</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -117,9 +109,12 @@
     const synth = window.speechSynthesis;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
     
-    // ПЕРЕМЕННЫЕ ДЛЯ КОНТРОЛЯ ЗВУКА
-    let currentAudio = null; // Для облачного голоса
-    let lastSpokenText = ""; // Чтобы понимать, какой блок сейчас "активен"
+    // ПЕРЕМЕННЫЕ ДЛЯ УМНОЙ ПАУЗЫ
+    let currentAudio = null;
+    let isSpeaking = false;
+    let speechQueue = []; // Массив предложений
+    let currentSentenceIdx = 0; // На каком предложении остановились
+    let lastBoxId = null; // Какой блок текста читали последним
 
     marked.setOptions({ breaks: true, gfm: true });
     window.addEventListener('load', loadChat);
@@ -129,149 +124,146 @@
         const u = new SpeechSynthesisUtterance('');
         synth.speak(u);
         audioReady = true;
-        document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук активен</span>";
-        setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
+        document.getElementById('s-label').innerText = "✅ Звук готов";
     }
 
-    /* --- УЛУЧШЕННАЯ ФУНКЦИЯ ОЗВУЧКИ (С ПАУЗОЙ) --- */
-    async function speak(t, onEndCallback = null) {
-        wakeAudio();
+    /* --- УМНАЯ ОЗВУЧКА С ЗАПОМИНАНИЕМ МЕСТА --- */
+    function speak(text, boxId, onEndCallback = null) {
         const eng = document.getElementById('voice-engine').value;
-        const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
+        const cleanText = text.replace(/[#*`_{}\[\]()]/g, '').trim();
 
-        // Если мы нажимаем на тот же текст, который уже звучит — ОСТАНАВЛИВАЕМ
-        if (lastSpokenText === clean && (synth.speaking || (currentAudio && !currentAudio.paused))) {
-            stopAllSpeech();
-            lastSpokenText = "";
+        // 1. Если кликнули по тому же блоку, который звучит — СТОП (пауза)
+        if (lastBoxId === boxId && isSpeaking) {
+            stopAllSpeech(false); // Остановить, но не сбрасывать индекс предложения
             return;
         }
 
-        stopAllSpeech(); // Остановить старое перед началом нового
-        lastSpokenText = clean;
+        // 2. Если кликнули по новому блоку — сброс старого
+        if (lastBoxId !== boxId) {
+            stopAllSpeech(true);
+            lastBoxId = boxId;
+            // Разбиваем текст на предложения
+            speechQueue = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
+            currentSentenceIdx = 0;
+        }
+
+        isSpeaking = true;
+        playQueue(eng, onEndCallback);
+    }
+
+    function playQueue(eng, onEndCallback) {
+        if (currentSentenceIdx >= speechQueue.length) {
+            isSpeaking = false;
+            if (onEndCallback) onEndCallback();
+            return;
+        }
+
+        const sentence = speechQueue[currentSentenceIdx];
 
         if (eng === 'system') {
-            const u = new SpeechSynthesisUtterance(clean);
+            const u = new SpeechSynthesisUtterance(sentence);
             u.lang = 'ru-RU';
-            u.rate = 0.9;
             u.onend = () => {
-                if (onEndCallback) onEndCallback();
-                lastSpokenText = "";
+                if (isSpeaking) {
+                    currentSentenceIdx++;
+                    playQueue(eng, onEndCallback);
+                }
             };
             synth.speak(u);
         } else {
-            const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean.substring(0, 200))}`;
+            const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(sentence.substring(0, 200))}`;
             currentAudio = new Audio(url);
             currentAudio.onended = () => {
-                if (onEndCallback) onEndCallback();
-                lastSpokenText = "";
+                if (isSpeaking) {
+                    currentSentenceIdx++;
+                    playQueue(eng, onEndCallback);
+                }
             };
-            currentAudio.play().catch(() => {
-                // Если облако упало, дублируем системным
-                const u = new SpeechSynthesisUtterance(clean);
-                u.lang = 'ru-RU';
-                synth.speak(u);
-            });
+            currentAudio.play();
         }
     }
 
-    function stopAllSpeech() {
-        synth.cancel(); // Стоп системный голос
+    function stopAllSpeech(resetIndices = true) {
+        isSpeaking = false;
+        synth.cancel();
         if (currentAudio) {
-            currentAudio.pause(); // Стоп облачный голос
-            currentAudio.currentTime = 0;
+            currentAudio.pause();
         }
+        if (resetIndices) {
+            currentSentenceIdx = 0;
+            lastBoxId = null;
+            speechQueue = [];
+        }
+        document.getElementById('status-chat').innerText = resetIndices ? "" : "⏸ На паузе";
     }
 
     async function sendMsg() {
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
+        const id = "msg-" + Date.now();
+        
         b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Вы: ${val}</div>`);
         document.getElementById('status-chat').innerText = "Книга думает...";
+        
         try {
             const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
-            let d = await r.text();
+            const d = await r.text();
             const div = document.createElement('div');
             div.className = "ai-box";
+            div.id = id;
             div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
-            div.onclick = () => speak(d);
+            div.onclick = () => speak(d, id);
             b.insertAdjacentElement('afterbegin', div);
             saveChat();
             document.getElementById('status-chat').innerText = "";
-            speak(d);
-        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
+            speak(d, id);
+        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка"; }
     }
 
     /* --- АУДИОКНИГА --- */
     let isReadingBook = false;
-    let bookQueue = [];
-    let currentReadIdx = 0;
+    let bookBoxes = [];
+    let boxIdx = 0;
 
     function toggleAudiobook() {
         if (isReadingBook) { stopAudiobook(); return; }
-        const boxes = Array.from(document.querySelectorAll('.ai-box')).reverse();
-        if (boxes.length === 0) return;
+        bookBoxes = Array.from(document.querySelectorAll('.ai-box')).reverse();
+        if (bookBoxes.length === 0) return;
         isReadingBook = true;
-        currentReadIdx = 0;
-        bookQueue = boxes;
-        document.getElementById('audiobook-btn').style.color = 'var(--accent)';
-        readNextInQueue();
+        boxIdx = 0;
+        document.getElementById('audiobook-btn').style.color = 'red';
+        readNextBox();
     }
 
     function stopAudiobook() {
         isReadingBook = false;
-        stopAllSpeech();
+        stopAllSpeech(true);
         document.getElementById('audiobook-btn').style.color = 'inherit';
-        document.getElementById('status-chat').innerText = "";
-        bookQueue.forEach(b => b.style.background = 'transparent');
     }
 
-    function readNextInQueue() {
-        if (!isReadingBook || currentReadIdx >= bookQueue.length) { stopAudiobook(); return; }
-        const currentBox = bookQueue[currentReadIdx];
-        const text = currentBox.innerText.replace('AI:', '').trim();
-        currentBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        bookQueue.forEach(b => b.style.background = 'transparent');
-        currentBox.style.background = 'rgba(212, 175, 55, 0.2)';
-        document.getElementById('status-chat').innerText = `Читаю: ${currentReadIdx + 1}/${bookQueue.length}`;
-        speak(text, () => {
-            currentReadIdx++;
-            setTimeout(readNextInQueue, 600);
+    function readNextBox() {
+        if (!isReadingBook || boxIdx >= bookBoxes.length) { stopAudiobook(); return; }
+        const box = bookBoxes[boxIdx];
+        box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        speak(box.innerText, box.id, () => {
+            boxIdx++;
+            setTimeout(readNextBox, 1000);
         });
     }
 
-    async function genArt() {
-        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
-        if (!i.value) return;
-        let txt = i.value; i.value = '';
-        if (txt.toLowerCase().match(/камаз|truck|dongfeng/)) {
-            txt += ", realistic truck photography, 4k, cinematic lighting, shot on DJI Osmo Action 5 Pro";
-        }
-        document.getElementById('status-art').innerText = "Рисую...";
-        try {
-            const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
-            const td = await tr.json();
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(td.responseData.translatedText)}?model=${m}&nologo=true&seed=${Date.now()}`;
-            const card = `<div style="background:#fff; padding:10px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
-                <img src="${url}" style="width:100%; border-radius:4px;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
-                <p style="text-align:center; font-size:12px; margin-top:5px; color:#555;">${txt}</p>
-            </div>`;
-            b.insertAdjacentHTML('afterbegin', card);
-        } catch(e) { document.getElementById('status-art').innerText = "Ошибка"; }
-    }
-
+    /* --- ОСТАЛЬНАЯ ЛОГИКА --- */
     function saveChat() { localStorage.setItem('boss_book_chat', document.getElementById('hub-box').innerHTML); }
     function loadChat() {
         const saved = localStorage.getItem('boss_book_chat');
         if (saved) {
             document.getElementById('hub-box').innerHTML = saved;
             document.querySelectorAll('.ai-box').forEach(box => {
-                const text = box.innerText.replace('AI:', '').trim();
-                box.onclick = () => speak(text);
+                box.onclick = () => speak(box.innerText, box.id);
             });
         }
     }
-    function clearChat() { if(confirm('Удалить всё, Босс?')) { document.getElementById('hub-box').innerHTML = ''; localStorage.removeItem('boss_book_chat'); stopAudiobook(); } }
+    function clearChat() { if(confirm('Очистить книгу?')) { document.getElementById('hub-box').innerHTML = ''; localStorage.removeItem('boss_book_chat'); stopAllSpeech(true); } }
     function runMic(id, cb, bId) {
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!R) return;
@@ -281,18 +273,14 @@
         r.onend = () => document.getElementById(bId).style.color = 'inherit';
         r.start();
     }
-    function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; if(pz) pz.destroy(); pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 }); }
-
-    let sX = 0;
-    document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
-    document.addEventListener('touchend', e => {
-        if(document.getElementById('z-overlay').style.display === 'flex') return;
-        let d = sX - e.changedTouches[0].clientX;
-        if (Math.abs(d) > 60) {
-            if (d > 0 && step < 3) { document.getElementById('p'+step).classList.add('flipped'); step++; flipSound.play(); }
-            else if (d < 0 && step > 1) { step--; document.getElementById('p'+step).classList.remove('flipped'); flipSound.play(); }
-        }
-    });
-</script>
-</body>
-</html>
+    async function genArt() {
+        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
+        if (!i.value) return;
+        let txt = i.value; i.value = '';
+        if (txt.toLowerCase().match(/камаз|truck|dongfeng/)) txt += ", realistic truck, 4k, shot on Osmo Action 5 Pro";
+        document.getElementById('status-art').innerText = "Рисую...";
+        try {
+            const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
+            const td = await tr.json();
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(td.responseData.translatedText)}
+            
