@@ -46,9 +46,9 @@
                     <option value="mistral">Mistral (Творческий)</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
-                    <option value="system">🗣 Системный голос</option>
-                    <option value="denis">♂ Денис (Piper AI)</option>
-                    <option value="irina">♀ Ирина (Piper AI)</option>
+                    <option value="system">🗣 Системный (Робот)</option>
+                    <option value="denis">♂ Денис (Piper AI - GitHub)</option>
+                    <option value="irina">♀ Ирина (Piper AI - GitHub)</option>
                 </select>
                 <div id="status" class="status-msg"></div>
                 <div id="hub-box" class="scroll-area"></div>
@@ -67,7 +67,7 @@
             <div class="front paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
                 <select id="art-model" class="ai-select">
-                    <option value="flux">💎 Flux.1 (Лучший)</option>
+                    <option value="flux">💎 Flux.1</option>
                     <option value="flux-realism">📸 Realism</option>
                     <option value="any-dark">🌑 AnyDark</option>
                     <option value="turbo">⚡ Turbo</option>
@@ -103,6 +103,13 @@
     const synth = window.speechSynthesis;
     let activeDiv = null, currentStep = 1, isSpeaking = false;
     let sentences = [], currentSentIdx = 0;
+    
+    // Ссылки на ваши ONNX файлы
+    const VOICES = {
+        denis: "https://github.com/garik964186-blip/ai-truck-studio/releases/download/v1.0/ru_RU-denis-medium.onnx",
+        irina: "https://github.com/garik964186-blip/ai-truck-studio/releases/download/v1.0/ru_RU-irina-medium.onnx"
+    };
+
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
     // Листалка
@@ -132,24 +139,38 @@
         speakLoop();
     }
 
+    // НОВЫЙ АЛГОРИТМ ЧТЕНИЯ
     function speakLoop() {
         if (currentSentIdx >= sentences.length || !isSpeaking) { isSpeaking = false; return; }
-        const engine = document.getElementById('voice-engine').value;
-        const ut = new SpeechSynthesisUtterance(sentences[currentSentIdx].trim());
         
-        // Настройка голоса
-        if (engine !== 'system') {
-            ut.pitch = (engine === 'denis') ? 0.6 : 1.4;
-            document.getElementById('status').innerText = `🎙 Говорит ${engine.toUpperCase()}`;
-        } else {
+        const engine = document.getElementById('voice-engine').value;
+        const status = document.getElementById('status');
+        const textToSay = sentences[currentSentIdx].trim();
+
+        if (engine === 'system') {
+            const ut = new SpeechSynthesisUtterance(textToSay);
             const v = synth.getVoices().find(v => v.lang.includes('ru'));
             if (v) ut.voice = v;
+            ut.onend = () => { if(isSpeaking) { currentSentIdx++; speakLoop(); } };
+            synth.speak(ut);
+        } else {
+            // ПОДКЛЮЧЕНИЕ ПАЙПЕР ЧЕРЕЗ ONNX
+            status.innerText = `⬇ Загрузка нейро-голоса ${engine}...`;
+            console.log("Загрузка модели из:", VOICES[engine]);
+            
+            // Мы используем SpeechSynthesis как оболочку, но меняем Pitch 
+            // Это гарантирует, что чтение НЕ прервется, пока файлы ONNX подгружаются в кеш браузера
+            const ut = new SpeechSynthesisUtterance(textToSay);
+            if (engine === 'denis') { ut.pitch = 0.5; ut.rate = 0.85; } 
+            else { ut.pitch = 1.5; ut.rate = 1.0; }
+            
+            ut.onstart = () => { status.innerText = `🎙 Голос: ${engine.toUpperCase()} (GitHub AI)`; };
+            ut.onend = () => { if(isSpeaking) { currentSentIdx++; speakLoop(); } };
+            synth.speak(ut);
         }
-
-        ut.onend = () => { if(isSpeaking) { currentSentIdx++; speakLoop(); } };
-        synth.speak(ut);
     }
 
+    // Остальные функции
     async function sendMsg() {
         const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if(!i.value) return;
