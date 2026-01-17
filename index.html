@@ -45,6 +45,7 @@
                 <select id="chat-model" class="ai-select">
                     <option value="openai">GPT-4o (Умный)</option>
                     <option value="llama">Llama 3.3 (Мощная)</option>
+                    <option value="mistral-large">Mistral Large</option>
                     <option value="qwen-coder">Qwen (Код)</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
@@ -53,7 +54,7 @@
                     <option value="system">🗣 Системный Робот</option>
                 </select>
                 <div id="status-chat" class="status-bar" onclick="wakeAudio()">
-                    <span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для активации звука</span>
+                    <span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для звука</span>
                 </div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -72,6 +73,7 @@
                 <select id="art-model" class="ai-select">
                     <option value="flux">💎 Flux.1 (Шедевр)</option>
                     <option value="flux-realism">📸 Фото-реализм</option>
+                    <option value="flux-anime">🎎 Аниме</option>
                     <option value="turbo">⚡ Быстро</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
@@ -115,7 +117,7 @@
         if (audioReady) return;
         synth.speak(new SpeechSynthesisUtterance(''));
         audioReady = true;
-        document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук готов</span>";
+        document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук активен</span>";
         setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
     }
 
