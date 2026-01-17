@@ -105,7 +105,14 @@
 
 <script>
     let synth = window.speechSynthesis, activeDiv = null, currentStep = 1;
+    let lastCharIndex = 0; // Для запоминания места остановки
+    
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
+
+    // Разблокировка звука для мобилок
+    document.addEventListener('touchstart', () => {
+        flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; }).catch(()=>{});
+    }, { once: true });
 
     function startMic(inputId, callback, btnId) {
         const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -129,7 +136,6 @@
             const data = await res.text();
             loader.style.display = 'none';
             const msgDiv = document.createElement('div');
-            msgDiv.className = "ai-msg";
             msgDiv.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
             msgDiv.innerHTML = `<b>AI:</b> <span class="pause-badge">⏸ ПАУЗА</span> ${marked.parse(data)}`;
             msgDiv.onclick = () => toggleVoice(data, msgDiv);
@@ -164,16 +170,36 @@
                 return;
             } else if (synth.paused) {
                 synth.resume();
+                // Если стандартный resume подвел (часто на Android), запускаем заново с обрезкой
+                if (!synth.speaking) {
+                    speakFrom(cleanText.substring(lastCharIndex), el);
+                }
                 el.classList.remove('is-paused');
                 return;
             }
         }
 
         synth.cancel();
+        lastCharIndex = 0;
+        speakFrom(cleanText, el);
+    }
+
+    function speakFrom(textPart, el) {
         activeDiv = el;
-        const ut = new SpeechSynthesisUtterance(cleanText);
+        const ut = new SpeechSynthesisUtterance(textPart);
         ut.lang = 'ru-RU';
-        ut.onend = () => { if(!synth.paused) { el.classList.remove('is-paused'); activeDiv = null; } };
+        ut.onboundary = (event) => {
+            if (event.name === 'word') {
+                lastCharIndex += event.charIndex;
+            }
+        };
+        ut.onend = () => {
+            if (!synth.paused) {
+                el.classList.remove('is-paused');
+                activeDiv = null;
+                lastCharIndex = 0;
+            }
+        };
         el.classList.remove('is-paused');
         synth.speak(ut);
     }
@@ -185,12 +211,12 @@
         if (Math.abs(d) > 70) {
             synth.cancel();
             if (d > 0 && currentStep < 3) { 
-                flipSound.play();
+                flipSound.currentTime = 0; flipSound.play().catch(()=>{});
                 document.getElementById('p'+currentStep).classList.add('flipped'); 
                 currentStep++; 
             }
             else if (d < 0 && currentStep > 1) { 
-                flipSound.play();
+                flipSound.currentTime = 0; flipSound.play().catch(()=>{});
                 currentStep--; 
                 document.getElementById('p'+currentStep).classList.remove('flipped'); 
             }
