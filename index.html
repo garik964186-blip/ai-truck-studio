@@ -9,7 +9,7 @@
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: pan-y; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 1500px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
@@ -18,14 +18,14 @@
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 18px; }
-        .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; }
+        .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; color: var(--ink); }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
         .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; }
         .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
         .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
         .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px; border-radius: 25px; font-size: 16px; }
-        .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; }
+        .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; width: 45px; }
         #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
     </style>
 </head>
@@ -66,9 +66,11 @@
             <div class="paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
                 <select id="art-model" class="ai-select">
-                    <option value="flux">💎 Flux.1 (Топ)</option>
-                    <option value="flux-realism">📸 Реализм</option>
-                    <option value="turbo">⚡ Быстро</option>
+                    <option value="flux">💎 Flux.1 (Шедевр)</option>
+                    <option value="flux-realism">📸 Фото-реализм</option>
+                    <option value="flux-anime">🎎 Аниме-стиль</option>
+                    <option value="flux-3d">🧊 3D Рендер</option>
+                    <option value="turbo">⚡ Быстрый набросок</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
                 <div id="imgs-box" class="scroll-area"></div>
@@ -105,25 +107,36 @@
 
     function unlockAudio() {
         if (audioUnlocked) return;
-        synth.speak(new SpeechSynthesisUtterance(''));
+        const u = new SpeechSynthesisUtterance('');
+        synth.speak(u);
         audioUnlocked = true;
     }
 
     async function speak(t) {
         unlockAudio();
-        const status = document.getElementById('status-chat');
+        const eng = document.getElementById('voice-engine').value;
+        const st = document.getElementById('status-chat');
         const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
-        status.innerHTML = "🔊 Озвучка...";
         
+        if (eng === 'system') {
+            synth.cancel();
+            const u = new SpeechSynthesisUtterance(clean);
+            u.lang = 'ru-RU';
+            synth.speak(u);
+            return;
+        }
+
+        st.innerHTML = "🔊 Книга говорит...";
         const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean)}`;
         const a = new Audio(url);
         a.play().catch(() => {
-            status.innerHTML = `<span style="color:red; cursor:pointer;" onclick="speak('${clean.replace(/'/g, "\\'")}')">📢 Включить звук</span>`;
+            st.innerHTML = `<span style="color:red; cursor:pointer;" onclick="speak('${clean.replace(/'/g, "\\'")}')">📢 Нажми для звука</span>`;
         });
-        a.onended = () => status.innerText = "";
+        a.onended = () => st.innerText = "";
     }
 
     async function sendMsg() {
+        unlockAudio();
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
@@ -144,18 +157,22 @@
     }
 
     async function genArt() {
+        unlockAudio();
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
         const txt = i.value; i.value = '';
         document.getElementById('status-art').innerText = "Рисую...";
         
-        const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
-        const td = await tr.json();
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(td.responseData.translatedText)}?model=${m}&nologo=true&seed=${Date.now()}`;
-        
-        b.insertAdjacentHTML('afterbegin', `<div style="background:#fff; padding:10px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
-            <img src="${url}" style="width:100%;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
-            <p style="text-align:center; font-size:12px; margin-top:5px;">${txt}</p></div>`);
+        try {
+            const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
+            const td = await tr.json();
+            const translated = td.responseData.translatedText;
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(translated)}?model=${m}&nologo=true&seed=${Date.now()}`;
+            
+            b.insertAdjacentHTML('afterbegin', `<div style="background:#fff; padding:10px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+                <img src="${url}" style="width:100%;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
+                <p style="text-align:center; font-size:12px; margin-top:5px;">${txt}</p></div>`);
+        } catch(e) { document.getElementById('status-art').innerText = "Ошибка"; }
     }
 
     function openZ(u) {
@@ -166,9 +183,9 @@
     }
 
     function startMic(id, cb, bId) {
+        unlockAudio();
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!R) return;
-        unlockAudio();
         const r = new R(); r.lang = 'ru-RU';
         r.onstart = () => document.getElementById(bId).style.color = 'red';
         r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
