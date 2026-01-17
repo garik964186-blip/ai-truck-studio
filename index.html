@@ -52,6 +52,8 @@
                     <option value="openai">GPT-4o (Умный)</option>
                     <option value="deepseek">DeepSeek R1 (Логика)</option>
                     <option value="llama">Llama 3.3 (Быстрая)</option>
+                    <option value="qwen">Qwen 2.5 (Технический)</option>
+                    <option value="mistral">Mistral Nemo</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
                     <option value="denis">♂ Денис (Piper-Нейро)</option>
@@ -77,6 +79,8 @@
                 <select id="art-model" class="ai-select">
                     <option value="flux">💎 Flux.1 (Лучший)</option>
                     <option value="flux-realism">📸 Realism (Фото)</option>
+                    <option value="any-dark">🌑 AnyDark (Мрачный)</option>
+                    <option value="turbo">⚡ Turbo (Быстрый)</option>
                 </select>
                 <div id="status-art" class="status-msg"></div>
                 <div id="imgs-box" class="scroll-area"></div>
@@ -99,8 +103,9 @@
                     </video>
                 </div>
                 <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold); text-align:center;">
-                    <p style="font-size:2em; font-weight:bold; letter-spacing:3px; margin:0;">BOSS EDITION</p>
-                    <div style="margin-top:10px; font-size:12px; opacity:0.6;">⬅ СМАХНИ ДЛЯ ВХОДА</div>
+                    <p style="font-size:2em; font-weight:bold; letter-spacing:3px; margin:0;">НАША КНИГА</p>
+                    <p style="font-size:1.2em; margin:5px 0 0 0; opacity:0.8;">BOSS EDITION</p>
+                    <div style="margin-top:15px; font-size:12px; opacity:0.6;">⬅ СМАХНИ ДЛЯ ВХОДА</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -109,22 +114,19 @@
 </div>
 
 <script>
-    // --- ИНИЦИАЛИЗАЦИЯ НЕЙРО-ГОЛОСА (PIPER) ---
+    // Подключаем Piper из твоего репозитория
     const piperWorker = new Worker('https://garik964186-blip.github.io/piper-tts-web/scripts/worker.js');
     const synth = window.speechSynthesis;
     let currentStep = 1, pz = null;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
     function forceUnlockAudio() { 
-        const silent = new SpeechSynthesisUtterance('');
-        synth.speak(silent); 
+        synth.speak(new SpeechSynthesisUtterance('')); 
     }
 
     async function speak(text) {
         const engine = document.getElementById('voice-engine').value;
         const status = document.getElementById('status-chat');
-        
-        // Очистка текста от Markdown символов для корректной озвучки
         const cleanText = text.replace(/[#*`_{}\[\]()]/g, '');
 
         if (engine === 'system') {
@@ -135,24 +137,20 @@
             return;
         }
 
-        status.innerText = "Книга настраивает нейро-голос...";
+        status.innerText = "Подготовка нейро-голоса (может занять время)...";
         const modelId = (engine === 'denis') ? 'ru_RU-dmitri-medium' : 'ru_RU-irina-medium';
 
         piperWorker.postMessage({ text: cleanText, model: modelId });
 
         piperWorker.onmessage = (e) => {
             if (e.data.audioUrl) {
-                const audio = new Audio(e.data.audioUrl);
-                audio.play();
+                new Audio(e.data.audioUrl).play();
                 status.innerText = "";
             }
-            if (e.data.error) {
-                status.innerText = "Ошибка голоса. Используй системный.";
-            }
+            if (e.data.error) status.innerText = "Ошибка голоса. Проверь интернет.";
         };
     }
 
-    // --- ЛОГИКА ЧАТА ---
     async function sendMsg() {
         const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if(!i.value) return;
@@ -170,10 +168,9 @@
             b.insertAdjacentElement('afterbegin', div);
             document.getElementById('status-chat').innerText = "";
             speak(data);
-        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка связи"; }
+        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
     }
 
-    // --- ЛОГИКА АРТА ---
     async function translate(text) {
         try {
             const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
@@ -186,7 +183,7 @@
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if(!i.value) return;
         const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Рисуем шедевр...";
+        document.getElementById('status-art').innerText = "Рисуем...";
         const en = await translate(txt);
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&nologo=true&seed=${Date.now()}`;
         
@@ -197,7 +194,6 @@
             </div>`);
     }
 
-    // --- ИНТЕРФЕЙСНЫЕ ФУНКЦИИ ---
     function zoomImg(url) {
         const overlay = document.getElementById('img-overlay');
         document.getElementById('full-img').src = url;
