@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ULTRA — BOSS FINAL</title>
+    <title>ULTRA — BOSS FINAL EDITION</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -74,12 +74,11 @@
                 <select id="art-model" class="ai-select">
                     <option value="flux">💎 Flux (Качество)</option>
                     <option value="turbo">⚡ Turbo (Мгновенно)</option>
-                    <option value="any-thin">🖌️ Any-Thin (Стиль)</option>
                 </select>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <button onclick="startMic('i-art', genArt)" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
-                    <input type="text" id="i-art" class="field" placeholder="Нарисуй...">
+                    <input type="text" id="i-art" class="field" placeholder="Нарисуй по-русски...">
                     <button onclick="genArt()" class="btn" style="color:var(--accent)"><i class="fas fa-magic"></i></button>
                 </div>
             </div>
@@ -111,8 +110,6 @@
 
 <script>
     let startX = 0, currentStep = 1;
-    
-    // ЗВУК ПЕРЕЛИСТЫВАНИЯ
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/page-flip-01a.mp3');
 
     document.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
@@ -132,23 +129,14 @@
         }
     });
 
-    // УЛУЧШЕННЫЙ ГОЛОС
     function speak(text) {
         window.speechSynthesis.cancel();
         const msg = new SpeechSynthesisUtterance();
         msg.text = text.replace(/[#*`_]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
         msg.lang = 'ru-RU';
-        msg.pitch = 1.05; 
-        msg.rate = 1.0; 
-
-        const voices = window.speechSynthesis.getVoices();
-        const bestVoice = voices.find(v => v.lang.includes('ru') && v.name.includes('Google')) || voices.find(v => v.lang.includes('ru'));
-        if (bestVoice) msg.voice = bestVoice;
-        
         window.speechSynthesis.speak(msg);
     }
 
-    // МИКРОФОН С АВТО-ОТПРАВКОЙ
     function startMic(id, cb) {
         const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!Speech) return;
@@ -165,35 +153,51 @@
         rec.start();
     }
 
-    // ЧАТ
+    // УСКОРЕННЫЙ ЧАТ
     async function sendMsg() {
         const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if(!i.value) return;
         const val = i.value; i.value = '';
-        b.innerHTML = `<div style="margin-bottom:10px;"><b>Вы:</b> ${val}</div>` + b.innerHTML;
+        
+        // Быстрое добавление через insertAdjacentHTML
+        b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px; opacity:0.7;"><b>Вы:</b> ${val}</div>`);
+        
         try {
             const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
             const data = await res.text();
-            b.innerHTML = `<div style="border-bottom:1px dashed #ccc; padding-bottom:10px; margin-bottom:15px;"><b>AI:</b> ${marked.parse(data)}</div>` + b.innerHTML;
+            const htmlResponse = `<div style="border-bottom:1px dashed #ccc; padding-bottom:10px; margin-bottom:15px;"><b>AI:</b> ${marked.parse(data)}</div>`;
+            b.insertAdjacentHTML('afterbegin', htmlResponse);
             speak(data);
-        } catch(e) { b.innerHTML = "<div>Ошибка...</div>" + b.innerHTML; }
+        } catch(e) { 
+            b.insertAdjacentHTML('afterbegin', "<div>Ошибка связи...</div>");
+        }
     }
 
-    // ГЕНЕРАЦИЯ ФОТО
-    function genArt() {
+    // ГЕНЕРАЦИЯ С АВТО-ПЕРЕВОДОМ
+    async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if(!i.value) return;
-        const val = i.value; i.value = '';
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}&nologo=true&seed=${Math.random()}`;
-        const f = document.createElement('div');
-        f.className = 'photo-frame';
-        f.onclick = () => { document.getElementById('v-img').src = url; document.getElementById('viewer').style.display = 'flex'; };
-        f.innerHTML = `<img src="${url}" style="width:100%"><p style="text-align:center; font-family:cursive; margin-top:10px; font-size:12px;">${val}</p>`;
-        b.insertBefore(f, b.firstChild);
+        const rawText = i.value;
+        i.value = "Перевожу промпт..."; // Статус для босса
+
+        try {
+            // Перевод на лету через Mistral (быстрая модель)
+            const transRes = await fetch(`https://text.pollinations.ai/prompt/Translate into English for AI art prompt, return ONLY translation: ${encodeURIComponent(rawText)}?model=mistral`);
+            const translated = await transRes.text();
+            
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(translated)}?model=${m}&nologo=true&seed=${Math.random()}`;
+            
+            const f = document.createElement('div');
+            f.className = 'photo-frame';
+            f.onclick = () => { document.getElementById('v-img').src = url; document.getElementById('viewer').style.display = 'flex'; };
+            f.innerHTML = `<img src="${url}" style="width:100%"><p style="text-align:center; font-family:cursive; margin-top:10px; font-size:12px;">${rawText}</p>`;
+            
+            b.insertAdjacentElement('afterbegin', f);
+            i.value = "";
+        } catch(e) {
+            i.value = "Ошибка. Попробуй еще раз.";
+        }
     }
-    
-    // Подгрузка голосов
-    window.speechSynthesis.getVoices();
 </script>
 </body>
 </html>
