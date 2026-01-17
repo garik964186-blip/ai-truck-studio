@@ -24,7 +24,7 @@
         
         html, body {
             height: 100%;
-            overflow: hidden; /* Фиксируем экран, чтобы не дергался */
+            overflow: hidden;
             margin: 0;
             padding: 0;
             background: var(--bg);
@@ -34,7 +34,7 @@
 
         .container {
             width: 100%;
-            height: 100dvh; /* Полная высота на мобилках */
+            height: 100dvh;
             background: var(--card);
             display: flex;
             flex-direction: column;
@@ -135,7 +135,6 @@
             border-bottom-right-radius: 2px;
         }
         
-        /* К сообщению бота добавляем стиль "активности" при нажатии */
         .msg.a {
             align-self: flex-start;
             background: var(--ai-msg);
@@ -143,11 +142,10 @@
             border-bottom-left-radius: 2px;
             border: 1px solid #333;
             cursor: pointer; 
-            user-select: none; /* Чтобы текст не выделялся при тапе */
         }
         .msg.a:active { opacity: 0.7; transform: scale(0.98); }
 
-        /* --- ГАЛЕРЕЯ --- */
+        /* --- ГАЛЕРЕЯ / ГРАФИЧЕСКАЯ ДОСКА --- */
         #imgs {
             flex-grow: 1;
             overflow-y: auto;
@@ -262,7 +260,7 @@
 
 <div class="container">
     <div class="header">
-        <img src="1768422265866.jpg" class="banner-img" onerror="this.style.display='none'">
+        <img src="1768422265866.jpg" class="banner-img" onerror="this.src='https://images.unsplash.com/photo-1586191582056-a15cd117d1bb?q=80&w=1000&auto=format&fit=crop'">
         <div class="header-title">ОТ ИГРУШКИ ДО ФУРЫ</div>
     </div>
     
@@ -276,7 +274,7 @@
             <select id="m-art">
                 <option value="flux">🚛 Flux (Детали)</option>
                 <option value="flux-realism">📸 Реализм</option>
-                <option value="midjourney">🎨 Арт</option>
+                <option value="any-dark">🎨 Тёмный Арт</option>
             </select>
             <button onclick="document.getElementById('imgs').innerHTML=''" style="background:#333; border:none; color:white; border-radius:10px; width:40px;"><i class="fas fa-trash"></i></button>
         </div>
@@ -299,13 +297,14 @@
             <select id="m-chat">
                 <option value="openai">⚡ GPT-4o</option>
                 <option value="gemini">✨ Gemini</option>
-                <option value="qwen-coder">💻 Qwen (Код)</option>
+                <option value="qwen">💻 Qwen (Код & Логика)</option>
+                <option value="mistral">🌪️ Mistral</option>
             </select>
             <button onclick="document.getElementById('chat-box').innerHTML=''" style="background:#333; border:none; color:white; border-radius:10px; width:40px;"><i class="fas fa-trash"></i></button>
         </div>
 
         <div id="chat-box">
-            <div class="msg a" onclick="stopSpeaking()">Босс, я тут. Если я заговорюсь — просто ткни в меня пальцем (нажми на сообщение), и я замолчу.</div>
+            <div class="msg a" onclick="stopSpeaking()">Босс, я на связи. Помню про КамАЗ К5 и Dongfeng. Нужна помощь — пиши или говори!</div>
         </div>
 
         <div class="input-area">
@@ -317,7 +316,7 @@
 </div>
 
 <script>
-    // --- УПРАВЛЕНИЕ ---
+    // --- ПЕРЕКЛЮЧЕНИЕ ТАБОВ ---
     function switchTab(tab) {
         document.querySelectorAll('.tab-btn, .content').forEach(el => el.classList.remove('active'));
         document.getElementById('b-' + tab).classList.add('active');
@@ -330,7 +329,7 @@
         box.scrollTop = box.scrollHeight;
     }
 
-    // --- ЗВУК И РЕЧЬ ---
+    // --- ОЗВУЧКА ---
     function speak(text) {
         window.speechSynthesis.cancel();
         let cleanText = text.replace(/```[\s\S]*?```/g, ' код ')
@@ -346,19 +345,14 @@
         }
     }
 
-    // Функция остановки звука (вешается на onclick сообщений)
     function stopSpeaking() {
-        if(window.speechSynthesis.speaking) {
-            window.speechSynthesis.cancel();
-            // Визуальный отклик можно добавить в консоль
-            console.log("Звук остановлен боссом");
-        }
+        window.speechSynthesis.cancel();
     }
 
     // --- ГОЛОСОВОЙ ВВОД ---
     function startVoice(mode) {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) return alert("Нужен Chrome/Safari");
+        if (!SR) return alert("Голосовой ввод не поддерживается в этом браузере.");
         
         const rec = new SR();
         rec.lang = 'ru-RU';
@@ -375,23 +369,18 @@
         
         rec.onresult = (event) => {
             const text = event.results[0][0].transcript;
-            
-            // Если мы в чате - отправляем сразу
             if (mode === 'chat') {
                 document.getElementById('i-chat').value = text;
                 sendMessage();
-            } 
-            // Если мы рисуем - ставим текст и СРАЗУ вызываем генерацию
-            else if (mode === 'art') {
+            } else if (mode === 'art') {
                 document.getElementById('i-art').value = text;
-                generateImage(); // <-- АВТО-СТАРТ С ПЕРЕВОДОМ
+                generateImage();
             }
         };
-        
         rec.start();
     }
 
-    // --- ГЕНЕРАЦИЯ КАРТИНКИ + АВТО-ПЕРЕВОД ---
+    // --- ГЕНЕРАЦИЯ ИЗОБРАЖЕНИЙ ---
     async function generateImage() {
         const input = document.getElementById('i-art');
         const container = document.getElementById('imgs');
@@ -399,62 +388,36 @@
         
         if (!promptText || promptText === "Слушаю...") return;
 
-        // Создаем карточку загрузки
         const loadDiv = document.createElement('div');
         loadDiv.className = 'img-card';
-        // Показываем статус перевода
-        loadDiv.innerHTML = `<div style="padding:20px; text-align:center; color:#888;"><i class="fas fa-language"></i> Перевожу запрос...</div>`;
+        loadDiv.innerHTML = `<div style="padding:20px; text-align:center; color:#888;"><i class="fas fa-paint-brush fa-spin"></i> Готовлю шедевр...</div>`;
         container.insertBefore(loadDiv, container.firstChild);
 
         try {
-            // 1. АВТОМАТИЧЕСКИЙ ПЕРЕВОД (RU -> EN)
-            // Используем публичный API Google Translate
+            // Авто-перевод (Pollinations лучше понимает EN)
             let translatedPrompt = promptText;
-            
-            // Проверяем, есть ли русские буквы
-            if (/[а-яА-ЯёЁ]/.test(promptText)) {
-                try {
-                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(promptText)}`);
-                    const data = await res.json();
-                    // data[0][0][0] содержит переведенный текст
-                    if(data && data[0] && data[0][0] && data[0][0][0]) {
-                        translatedPrompt = data[0][0][0];
-                        // Обновляем статус на "Рисую"
-                        loadDiv.innerHTML = `<div style="padding:20px; text-align:center; color:#888;"><i class="fas fa-paint-brush fa-spin"></i> Рисую: "${translatedPrompt}"...</div>`;
-                    }
-                } catch (err) {
-                    console.warn("Перевод не удался, используем оригинал");
-                }
-            } else {
-                 loadDiv.innerHTML = `<div style="padding:20px; text-align:center; color:#888;"><i class="fas fa-paint-brush fa-spin"></i> Рисую...</div>`;
-            }
+            const resTrans = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(promptText)}`);
+            const dataTrans = await resTrans.json();
+            if(dataTrans && dataTrans[0][0][0]) translatedPrompt = dataTrans[0][0][0];
 
-            // 2. ГЕНЕРАЦИЯ (С английским промптом)
             const model = document.getElementById('m-art').value;
-            const seed = Math.floor(Math.random() * 100000);
+            const seed = Math.floor(Math.random() * 999999);
             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(translatedPrompt)}?model=${model}&seed=${seed}&nologo=true&width=1024&height=1024`;
 
-            // Подгружаем картинку заранее, чтобы узнать когда она готова
             const imgObj = new Image();
             imgObj.src = url;
-            
             imgObj.onload = () => {
                 loadDiv.innerHTML = `
                     <img src="${url}" class="gen-img" onclick="openZoom(this.src)">
-                    <a href="${url}" target="_blank" class="dl-link"><i class="fas fa-download"></i> СКАЧАТЬ (${translatedPrompt})</a>
+                    <a href="${url}" target="_blank" class="dl-link"><i class="fas fa-download"></i> СКАЧАТЬ</a>
                 `;
             };
-            
-            imgObj.onerror = () => {
-                loadDiv.innerHTML = `<div style="padding:20px; color:var(--accent);">Ошибка сервера. Попробуй еще раз.</div>`;
-            };
-
         } catch (e) {
-            loadDiv.innerHTML = `<div style="padding:20px; color:red;">Сбой системы</div>`;
+            loadDiv.innerHTML = `<div style="padding:20px; color:red;">Ошибка генерации</div>`;
         }
     }
 
-    // --- ЧАТ ---
+    // --- ЧАТ (ОБНОВЛЕННЫЙ) ---
     async function sendMessage() {
         const input = document.getElementById('i-chat');
         const box = document.getElementById('chat-box');
@@ -467,21 +430,22 @@
         scrollToBottom();
 
         const loadId = 'msg-' + Date.now();
-        // ВАЖНО: onclick="stopSpeaking()" позволяет остановить голос тапом
         box.innerHTML += `<div class="msg a" id="${loadId}" onclick="stopSpeaking()"><i class="fas fa-circle-notch fa-spin"></i></div>`;
         scrollToBottom();
 
         try {
             const model = document.getElementById('m-chat').value;
+            // Используем новый стабильный эндпоинт
             const response = await fetch('https://text.pollinations.ai/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     messages: [
-                        { role: 'system', content: 'Ты умный помощник. Отвечай кратко и по делу. Ты знаешь все о грузовиках.' },
+                        { role: 'system', content: 'Ты — нейросеть, умный помощник Босса. Твой девиз: "Туман похож на обман". Ты эксперт по грузовикам (КамАЗ К5, Dongfeng). Отвечай четко.' },
                         { role: 'user', content: text }
                     ],
-                    model: model
+                    model: model,
+                    seed: Math.floor(Math.random() * 1000)
                 })
             });
 
@@ -489,21 +453,19 @@
             const msgDiv = document.getElementById(loadId);
             
             msgDiv.innerHTML = marked.parse(answer);
-            msgDiv.title = "Нажми, чтобы выключить звук";
-            
             msgDiv.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
             
             scrollToBottom();
             speak(answer);
 
         } catch (e) {
-            document.getElementById(loadId).innerText = "Нет связи с базой.";
+            document.getElementById(loadId).innerHTML = "<span style='color:red'>Связь прервана. Попробуй сменить модель.</span>";
         }
     }
 
     // --- ЗУМ ---
     function openZoom(src) {
-        document.getElementById('zoom-content').innerHTML = `<img src="${src}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+        document.getElementById('zoom-content').innerHTML = `<img src="${src}" style="max-width:95%; max-height:95%; border-radius:10px; box-shadow:0 0 30px rgba(0,0,0,0.5);">`;
         document.getElementById('zoom-overlay').style.display = 'flex';
     }
     function closeZoom() {
