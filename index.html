@@ -8,28 +8,40 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: "Georgia", serif; display: flex; justify-content: center; align-items: center; }
-        .viewport { width: 100vw; height: 100dvh; perspective: 2500px; position: relative; display: flex; justify-content: center; align-items: center; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: "Georgia", serif; }
+        
+        .viewport { width: 100vw; height: 100dvh; perspective: 2500px; display: flex; justify-content: center; align-items: center; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
+        
         .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; }
-        .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; box-sizing: border-box; }
+        .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
+        
         .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; overflow: hidden; }
         .back { transform: rotateY(180deg); background: #e8d5a7; }
         .flipped { transform: rotateY(-170deg) skewY(-1deg); pointer-events: none !important; }
         
-        .cover-front { background: #2b0000; border: 10px double var(--gold); display: flex; flex-direction: column; height: 100%; }
-        .v-box { width: 100%; height: 75%; background: #000; border-bottom: 4px solid var(--gold); position: relative; overflow: hidden; }
+        /* Стили обложки */
+        .cover-front { background: #2b0000; border: 10px double var(--gold); box-sizing: border-box; display: flex; flex-direction: column; }
+        .v-box { width: 100%; height: 70%; background: #000; border-bottom: 4px solid var(--gold); overflow: hidden; position: relative; }
         .v-box video { width: 100%; height: 100%; object-fit: cover; }
-        .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; }
-        
-        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
+        .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; padding: 10px; }
+
+        /* Интерфейс страниц */
+        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-variant: small-caps; }
         .ai-select { width: 92%; background: #fff9e6; border: 1px solid var(--ink); margin: 8px auto; padding: 10px; border-radius: 8px; font-family: inherit; font-weight: bold; }
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-        .input-bar { padding: 10px; background: rgba(0,0,0,0.08); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: env(safe-area-inset-bottom); }
-        .row { display: flex; gap: 10px; align-items: center; }
-        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; }
-        .btn { background: none; border: none; font-size: 24px; cursor: pointer; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 80px; }
         
+        /* Фиксированная панель ввода */
+        .input-bar { position: absolute; bottom: 0; left: 0; width: 100%; padding: 10px; background: var(--paper); border-top: 1px solid rgba(0,0,0,0.1); box-sizing: border-box; z-index: 10; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+        .thinking { display: none; text-align: center; font-size: 12px; color: var(--accent); margin-bottom: 5px; font-style: italic; }
+        .row { display: flex; gap: 10px; align-items: center; }
+        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; }
+        .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
+        .btn-magic { color: var(--accent) !important; }
+        
+        .mic-active { color: var(--accent); animation: pulse 1s infinite alternate; }
+        @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
+
         .pause-badge { display: none; background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; vertical-align: middle; margin-right: 5px; }
         .is-paused .pause-badge { display: inline-block; }
         .photo-frame { border: 5px solid #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.2); background: #fff; padding: 5px; margin-bottom: 15px; }
@@ -48,10 +60,14 @@
                     <option value="mistral">Mistral (Быстрый)</option>
                 </select>
                 <div id="hub-box" class="scroll-area"></div>
-                <div class="input-bar"><div class="row">
-                    <input type="text" id="i-hub" class="field" placeholder="Спроси книгу...">
-                    <button onclick="sendMsg()" class="btn" style="color:var(--accent)"><i class="fas fa-paper-plane"></i></button>
-                </div></div>
+                <div class="input-bar">
+                    <div id="think-chat" class="thinking">Книга думает...</div>
+                    <div class="row">
+                        <button onclick="startMic('i-hub', sendMsg, 'm-hub')" class="btn" id="m-hub"><i class="fas fa-microphone"></i></button>
+                        <input type="text" id="i-hub" class="field" placeholder="Спроси книгу...">
+                        <button onclick="sendMsg()" class="btn btn-magic"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
             </div>
             <div class="back"></div>
         </div>
@@ -64,10 +80,14 @@
                     <option value="turbo">⚡ Turbo (Скорость)</option>
                 </select>
                 <div id="imgs-box" class="scroll-area"></div>
-                <div class="input-bar"><div class="row">
-                    <input type="text" id="i-art" class="field" placeholder="Нарисуй...">
-                    <button onclick="genArt()" class="btn" style="color:var(--accent)"><i class="fas fa-magic"></i></button>
-                </div></div>
+                <div class="input-bar">
+                    <div id="think-art" class="thinking">Рисую шедевр...</div>
+                    <div class="row">
+                        <button onclick="startMic('i-art', genArt, 'm-art')" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
+                        <input type="text" id="i-art" class="field" placeholder="Нарисуй...">
+                        <button onclick="genArt()" class="btn btn-magic"><i class="fas fa-magic"></i></button>
+                    </div>
+                </div>
             </div>
             <div class="back"></div>
         </div>
@@ -75,11 +95,13 @@
         <div class="page" id="p1" style="z-index: 3;">
             <div class="front cover-front">
                 <div class="v-box">
-                    <video autoplay loop muted playsinline><source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4"></video>
+                    <video autoplay loop muted playsinline>
+                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
+                    </video>
                 </div>
                 <div class="c-text">
-                    <p style="font-size:2em; font-weight:bold; letter-spacing:3px; margin:0;">НАША КНИГА</p>
-                    <div style="margin-top:10px; opacity:0.6;">⬅ СМАХНИ ВЛЕВО</div>
+                    <h1 style="font-size: 2.2em; margin: 0; letter-spacing: 2px;">НАША КНИГА</h1>
+                    <p style="font-size: 0.9em; opacity: 0.7; margin-top: 15px;">⬅ СМАХНИ ВЛЕВО</p>
                 </div>
             </div>
             <div class="back"></div>
@@ -90,19 +112,25 @@
 <script>
     let synth = window.speechSynthesis, activeDiv = null, currentStep = 1;
     let sentences = [], currentSentenceIndex = 0, isPaused = false;
-    
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    // Предзагрузка звука
-    document.addEventListener('click', () => { 
-        flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; });
-    }, { once: true });
+    // Голосовой ввод
+    function startMic(inputId, callback, btnId) {
+        const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Speech) return;
+        const rec = new Speech(); rec.lang = 'ru-RU';
+        const btn = document.getElementById(btnId);
+        rec.onstart = () => btn.classList.add('mic-active');
+        rec.onresult = (e) => { document.getElementById(inputId).value = e.results[0][0].transcript; callback(); };
+        rec.onend = () => btn.classList.remove('mic-active');
+        rec.start();
+    }
 
+    // Логика аудиокниги
     function toggleVoice(text, el) {
         if (activeDiv === el) {
             if (synth.speaking && !isPaused) {
-                synth.cancel();
-                isPaused = true;
+                synth.cancel(); isPaused = true;
                 el.classList.add('is-paused');
                 return;
             } else if (isPaused) {
@@ -112,12 +140,7 @@
                 return;
             }
         }
-
-        // Новый запуск
-        synth.cancel();
-        activeDiv = el;
-        isPaused = false;
-        // Разбиваем текст на предложения
+        synth.cancel(); activeDiv = el; isPaused = false;
         const cleanText = text.replace(/[#*`_{}]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
         sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
         currentSentenceIndex = 0;
@@ -126,55 +149,62 @@
 
     function speakSentences() {
         if (currentSentenceIndex >= sentences.length || isPaused) return;
-
         const ut = new SpeechSynthesisUtterance(sentences[currentSentenceIndex]);
         ut.lang = 'ru-RU';
-        
-        ut.onend = () => {
-            currentSentenceIndex++;
-            if (!isPaused) speakSentences();
-        };
-
+        ut.onend = () => { if (!isPaused) { currentSentenceIndex++; speakSentences(); } };
         synth.speak(ut);
     }
 
+    // Чат
     async function sendMsg() {
-        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
+        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value, loader = document.getElementById('think-chat');
         if(!i.value) return;
         const val = i.value; i.value = '';
         b.insertAdjacentHTML('afterbegin', `<div style="opacity:0.7;margin-bottom:10px;"><b>Вы:</b> ${val}</div>`);
-        
+        loader.style.display = 'block';
         try {
             const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
             const data = await res.text();
+            loader.style.display = 'none';
             const div = document.createElement('div');
             div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
             div.innerHTML = `<b>AI:</b> <span class="pause-badge">⏸</span> ${marked.parse(data)}`;
             div.onclick = () => toggleVoice(data, div);
             b.insertAdjacentElement('afterbegin', div);
             toggleVoice(data, div);
-        } catch(e) {}
+        } catch(e) { loader.style.display = 'none'; }
     }
 
+    // Картинки
     async function genArt() {
-        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
+        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value, loader = document.getElementById('think-art');
         if(!i.value) return;
         const txt = i.value; i.value = '';
+        loader.style.display = 'block';
         try {
             const tr = await fetch(`https://text.pollinations.ai/prompt/translate to english: ${txt}`);
             const eng = await tr.text();
             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(eng)}?model=${m}&nologo=true&seed=${Date.now()}`;
-            b.insertAdjacentHTML('afterbegin', `<div class="photo-frame"><img src="${url}" style="width:100%"><p style="text-align:center;font-size:14px;">${txt}</p></div>`);
-        } catch(e) {}
+            const frame = document.createElement('div');
+            frame.className = 'photo-frame';
+            frame.innerHTML = `<img src="${url}" style="width:100%" onload="this.parentElement.nextElementSibling.style.display='none'">`;
+            b.insertAdjacentElement('afterbegin', frame);
+            frame.insertAdjacentHTML('beforeend', `<p style="text-align:center;font-size:14px;">${txt}</p>`);
+            loader.style.display = 'none';
+        } catch(e) { loader.style.display = 'none'; }
     }
 
+    // Свайпы и звук
     let startX = 0;
-    document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+    document.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+        flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; }).catch(()=>{});
+    });
+
     document.addEventListener('touchend', e => {
         let d = startX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 70) {
-            synth.cancel();
-            isPaused = false;
+            synth.cancel(); isPaused = false;
             if (d > 0 && currentStep < 3) { 
                 flipSound.currentTime = 0; flipSound.play();
                 document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
