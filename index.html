@@ -39,11 +39,11 @@
             <div class="front paper-sheet">
                 <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
                 <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Умный)</option>
-                    <option value="deepseek">DeepSeek R1 (Логика)</option>
-                    <option value="llama">Llama 3.3 (Быстрая)</option>
-                    <option value="qwen">Qwen 2.5 (Техник)</option>
-                    <option value="mistral">Mistral (Творческий)</option>
+                    <option value="openai">GPT-4o (Мудрец)</option>
+                    <option value="deepseek-r1">DeepSeek R1 (Логика)</option>
+                    <option value="llama-3.3-70b">Llama 3.3 (Быстрая)</option>
+                    <option value="qwen-2.5-72b">Qwen 2.5 (Техник)</option>
+                    <option value="mistral-7b-instruct">Mistral (Творческий)</option>
                 </select>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -61,10 +61,9 @@
             <div class="front paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
                 <select id="art-model" class="ai-select">
-                    <option value="flux">💎 Flux.1 (Лучший)</option>
+                    <option value="flux">💎 Flux.1 (Качество)</option>
                     <option value="flux-realism">📸 Flux Realism (Фото)</option>
-                    <option value="any-dark">🌑 AnyDark (Аниме/Тень)</option>
-                    <option value="turbo">⚡ Turbo (Мгновенно)</option>
+                    <option value="turbo">⚡ Turbo (Скорость)</option>
                 </select>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -97,34 +96,47 @@
     const synth = window.speechSynthesis;
     let activeDiv = null, currentStep = 1;
     let sentences = [], currentSentIdx = 0, isSpeaking = false;
-    
-    // Звук перелистывания
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    // Разблокировка звука при первом клике
-    document.addEventListener('click', function init() {
+    document.addEventListener('click', () => {
         flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; });
-        document.removeEventListener('click', init);
     }, { once: true });
+
+    async function sendMsg() {
+        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
+        if(!i.value) return;
+        const v = i.value; i.value = '';
+        b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px;opacity:0.6"><b>Вы:</b> ${v}</div>`);
+        
+        try {
+            const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}&cache=false`);
+            let data = await res.text();
+            
+            // Если API вернуло ошибку JSON вместо текста, пробуем дефолтную модель
+            if (data.includes('"error"')) {
+                const retry = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=openai`);
+                data = await retry.text();
+            }
+
+            const div = document.createElement('div');
+            div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
+            div.innerHTML = `<b>AI:</b> <span class="pause-badge">⏸ ПАУЗА</span> ${marked.parse(data)}`;
+            div.onclick = () => toggleVoice(data, div);
+            b.insertAdjacentElement('afterbegin', div);
+            toggleVoice(data, div);
+        } catch(e) { console.error(e); }
+    }
 
     function toggleVoice(text, el) {
         if (activeDiv === el) {
-            if (isSpeaking) {
-                synth.cancel(); isSpeaking = false;
-                el.classList.add('is-paused');
-            } else {
-                isSpeaking = true; el.classList.remove('is-paused');
-                speakLoop();
-            }
+            if (isSpeaking) { synth.cancel(); isSpeaking = false; el.classList.add('is-paused'); }
+            else { isSpeaking = true; el.classList.remove('is-paused'); speakLoop(); }
             return;
         }
-        synth.cancel();
-        activeDiv = el;
+        synth.cancel(); activeDiv = el;
         const clean = text.replace(/[#*`_{}]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
         sentences = clean.match(/[^.!?]+[.!?]+/g) || [clean];
-        currentSentIdx = 0;
-        isSpeaking = true;
-        el.classList.remove('is-paused');
+        currentSentIdx = 0; isSpeaking = true; el.classList.remove('is-paused');
         speakLoop();
     }
 
@@ -134,21 +146,6 @@
         ut.lang = 'ru-RU';
         ut.onend = () => { if (isSpeaking) { currentSentIdx++; speakLoop(); } };
         synth.speak(ut);
-    }
-
-    async function sendMsg() {
-        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
-        if(!i.value) return;
-        const v = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px;opacity:0.6"><b>Вы:</b> ${v}</div>`);
-        const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
-        const data = await res.text();
-        const div = document.createElement('div');
-        div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
-        div.innerHTML = `<b>AI:</b> <span class="pause-badge">⏸ ПАУЗА</span> ${marked.parse(data)}`;
-        div.onclick = () => toggleVoice(data, div);
-        b.insertAdjacentElement('afterbegin', div);
-        toggleVoice(data, div);
     }
 
     async function genArt() {
