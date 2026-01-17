@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ULTRA — LIVE COVER</title>
+    <title>ULTRA — FULL POWER</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -20,42 +20,24 @@
         .back { transform: rotateY(180deg); background: #e8d5a7; box-shadow: inset 20px 0 40px rgba(0,0,0,0.2); }
         .flipped { transform: rotateY(-170deg) skewY(-1deg); }
 
-        /* ОБЛОЖКА С ВИДЕО */
-        .cover-front { 
-            background: #2a0000; 
-            border: 8px double var(--gold); 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: flex-start;
-            padding-top: 20px;
-        }
-        .video-container {
-            width: 85%;
-            height: 60%;
-            margin-top: 20px;
-            border: 3px solid var(--gold);
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            background: #000;
-            overflow: hidden;
-            position: relative;
-        }
-        .video-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .cover-title { color: var(--gold); margin-top: 20px; text-align: center; text-shadow: 2px 2px 4px #000; }
+        /* ОБЛОЖКА С ПОЛНЫМ ВИДЕО */
+        .cover-front { background: #1a0000; border: 5px solid var(--gold); position: relative; }
+        .video-bg { width: 100%; height: 100%; object-fit: contain; background: #000; }
+        .cover-overlay { position: absolute; bottom: 20px; width: 100%; text-align: center; color: var(--gold); background: rgba(0,0,0,0.5); padding: 10px 0; }
 
-        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
-        .scroll-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .header { padding: 10px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
+        .ai-select { width: 90%; background: #fff9e6; border: 1px solid var(--ink); margin: 5px auto; display: block; padding: 5px; border-radius: 5px; }
+        
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
         .input-bar { padding: 10px; background: rgba(0,0,0,0.05); display: flex; gap: 8px; align-items: center; }
-        .field { flex: 1; background: #fff; border: 1px solid #ccc; padding: 12px; border-radius: 25px; outline: none; }
-        .mic-btn { background: #eee; border-radius: 50%; width: 45px; height: 45px; border: none; cursor: pointer; }
-        .mic-active { color: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        .field { flex: 1; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 20px; outline: none; }
+        .mic-btn { background: #eee; border-radius: 50%; width: 40px; height: 40px; border: none; cursor: pointer; }
+        .mic-active { color: var(--accent); box-shadow: 0 0 10px var(--accent); animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        #viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; }
-        #v-img { position: absolute; max-width: 90%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .photo-frame { background: white; padding: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 10px; cursor: pointer; }
+        #viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
+        #v-img { max-width: 100%; max-height: 100%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
     </style>
 </head>
 <body>
@@ -66,10 +48,15 @@
         <div class="page" id="p3" style="z-index: 1;">
             <div class="front paper-sheet">
                 <div class="header">МАГИЧЕСКИЙ ЧАТ</div>
+                <select id="model-select" class="ai-select">
+                    <option value="openai">🔮 GPT-4o (Мудрец)</option>
+                    <option value="mistral">🌪️ Mistral (Быстрый)</option>
+                    <option value="qwen-coder">💻 Qwen Code (Техник)</option>
+                </select>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
-                    <button onclick="startMic('i-hub', sendHubMessage)" class="mic-btn"><i class="fas fa-microphone"></i></button>
-                    <input type="text" id="i-hub" class="field" placeholder="Спроси...">
+                    <button onclick="startMic('i-hub', sendHubMessage)" class="mic-btn" id="m-hub"><i class="fas fa-microphone"></i></button>
+                    <input type="text" id="i-hub" class="field" placeholder="Спроси книгу...">
                 </div>
             </div>
             <div class="back"></div>
@@ -80,8 +67,8 @@
                 <div class="header">ЭСКИЗЫ</div>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
-                    <button onclick="startMic('i-art', genArt)" class="mic-btn"><i class="fas fa-microphone"></i></button>
-                    <input type="text" id="i-art" class="field" placeholder="Нарисуй...">
+                    <button onclick="startMic('i-art', genArt)" class="mic-btn" id="m-art"><i class="fas fa-microphone"></i></button>
+                    <input type="text" id="i-art" class="field" placeholder="Что нарисовать?">
                 </div>
             </div>
             <div class="back"></div>
@@ -89,15 +76,12 @@
 
         <div class="page" id="p1" style="z-index: 3;">
             <div class="front cover-front">
-                <div class="video-container">
-                    <video autoplay loop muted playsinline>
-                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
-                    </video>
-                </div>
-                <div class="cover-title">
-                    <h1 style="margin:5px 0;">ULTRA</h1>
-                    <p style="font-style:italic;">КНИГА БОССА</p>
-                    <div style="margin-top:20px; font-size:12px; opacity:0.7;">Листни для входа...</div>
+                <video class="video-bg" autoplay loop muted playsinline>
+                    <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
+                </video>
+                <div class="cover-overlay">
+                    <h2 style="margin:0;">ULTRA</h2>
+                    <p style="margin:0; font-size:14px;">КНИГА БОССА</p>
                 </div>
             </div>
             <div class="back"></div>
@@ -111,6 +95,7 @@
 <script>
     let startX = 0, currentStep = 1;
 
+    // СВАЙПЫ
     document.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
     document.addEventListener('touchend', e => {
         let diff = startX - e.changedTouches[0].clientX;
@@ -120,39 +105,58 @@
         }
     });
 
+    // ОЗВУЧКА (TTS)
+    function speak(text) {
+        const msg = new SpeechSynthesisUtterance();
+        msg.text = text.replace(/[#*`]/g, ''); // Очистка от символов разметки
+        msg.lang = 'ru-RU';
+        window.speechSynthesis.speak(msg);
+    }
+
+    // МИКРОФОН + АВТО-СТАРТ
     function startMic(targetId, callback) {
         const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!Speech) return;
         const rec = new Speech();
         rec.lang = 'ru-RU';
+        const btn = event.currentTarget;
+        rec.onstart = () => btn.classList.add('mic-active');
         rec.onresult = (e) => {
             document.getElementById(targetId).value = e.results[0][0].transcript;
+            btn.classList.remove('mic-active');
             callback();
         };
+        rec.onerror = () => btn.classList.remove('mic-active');
         rec.start();
     }
 
     async function sendHubMessage() {
-        const val = document.getElementById('i-hub').value; if(!val) return;
-        document.getElementById('i-hub').value = '';
+        const input = document.getElementById('i-hub');
         const box = document.getElementById('hub-box');
+        const model = document.getElementById('model-select').value;
+        const val = input.value; if(!val) return;
+        input.value = '';
         box.innerHTML = `<div><b>Вы:</b> ${val}</div>` + box.innerHTML;
-        const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}`);
-        const data = await res.text();
-        box.innerHTML = `<div><b>AI:</b> ${marked.parse(data)}</div>` + box.innerHTML;
+        
+        try {
+            const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${model}`);
+            const data = await res.text();
+            box.innerHTML = `<div><b>AI:</b> ${marked.parse(data)}</div>` + box.innerHTML;
+            speak(data); // Озвучка ответа
+        } catch(e) { box.innerHTML = "<div>Ошибка связи</div>" + box.innerHTML; }
     }
 
     function genArt() {
-        const val = document.getElementById('i-art').value; if(!val) return;
-        document.getElementById('i-art').value = '';
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(val)}?nologo=true`;
+        const input = document.getElementById('i-art');
+        const val = input.value; if(!val) return;
+        input.value = '';
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(val)}?nologo=true&seed=${Math.random()}`;
         const frame = document.createElement('div');
-        frame.style.background = 'white'; frame.style.padding = '10px';
-        frame.innerHTML = `<img src="${url}" style="width:100%" onclick="showFull('${url}')"><p>${val}</p>`;
+        frame.className = 'photo-frame';
+        frame.onclick = () => { document.getElementById('v-img').src = url; document.getElementById('viewer').style.display = 'block'; };
+        frame.innerHTML = `<img src="${url}" style="width:100%"><p style="text-align:center;font-size:12px;">${val}</p>`;
         document.getElementById('imgs-box').insertBefore(frame, document.getElementById('imgs-box').firstChild);
     }
-
-    function showFull(url) { document.getElementById('v-img').src = url; document.getElementById('viewer').style.display = 'block'; }
 </script>
 </body>
 </html>
