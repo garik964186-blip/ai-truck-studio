@@ -5,65 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>От игрушки до фуры — Чат</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; display: flex; justify-content: center; padding: 10px; margin: 0; color: #eee; }
-        .chat-container { width: 100%; max-width: 500px; background: #2d2d2d; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid #444; margin-top: 10px; }
-        
-        /* Блок обложки с твоего сайта */
-        .cover-image {
-            width: 100%;
-            height: 100px;
-            background: url('1000130882.jpg') center/cover no-repeat; /* Прямой путь к файлу в твоем репозитории */
-            border-bottom: 2px solid #007bff;
-        }
-
-        /* Синяя кликабельная шапка как на первом скрине */
-        .header { background: #007bff; padding: 0; text-align: center; }
-        .header a { 
-            display: block; 
-            color: white; 
-            padding: 15px; 
-            text-decoration: none; 
-            font-weight: bold; 
-            text-transform: uppercase; 
-            font-size: 18px;
-        }
-
-        #chat-output { height: 380px; overflow-y: auto; padding: 15px; border-bottom: 1px solid #444; font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; background: #252525; }
-        .input-area { display: flex; padding: 10px; gap: 8px; background: #2d2d2d; }
-        input { flex: 1; padding: 12px; border: 1px solid #444; border-radius: 5px; outline: none; background: #1a1a1a; color: white; }
-        
-        /* Кнопка оранжевая как на скрине */
-        button { padding: 10px 15px; background: #d35400; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        
-        .msg { margin-bottom: 12px; padding: 10px; border-radius: 8px; max-width: 85%; }
-        .user-msg { background: #3498db; align-self: flex-end; color: white; }
-        .ai-msg { background: #3d3d3d; align-self: flex-start; border-left: 4px solid #d35400; }
-        .system-msg { color: #888; font-style: italic; text-align: center; font-size: 12px; margin-bottom: 10px; }
-        img.generated-img { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #d35400; }
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .chat-container { width: 100%; max-width: 500px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: #007bff; color: white; padding: 15px; text-align: center; font-weight: bold; }
+        #chat-output { height: 300px; overflow-y: auto; padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; line-height: 1.5; }
+        .input-area { display: flex; padding: 10px; gap: 10px; background: #fafafa; }
+        input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none; }
+        button { padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .system-msg { color: #888; font-style: italic; margin-bottom: 10px; }
+        .user-msg { color: #007bff; font-weight: bold; margin-bottom: 5px; }
+        .ai-msg { margin-bottom: 15px; background: #f1f1f1; padding: 8px; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <div class="chat-container">
-    <div class="cover-image"></div>
-    
-    <div class="header">
-        <a href="index.html">ОТ ИГРУШКИ ДО ФУРЫ</a>
-    </div>
-    
+    <div class="header">От игрушки до фуры — AI Босс</div>
     <div id="chat-output">
-        <div class="system-msg">Система готова, босс. Жду приказа...</div>
+        <div class="system-msg">Готов к работе, босс. Введите сообщение...</div>
     </div>
-
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="Напиши 'Нарисуй' или спроси..." autocomplete="off">
-        <button id="send-btn">ОТПРАВИТЬ</button>
+        <input type="text" id="user-input" placeholder="Спроси что-нибудь..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button id="send-btn" onclick="sendMessage()">Отправить</button>
     </div>
 </div>
 
 <script>
-    // Твои модели сохранены
+    // Список бесплатных моделей для обхода лимитов
     const AI_MODELS = ['openai', 'mistral', 'qwen', 'llama', 'searchgpt'];
+    
     const output = document.getElementById('chat-output');
     const input = document.getElementById('user-input');
     const btn = document.getElementById('send-btn');
@@ -72,27 +43,22 @@
         const text = input.value.trim();
         if (!text) return;
 
+        // Блокируем интерфейс
         input.value = '';
         input.disabled = true;
         btn.disabled = true;
         
-        appendMessage('ВЫ', text, 'user-msg');
-        const aiDiv = appendMessage('AI', 'Связь с базой...', 'ai-msg');
-
-        const isImage = text.toLowerCase().includes('нарисуй') || text.toLowerCase().includes('картинка');
+        appendMessage('Вы', text, 'user-msg');
+        const aiDiv = appendMessage('AI', 'Думаю...', 'ai-msg');
 
         try {
-            if (isImage) {
-                const seed = Math.floor(Math.random() * 100000);
-                const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?seed=${seed}&width=1024&height=1024&model=flux&nologo=true`;
-                aiDiv.innerHTML = `Готово!<br><img src="${imageUrl}" class="generated-img" onload="output.scrollTop = output.scrollHeight">`;
-            } else {
-                const response = await fetchWithRetry(text);
-                aiDiv.innerText = response;
-            }
+            const response = await fetchWithRetry(text);
+            aiDiv.innerText = response;
         } catch (error) {
-            aiDiv.innerText = "Ошибка: " + error.message;
+            aiDiv.innerText = error.message;
+            aiDiv.style.color = 'red';
         } finally {
+            // Разблокируем интерфейс
             input.disabled = false;
             btn.disabled = false;
             input.focus();
@@ -102,30 +68,45 @@
 
     function appendMessage(sender, text, className) {
         const msg = document.createElement('div');
-        msg.className = `msg ${className}`;
-        msg.innerHTML = `<strong>${sender}:</strong> <br><span>${text}</span>`;
+        msg.className = className;
+        msg.innerHTML = `<strong>${sender}:</strong> <span>${text}</span>`;
         output.appendChild(msg);
         output.scrollTop = output.scrollHeight;
         return msg.querySelector('span');
     }
 
+    // Логика перебора моделей (Ротация)
     async function fetchWithRetry(prompt, modelIdx = 0) {
-        if (modelIdx >= AI_MODELS.length) throw new Error("Все нейросети заняты.");
+        if (modelIdx >= AI_MODELS.length) {
+            throw new Error("Босс, все нейросети заняты. Подожди 10 секунд.");
+        }
+
         const model = AI_MODELS[modelIdx];
-        // Используем только GET запросы - они самые стабильные
-        const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.random()}`;
         
         try {
-            const response = await fetch(url);
-            if (!response.ok) return fetchWithRetry(prompt, modelIdx + 1);
+            const response = await fetch(`https://text.pollinations.ai/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [{ role: 'user', content: prompt }],
+                    model: model,
+                    seed: Math.floor(Math.random() * 10000) // Чтобы не брать ответ из кэша
+                })
+            });
+
+            // Если лимит 429 или ошибка сервера — пробуем следующую модель
+            if (!response.ok) {
+                console.warn(`Модель ${model} вернула ошибку ${response.status}. Пробую следующую...`);
+                return fetchWithRetry(prompt, modelIdx + 1);
+            }
+
             return await response.text();
+
         } catch (e) {
             return fetchWithRetry(prompt, modelIdx + 1);
         }
     }
-
-    btn.onclick = sendMessage;
-    input.onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
 </script>
+
 </body>
 </html>
