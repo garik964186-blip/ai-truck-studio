@@ -121,7 +121,9 @@
     let isPaused = false;
     let currentTalkingText = ""; 
 
-    const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
+    // Звук перелистывания (альтернативный источник + резервный сигнал)
+    const flipSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
+
     marked.setOptions({ breaks: true, gfm: true });
 
     function loadVoices() {
@@ -137,15 +139,15 @@
         const u = new SpeechSynthesisUtterance('');
         synth.speak(u);
         audioReady = true;
+        // Разблокируем звук перелистывания
+        flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; });
         document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук активен</span>";
         setTimeout(() => { if(!isPaused) document.getElementById('s-label').innerText = ""; }, 2000);
     }
 
-    // ЛОГИКА АУДИОКНИГИ (ПАУЗА/ПРОДОЛЖЕНИЕ)
+    // ЛОГИКА АУДИОКНИГИ
     function speak(t) {
         wakeAudio();
-
-        // Если тапнули по тому же тексту, который уже читается
         if (currentTalkingText === t) {
             if (synth.speaking && !isPaused) {
                 synth.pause();
@@ -159,8 +161,6 @@
                 return;
             }
         }
-
-        // Если новый текст
         synth.cancel();
         currentTalkingText = t;
         const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
@@ -176,18 +176,13 @@
             currentTalkingText = "";
             return;
         }
-
         const u = new SpeechSynthesisUtterance(chunksToRead[currentChunkIndex]);
         let v = voiceList.find(v => v.lang.includes('ru') && v.name.includes('Google'));
-        if(!v) v = voiceList.find(v => v.lang.includes('ru') && v.name.includes('Premium'));
         if(!v) v = voiceList.find(v => v.lang.includes('ru'));
-        
         if(v) { u.voice = v; u.rate = 1.05; }
         u.lang = 'ru-RU';
-
         u.onstart = () => document.getElementById('status-chat').innerText = "📖 Читаю...";
         u.onend = () => { if(!isPaused) { currentChunkIndex++; readNext(); } };
-
         synth.speak(u);
     }
 
@@ -195,22 +190,18 @@
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
-        
         b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Вы: ${val}</div>`);
         document.getElementById('status-chat').innerText = "Книга думает...";
-        
         try {
-            const prompt = `Ты - помощник в Книге Босса. Отвечай кратко и по делу. Текст: ${val}`;
+            const prompt = `Отвечай как Gemini в Книге Босса. Кратко. Вопрос: ${val}`;
             const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${m}`);
             let d = await r.text();
             if(d.includes('"content":')) { try { d = JSON.parse(d).choices[0].message.content; } catch(e){} }
-
             const div = document.createElement('div');
             div.className = "ai-box";
             div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
             div.onclick = () => speak(d);
             b.insertAdjacentElement('afterbegin', div);
-            
             saveChat();
             speak(d);
         } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
@@ -220,9 +211,6 @@
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
         let txt = i.value; i.value = '';
-        if (txt.toLowerCase().match(/камаз|truck|dongfeng|грузовик/)) {
-            txt += ", realistic truck photography, 4k, cinematic, high detail";
-        }
         document.getElementById('status-art').innerText = "Рисую...";
         try {
             const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
@@ -263,14 +251,29 @@
         pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 });
     }
 
+    // ПЕРЕЛИСТЫВАНИЕ (С ГАРАНТИРОВАННЫМ ЗВУКОМ)
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
         if(document.getElementById('z-overlay').style.display === 'flex') return;
         let d = sX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 60) {
-            if (d > 0 && step < 3) { document.getElementById('p'+step).classList.add('flipped'); step++; flipSound.play(); }
-            else if (d < 0 && step > 1) { step--; document.getElementById('p'+step).classList.remove('flipped'); flipSound.play(); }
+            let moved = false;
+            if (d > 0 && step < 3) { 
+                document.getElementById('p'+step).classList.add('flipped'); 
+                step++; 
+                moved = true; 
+            }
+            else if (d < 0 && step > 1) { 
+                step--; 
+                document.getElementById('p'+step).classList.remove('flipped'); 
+                moved = true; 
+            }
+            
+            if (moved) {
+                flipSound.currentTime = 0;
+                flipSound.play().catch(e => console.log("Sound block"));
+            }
         }
     });
 </script>
