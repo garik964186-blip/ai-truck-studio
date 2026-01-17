@@ -32,6 +32,7 @@
         @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
         .pause-badge { display: none; background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; vertical-align: middle; margin-right: 5px; }
         .is-paused .pause-badge { display: inline-block; }
+        .photo-frame { border: 5px solid #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.2); background: #fff; padding: 5px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -82,8 +83,8 @@
                     <video autoplay loop muted playsinline><source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4"></video>
                 </div>
                 <div class="c-text">
-                    <h1 style="font-size: 2.2em; margin: 0;">НАША КНИГА</h1>
-                    <p style="opacity: 0.7;">⬅ СМАХНИ ВЛЕВО</p>
+                    <h1 style="font-size: 2.2em; margin: 0; letter-spacing: 2px;">НАША КНИГА</h1>
+                    <p style="font-size: 0.9em; opacity: 0.7; margin-top: 15px;">⬅ СМАХНИ ВЛЕВО</p>
                 </div>
             </div>
             <div class="back"></div>
@@ -93,44 +94,47 @@
 
 <script>
     let synth = window.speechSynthesis, activeDiv = null, currentStep = 1;
-    let sentences = [], currentSentenceIndex = 0, isSpeaking = false;
+    let sentences = [], currentSentenceIndex = 0, isSpeaking = false, isPaused = false;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    // Логика голоса БЕЗ СБРОСА
+    // ПРИНУДИТЕЛЬНАЯ АКТИВАЦИЯ ЗВУКА ДЛЯ МОБИЛОК
+    document.addEventListener('touchstart', function() {
+        flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; }).catch(() => {});
+    }, { once: true });
+
     function toggleVoice(text, el) {
         if (activeDiv === el) {
-            if (isSpeaking) {
-                // ПАУЗА: просто останавливаем синтез, не сбрасывая индекс
+            if (isSpeaking && !isPaused) {
                 synth.cancel();
                 isSpeaking = false;
+                isPaused = true;
                 el.classList.add('is-paused');
-            } else {
-                // ПРОДОЛЖИТЬ: запускаем с того же индекса
-                el.classList.remove('is-paused');
+                return;
+            } else if (isPaused) {
+                isPaused = false;
                 isSpeaking = true;
+                el.classList.remove('is-paused');
                 speakNext();
+                return;
             }
-            return;
         }
-
-        // Если нажали на другое сообщение
+        
         synth.cancel();
         activeDiv = el;
-        el.classList.remove('is-paused');
+        isPaused = false;
+        isSpeaking = true;
         const cleanText = text.replace(/[#*`_{}]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
         sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
         currentSentenceIndex = 0;
-        isSpeaking = true;
         speakNext();
     }
 
     function speakNext() {
         if (currentSentenceIndex >= sentences.length || !isSpeaking) return;
-
         const ut = new SpeechSynthesisUtterance(sentences[currentSentenceIndex]);
         ut.lang = 'ru-RU';
         ut.onend = () => {
-            if (isSpeaking) {
+            if (isSpeaking && !isPaused) {
                 currentSentenceIndex++;
                 speakNext();
             }
@@ -138,12 +142,11 @@
         synth.speak(ut);
     }
 
-    // Чат и Арт (стандартные функции)
     async function sendMsg() {
         const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if(!i.value) return;
         const val = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px;"><b>Вы:</b> ${val}</div>`);
+        b.insertAdjacentHTML('afterbegin', `<div style="opacity:0.7;margin-bottom:10px;"><b>Вы:</b> ${val}</div>`);
         const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
         const data = await res.text();
         const div = document.createElement('div');
@@ -161,7 +164,7 @@
         const tr = await fetch(`https://text.pollinations.ai/prompt/translate to english: ${txt}`);
         const eng = await tr.text();
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(eng)}?model=${m}&nologo=true&seed=${Date.now()}`;
-        b.insertAdjacentHTML('afterbegin', `<div class="photo-frame"><img src="${url}" style="width:100%"><p style="text-align:center;">${txt}</p></div>`);
+        b.insertAdjacentHTML('afterbegin', `<div class="photo-frame"><img src="${url}" style="width:100%"><p style="text-align:center;font-size:14px;">${txt}</p></div>`);
     }
 
     function startMic(inputId, callback, btnId) {
@@ -175,17 +178,13 @@
         rec.start();
     }
 
-    // Свайпы и Звук страниц
     let startX = 0;
-    document.addEventListener('touchstart', e => {
-        startX = e.touches[0].clientX;
-        flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; }).catch(()=>{});
-    });
-
+    document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
         let d = startX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 70) {
             synth.cancel();
+            isSpeaking = false;
             if (d > 0 && currentStep < 3) { 
                 flipSound.currentTime = 0; flipSound.play();
                 document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
