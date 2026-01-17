@@ -8,37 +8,26 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
     <style>
-        /* --- СТИЛИ КНИГИ --- */
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
-        
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 1500px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        
-        /* Страницы */
         .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; z-index: 1; }
         .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
-        
-        /* Элементы интерфейса */
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
         .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; color: var(--ink); }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; transition: background 0.3s; border-radius: 8px; padding: 8px; }
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; transition: background 0.3s; border-radius: 8px; padding: 8px; position: relative; }
         .ai-box:active { background: rgba(0,0,0,0.05); }
         .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 25px; font-weight: bold; padding: 5px; }
         .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
-        
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
         .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px; border-radius: 25px; font-size: 16px; outline: none; }
         .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; width: 45px; }
-        
-        /* Зум и Markdown */
         #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
-        .ai-box table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
-        .ai-box td, .ai-box th { border: 1px solid var(--ink); padding: 4px; }
         .trash-btn { font-size: 18px; opacity: 0.7; cursor: pointer; border: none; background: none; color: var(--ink); }
     </style>
 </head>
@@ -124,13 +113,15 @@
 </div>
 
 <script>
-    /* --- ЛОГИКА ПРИЛОЖЕНИЯ --- */
     let step = 1, pz = null, audioReady = false;
     const synth = window.speechSynthesis;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
+    
+    // ПЕРЕМЕННЫЕ ДЛЯ КОНТРОЛЯ ЗВУКА
+    let currentAudio = null; // Для облачного голоса
+    let lastSpokenText = ""; // Чтобы понимать, какой блок сейчас "активен"
 
     marked.setOptions({ breaks: true, gfm: true });
-
     window.addEventListener('load', loadChat);
 
     function wakeAudio() {
@@ -142,144 +133,133 @@
         setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
     }
 
-    /* --- СИСТЕМА ГОЛОСА --- */
+    /* --- УЛУЧШЕННАЯ ФУНКЦИЯ ОЗВУЧКИ (С ПАУЗОЙ) --- */
     async function speak(t, onEndCallback = null) {
         wakeAudio();
         const eng = document.getElementById('voice-engine').value;
         const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
-        
-        if (eng === 'system') {
-            synth.cancel();
-            const u = new SpeechSynthesisUtterance(clean);
-            u.lang = 'ru-RU';
-            u.rate = 0.9;
-            if (onEndCallback) u.onend = onEndCallback;
-            synth.speak(u);
+
+        // Если мы нажимаем на тот же текст, который уже звучит — ОСТАНАВЛИВАЕМ
+        if (lastSpokenText === clean && (synth.speaking || (currentAudio && !currentAudio.paused))) {
+            stopAllSpeech();
+            lastSpokenText = "";
             return;
         }
 
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean.substring(0, 200))}`;
-        const a = new Audio(url);
-        a.onended = onEndCallback;
-        a.play().catch(() => {
+        stopAllSpeech(); // Остановить старое перед началом нового
+        lastSpokenText = clean;
+
+        if (eng === 'system') {
             const u = new SpeechSynthesisUtterance(clean);
             u.lang = 'ru-RU';
-            if (onEndCallback) u.onend = onEndCallback;
+            u.rate = 0.9;
+            u.onend = () => {
+                if (onEndCallback) onEndCallback();
+                lastSpokenText = "";
+            };
             synth.speak(u);
-        });
+        } else {
+            const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean.substring(0, 200))}`;
+            currentAudio = new Audio(url);
+            currentAudio.onended = () => {
+                if (onEndCallback) onEndCallback();
+                lastSpokenText = "";
+            };
+            currentAudio.play().catch(() => {
+                // Если облако упало, дублируем системным
+                const u = new SpeechSynthesisUtterance(clean);
+                u.lang = 'ru-RU';
+                synth.speak(u);
+            });
+        }
     }
 
-    /* --- РАБОТА С ЧАТОМ --- */
+    function stopAllSpeech() {
+        synth.cancel(); // Стоп системный голос
+        if (currentAudio) {
+            currentAudio.pause(); // Стоп облачный голос
+            currentAudio.currentTime = 0;
+        }
+    }
+
     async function sendMsg() {
-        wakeAudio();
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
-        
         b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Вы: ${val}</div>`);
         document.getElementById('status-chat').innerText = "Книга думает...";
-        
         try {
             const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
             let d = await r.text();
-            
             const div = document.createElement('div');
             div.className = "ai-box";
             div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
             div.onclick = () => speak(d);
             b.insertAdjacentElement('afterbegin', div);
-            
             saveChat();
             document.getElementById('status-chat').innerText = "";
             speak(d);
         } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
     }
 
-    /* --- АУДИОКНИГА (ПОСЛЕДОВАТЕЛЬНОЕ ЧТЕНИЕ) --- */
+    /* --- АУДИОКНИГА --- */
     let isReadingBook = false;
     let bookQueue = [];
     let currentReadIdx = 0;
 
     function toggleAudiobook() {
-        const btn = document.getElementById('audiobook-btn');
-        const boxes = Array.from(document.querySelectorAll('.ai-box')).reverse(); 
-        
-        if (isReadingBook) {
-            stopAudiobook();
-            return;
-        }
-
-        if (boxes.length === 0) {
-            alert("Книга пуста, Босс! Сначала напишите что-нибудь.");
-            return;
-        }
-
+        if (isReadingBook) { stopAudiobook(); return; }
+        const boxes = Array.from(document.querySelectorAll('.ai-box')).reverse();
+        if (boxes.length === 0) return;
         isReadingBook = true;
         currentReadIdx = 0;
         bookQueue = boxes;
-        btn.style.color = 'var(--accent)';
-        btn.innerHTML = '<i class="fas fa-stop-circle"></i>';
+        document.getElementById('audiobook-btn').style.color = 'var(--accent)';
         readNextInQueue();
     }
 
     function stopAudiobook() {
         isReadingBook = false;
-        synth.cancel();
-        const btn = document.getElementById('audiobook-btn');
-        btn.style.color = 'inherit';
-        btn.innerHTML = '<i class="fas fa-headphones"></i>';
+        stopAllSpeech();
+        document.getElementById('audiobook-btn').style.color = 'inherit';
         document.getElementById('status-chat').innerText = "";
         bookQueue.forEach(b => b.style.background = 'transparent');
     }
 
     function readNextInQueue() {
-        if (!isReadingBook || currentReadIdx >= bookQueue.length) {
-            stopAudiobook();
-            return;
-        }
-
+        if (!isReadingBook || currentReadIdx >= bookQueue.length) { stopAudiobook(); return; }
         const currentBox = bookQueue[currentReadIdx];
         const text = currentBox.innerText.replace('AI:', '').trim();
-        
         currentBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
         bookQueue.forEach(b => b.style.background = 'transparent');
-        currentBox.style.background = 'rgba(212, 175, 55, 0.2)'; 
-
-        document.getElementById('status-chat').innerText = `Глава ${currentReadIdx + 1} из ${bookQueue.length}`;
-
+        currentBox.style.background = 'rgba(212, 175, 55, 0.2)';
+        document.getElementById('status-chat').innerText = `Читаю: ${currentReadIdx + 1}/${bookQueue.length}`;
         speak(text, () => {
             currentReadIdx++;
-            setTimeout(readNextInQueue, 800);
+            setTimeout(readNextInQueue, 600);
         });
     }
 
-    /* --- ГЕНЕРАЦИЯ ИЗОБРАЖЕНИЙ --- */
     async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
         let txt = i.value; i.value = '';
-        
-        if (txt.toLowerCase().includes('камаз') || txt.toLowerCase().includes('грузовик') || txt.toLowerCase().includes('dongfeng')) {
-            txt += ", realistic truck photography, 4k, cinematic lighting, professional dji osmo action 5 pro shot";
+        if (txt.toLowerCase().match(/камаз|truck|dongfeng/)) {
+            txt += ", realistic truck photography, 4k, cinematic lighting, shot on DJI Osmo Action 5 Pro";
         }
-
-        document.getElementById('status-art').innerText = "Рисую шедевр...";
+        document.getElementById('status-art').innerText = "Рисую...";
         try {
             const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
             const td = await tr.json();
-            const finalPrompt = td.responseData.translatedText;
-            
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?model=${m}&nologo=true&seed=${Date.now()}`;
-            
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(td.responseData.translatedText)}?model=${m}&nologo=true&seed=${Date.now()}`;
             const card = `<div style="background:#fff; padding:10px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
                 <img src="${url}" style="width:100%; border-radius:4px;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
-                <p style="text-align:center; font-size:12px; margin-top:5px; color:#555;">${txt.split(',')[0]}</p>
+                <p style="text-align:center; font-size:12px; margin-top:5px; color:#555;">${txt}</p>
             </div>`;
             b.insertAdjacentHTML('afterbegin', card);
-        } catch(e) { document.getElementById('status-art').innerText = "Ошибка генерации"; }
+        } catch(e) { document.getElementById('status-art').innerText = "Ошибка"; }
     }
 
-    /* --- ФУНКЦИИ ПАМЯТИ --- */
     function saveChat() { localStorage.setItem('boss_book_chat', document.getElementById('hub-box').innerHTML); }
     function loadChat() {
         const saved = localStorage.getItem('boss_book_chat');
@@ -291,15 +271,7 @@
             });
         }
     }
-    function clearChat() {
-        if(confirm('Удалить все записи из книги, Босс?')) {
-            document.getElementById('hub-box').innerHTML = '';
-            localStorage.removeItem('boss_book_chat');
-            stopAudiobook();
-        }
-    }
-
-    /* --- МИКРОФОН И ЗУМ --- */
+    function clearChat() { if(confirm('Удалить всё, Босс?')) { document.getElementById('hub-box').innerHTML = ''; localStorage.removeItem('boss_book_chat'); stopAudiobook(); } }
     function runMic(id, cb, bId) {
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!R) return;
@@ -309,29 +281,16 @@
         r.onend = () => document.getElementById(bId).style.color = 'inherit';
         r.start();
     }
+    function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; if(pz) pz.destroy(); pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 }); }
 
-    function openZ(u) {
-        document.getElementById('z-img').src = u;
-        document.getElementById('z-overlay').style.display = 'flex';
-        if(pz) pz.destroy();
-        pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 });
-    }
-
-    /* --- НАВИГАЦИЯ (СВАЙПЫ) --- */
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
         if(document.getElementById('z-overlay').style.display === 'flex') return;
         let d = sX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 60) {
-            if (d > 0 && step < 3) { 
-                document.getElementById('p'+step).classList.add('flipped'); 
-                step++; flipSound.currentTime=0; flipSound.play(); 
-            }
-            else if (d < 0 && step > 1) { 
-                step--; document.getElementById('p'+step).classList.remove('flipped'); 
-                flipSound.currentTime=0; flipSound.play(); 
-            }
+            if (d > 0 && step < 3) { document.getElementById('p'+step).classList.add('flipped'); step++; flipSound.play(); }
+            else if (d < 0 && step > 1) { step--; document.getElementById('p'+step).classList.remove('flipped'); flipSound.play(); }
         }
     });
 </script>
