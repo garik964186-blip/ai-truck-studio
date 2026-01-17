@@ -24,28 +24,36 @@
             display: flex; justify-content: center; align-items: center; 
         }
 
-        /* Контейнер для библиотеки StPageFlip */
         #book-container { 
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
             background: transparent;
         }
 
-        /* Стили страницы для библиотеки */
-        .page { 
-            background: var(--paper); 
-            overflow: hidden;
-        }
+        .page { background: var(--paper); overflow: hidden; }
 
         .paper-sheet { 
             background: var(--paper); 
             background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); 
             color: var(--ink); 
             display: flex; flex-direction: column; 
-            height: 100%; 
-            width: 100%;
+            height: 100%; width: 100%;
             box-sizing: border-box;
             border: 1px solid rgba(0,0,0,0.1);
+            position: relative;
         }
+
+        /* --- ФИКС СВАЙПА КАРТИНОК --- */
+        /* Разрешаем клики только по важным элементам, остальное пропускает свайп к книге */
+        .paper-sheet * { pointer-events: none; }
+        
+        /* Список интерактивных элементов */
+        .field, .btn, .ai-select, .photo-frame, .scroll-area, video { 
+            pointer-events: auto; 
+        }
+
+        /* Фикс для скролла: разрешаем вертикальный свайп в чате, 
+           но горизонтальный отдаем книге */
+        .scroll-area { touch-action: pan-y; }
         
         /* ОБЛОЖКА */
         .cover-front { 
@@ -71,7 +79,7 @@
             color: var(--gold); text-align: center; 
         }
 
-        /* ИНТЕРФЕЙС ЧАТА И АЛЬБОМА */
+        /* ИНТЕРФЕЙС */
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-variant: small-caps; }
         .ai-select { width: 90%; background: #fff9e6; border: 1px solid var(--ink); margin: 8px auto; padding: 10px; border-radius: 8px; font-family: inherit; font-weight: bold; outline: none; }
         
@@ -87,6 +95,7 @@
             background: white; padding: 10px 10px 30px 10px; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
             margin-bottom: 20px; transform: rotate(-1deg); 
+            cursor: pointer;
         }
         
         #viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 10000; justify-content: center; align-items: center; }
@@ -109,7 +118,7 @@
                 <div class="c-text">
                     <h1 style="margin:0; letter-spacing:3px;">ULTRA</h1>
                     <p style="margin:5px 0; opacity:0.8; font-style:italic;">КНИГА БОССА</p>
-                    <div style="margin-top:20px; font-size:12px; opacity:0.5; animation: pulse 2s infinite;">
+                    <div style="margin-top:20px; font-size:12px; opacity:0.5;">
                         <i class="fas fa-hand-pointer"></i> ТЯНИ ЗА КРАЙ
                     </div>
                 </div>
@@ -122,7 +131,6 @@
                 <select id="art-model" class="ai-select">
                     <option value="flux">💎 Flux (Качество)</option>
                     <option value="turbo">⚡ Turbo (Мгновенно)</option>
-                    <option value="any-thin">🖌️ Any-Thin (Стиль)</option>
                 </select>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -157,8 +165,9 @@
 <script>
     let pageFlip;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/page-flip-01a.mp3');
+    let isPaused = false;
 
-    // Инициализация библиотеки
+    // Инициализация
     document.addEventListener('DOMContentLoaded', () => {
         pageFlip = new St.PageFlip(document.getElementById("book-container"), {
             width: 400,
@@ -170,42 +179,49 @@
             maxHeight: 900,
             maxShadowOpacity: 0.4,
             showCover: true,
-            mobileScrollSupport: false
+            mobileScrollSupport: false,
+            swipeDistance: 30, // Чувствительность свайпа
+            clickEventForward: false
         });
 
         pageFlip.loadFromHTML(document.querySelectorAll(".page"));
 
-        // Звук при перелистывании
         pageFlip.on('flip', () => {
             flipSound.currentTime = 0;
             flipSound.play();
         });
+
+        // УПРАВЛЕНИЕ ПАУЗОЙ ГОЛОСА ПО ТАПУ
+        document.getElementById("book-container").addEventListener('click', (e) => {
+            if (['INPUT', 'SELECT', 'BUTTON', 'I'].includes(e.target.tagName)) return;
+            const synth = window.speechSynthesis;
+            if (synth.speaking) {
+                if (isPaused) { synth.resume(); isPaused = false; }
+                else { synth.pause(); isPaused = true; }
+            }
+        });
     });
 
-    // ГОЛОСОВАЯ ФУНКЦИЯ
     function speak(text) {
         window.speechSynthesis.cancel();
+        isPaused = false;
         const msg = new SpeechSynthesisUtterance(text.replace(/[#*`_]/g, '').replace(/https?:\/\/\S+/g, 'ссылка'));
         msg.lang = 'ru-RU';
+        msg.onend = () => isPaused = false;
         window.speechSynthesis.speak(msg);
     }
 
-    // МИКРОФОН
     function startMic(id, cb) {
         const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Speech) return alert("Голосовой ввод не поддерживается");
+        if (!Speech) return;
         const rec = new Speech();
         rec.lang = 'ru-RU';
         rec.onstart = () => document.getElementById('m-' + id.split('-')[1]).classList.add('mic-active');
-        rec.onresult = (e) => {
-            document.getElementById(id).value = e.results[0][0].transcript;
-            cb();
-        };
+        rec.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
         rec.onend = () => document.querySelectorAll('.btn').forEach(b => b.classList.remove('mic-active'));
         rec.start();
     }
 
-    // ЛОГИКА ЧАТА
     async function sendMsg() {
         const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if(!i.value) return;
@@ -216,10 +232,9 @@
             const data = await res.text();
             b.innerHTML = `<div style="border-bottom:1px dashed #ccc; padding-bottom:10px; margin-bottom:15px;"><b>AI:</b> ${marked.parse(data)}</div>` + b.innerHTML;
             speak(data);
-        } catch(e) { b.innerHTML = "<div>Ошибка связи...</div>" + b.innerHTML; }
+        } catch(e) { b.innerHTML = "<div>Ошибка...</div>" + b.innerHTML; }
     }
 
-    // ГЕНЕРАЦИЯ КАРТИНКИ
     function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if(!i.value) return;
@@ -228,12 +243,14 @@
         
         const f = document.createElement('div');
         f.className = 'photo-frame';
-        f.onclick = () => { document.getElementById('v-img').src = url; document.getElementById('viewer').style.display = 'flex'; };
+        f.onclick = (e) => { 
+            e.stopPropagation(); // Чтобы не срабатывала пауза голоса при клике на фото
+            document.getElementById('v-img').src = url; 
+            document.getElementById('viewer').style.display = 'flex'; 
+        };
         f.innerHTML = `<img src="${url}" style="width:100%"><p style="text-align:center; font-family:cursive; margin:10px 0 0 0; font-size:12px;">${val}</p>`;
         b.insertBefore(f, b.firstChild);
     }
-
-    window.speechSynthesis.getVoices();
 </script>
 
 </body>
