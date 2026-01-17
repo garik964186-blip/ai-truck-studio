@@ -56,7 +56,7 @@
             <div class="paper-sheet">
                 <div class="header">
                     <span style="width:20px"></span>
-                    🔮 МАГИЧЕСКИЙ ЧАТ
+                    🔮 GEMINI ЧАТ
                     <button class="trash-btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
                 </div>
                 <select id="chat-model" class="ai-select">
@@ -64,12 +64,8 @@
                     <option value="deepseek">DeepSeek R1 (Логика)</option>
                     <option value="llama">Llama 3.3 (Мощная)</option>
                 </select>
-                <select id="voice-engine" class="ai-select">
-                    <option value="cloud">♂ Денис (Нейро-голос)</option>
-                    <option value="system">🗣 Системный (Робот)</option>
-                </select>
                 <div id="status-chat" class="status-bar" onclick="wakeAudio()">
-                    <span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для звука</span>
+                    <span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для активации звука</span>
                 </div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -125,13 +121,22 @@
     /* --- ЛОГИКА --- */
     let step = 1, pz = null, audioReady = false;
     const synth = window.speechSynthesis;
+    let voiceList = [];
     
-    // Звук перелистывания (короткий звук бумаги)
+    // Звук перелистывания
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
 
     marked.setOptions({ breaks: true, gfm: true });
 
-    // Загрузка сохраненного чата при старте
+    // Загрузка голосов
+    function loadVoices() {
+        voiceList = synth.getVoices();
+    }
+    loadVoices();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
     window.addEventListener('load', loadChat);
 
     function wakeAudio() {
@@ -143,27 +148,35 @@
         setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
     }
 
-    async function speak(t) {
+    /* --- НОВЫЙ МОДУЛЬ ГОЛОСА GEMINI STYLE --- */
+    function speak(t) {
         wakeAudio();
-        const eng = document.getElementById('voice-engine').value;
-        const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
-        
-        if (eng === 'system') {
-            synth.cancel();
-            const chunks = clean.match(/[^.!?]+[.!?]+/g) || [clean];
-            chunks.forEach(text => {
-                const u = new SpeechSynthesisUtterance(text);
-                u.lang = 'ru-RU';
-                synth.speak(u);
-            });
-            return;
-        }
+        synth.cancel(); // Остановить предыдущее
 
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean.substring(0, 200))}`;
-        const a = new Audio(url);
-        a.play().catch(() => {
-            const u = new SpeechSynthesisUtterance(clean);
-            u.lang = 'ru-RU';
+        const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
+        // Разбиваем на предложения для лучшего потока
+        const chunks = clean.match(/[^.!?]+[.!?]+/g) || [clean];
+
+        chunks.forEach((chunk, index) => {
+            const u = new SpeechSynthesisUtterance(chunk);
+            
+            // 1. Ищем лучший русский голос (приоритет Google)
+            let ruVoice = voiceList.find(v => v.lang.includes('ru') && v.name.includes('Google'));
+            if(!ruVoice) ruVoice = voiceList.find(v => v.lang.includes('ru') && (v.name.includes('Premium') || v.name.includes('Enhanced')));
+            if(!ruVoice) ruVoice = voiceList.find(v => v.lang.includes('ru')); // Хоть какой-то русский
+
+            if (ruVoice) {
+                u.voice = ruVoice;
+                // Настройки под "Gemini": чуть быстрее, нормальный тон
+                u.rate = 1.1; 
+                u.pitch = 1.0; 
+            } else {
+                u.lang = 'ru-RU'; // Fallback
+            }
+
+            // Небольшая пауза между предложениями
+            if(index > 0) u.volume = 1; 
+            
             synth.speak(u);
         });
     }
@@ -175,10 +188,12 @@
         const val = i.value; i.value = '';
         
         b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Вы: ${val}</div>`);
-        document.getElementById('status-chat').innerText = "Книга думает...";
+        document.getElementById('status-chat').innerText = "Генерирую ответ...";
         
         try {
-            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
+            // Добавляем промпт для стиля общения
+            const sys = "Отвечай кратко, емко, как умный AI-помощник. Тон: дружелюбный профессионал.";
+            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(sys + " " + val)}?model=${m}`);
             let d = await r.text();
             
             if(d.includes('"content":')) { try { const j = JSON.parse(d); d = j.choices[0].message.content; } catch(e){} }
@@ -189,9 +204,7 @@
             div.onclick = () => speak(d);
             b.insertAdjacentElement('afterbegin', div);
             
-            // СОХРАНЕНИЕ В ПАМЯТЬ
             saveChat();
-
             document.getElementById('status-chat').innerText = "";
             speak(d);
         } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
@@ -233,7 +246,6 @@
         const saved = localStorage.getItem('boss_book_chat');
         if (saved) {
             document.getElementById('hub-box').innerHTML = saved;
-            // Восстанавливаем клики
             document.querySelectorAll('.ai-box').forEach(box => {
                 const text = box.innerText.replace('AI:', '').trim();
                 box.onclick = () => speak(text);
@@ -269,7 +281,7 @@
         pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 });
     }
 
-    /* --- ПЕРЕЛИСТЫВАНИЕ СО ЗВУКОМ --- */
+    /* --- ПЕРЕЛИСТЫВАНИЕ --- */
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
