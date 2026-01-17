@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА | BOSS EDITION</title>
+    <title>BOSS BOOK | NO TRACE</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
@@ -11,26 +11,21 @@
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
-        
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 1500px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        
         .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; z-index: 1; }
-        .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; border-right: 1px solid rgba(0,0,0,0.1); }
+        .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
-        
-        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
+        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 18px; }
         .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; color: var(--ink); }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; transition: background 0.3s; border-radius: 8px; padding: 8px; position: relative; }
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; border-radius: 8px; padding: 5px; }
         .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 25px; font-weight: bold; padding: 5px; }
         .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
-        
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
         .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px; border-radius: 25px; font-size: 16px; outline: none; }
         .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; width: 45px; }
-        
         #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
     </style>
 </head>
@@ -42,25 +37,21 @@
 </div>
 
 <div class="viewport">
-    <div class="book" id="main-book">
+    <div class="book">
         
         <div class="page" id="p3">
             <div class="paper-sheet">
-                <div class="header">
-                    <button class="btn" onclick="toggleAudiobook()" id="audiobook-btn" style="font-size:20px;"><i class="fas fa-headphones"></i></button>
-                    <span>🔮 ЧАТ БОССА</span>
-                    <button class="btn" onclick="clearChat()" style="font-size:18px;"><i class="fas fa-trash"></i></button>
-                </div>
-                <select id="voice-engine" class="ai-select">
-                    <option value="system">🗣 Системный голос</option>
-                    <option value="cloud">♂ Денис (Cloud)</option>
+                <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ (INCÓGNITO)</div>
+                <select id="chat-model" class="ai-select">
+                    <option value="openai">GPT-4o</option>
+                    <option value="deepseek">DeepSeek R1</option>
                 </select>
-                <div id="status-chat" class="status-bar"><span id="s-label" style="color:red">📢 Нажми для активации звука</span></div>
+                <div id="status-chat" class="status-bar"><span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для звука</span></div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="runMic('i-chat', sendMsg, 'm-chat')" class="btn" id="m-chat"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-chat" class="field" placeholder="Слушаю...">
+                        <input type="text" id="i-chat" class="field" placeholder="Слушаю, Босс...">
                         <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
@@ -83,14 +74,13 @@
         </div>
 
         <div class="page" id="p1" style="z-index: 3;">
-            <div class="paper-sheet" style="background:#2b0000; border:10px double var(--gold);">
-                <video id="bg-video" autoplay loop muted playsinline style="width:100%; height:70%; object-fit:cover; border-bottom:4px solid var(--gold);">
+            <div class="paper-sheet" style="background:#1a1a1a; border:10px double var(--gold);">
+                <video autoplay loop muted playsinline style="width:100%; height:75%; object-fit:cover; border-bottom:4px solid var(--gold);">
                     <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
                 </video>
                 <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold); text-align:center;">
-                    <h1 style="margin:0; letter-spacing:5px;">НАША КНИГА</h1>
-                    <p style="font-size:14px; opacity:0.8;">BOSS EDITION</p>
-                    <p style="font-size:12px; animate: pulse 2s infinite;">⬅ СМАХНИ ДЛЯ ЧТЕНИЯ</p>
+                    <h1 style="margin:0; letter-spacing:5px;">ЧИСТАЯ КНИГА</h1>
+                    <div style="font-size:12px; opacity:0.6; margin-top:15px;">БЕЗ СОХРАНЕНИЯ ДАННЫХ</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -99,144 +89,100 @@
 </div>
 
 <script>
-    // Инициализация
-    let step = 1, audioReady = false, pz = null;
+    // Принудительно очищаем старую память при запуске этой версии
+    localStorage.clear();
+
+    let step = 1, pz = null, audioReady = false;
+    let isSpeaking = false, currentSentenceIndex = 0, currentQueue = [], activeId = null;
     const synth = window.speechSynthesis;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
-
-    // Переменные озвучки
-    let currentAudio = null;
-    let isSpeaking = false;
-    let speechQueue = [];
-    let currentSentenceIdx = 0;
-    let activeBoxId = null;
-
-    window.onload = () => {
-        try { loadChat(); } catch(e) { console.error("Ошибка загрузки"); }
-    };
 
     function wakeAudio() {
         if (audioReady) return;
         synth.speak(new SpeechSynthesisUtterance(''));
         audioReady = true;
-        document.getElementById('s-label').innerText = "✅ Звук активен";
-        setTimeout(() => document.getElementById('s-label').innerText = "", 2000);
+        document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук активен</span>";
+        setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
     }
 
-    /* --- УМНАЯ ОЗВУЧКА --- */
-    function speak(text, boxId, onEnd = null) {
-        if (!audioReady) wakeAudio();
-        const eng = document.getElementById('voice-engine').value;
-        const clean = text.replace(/[#*`_{}\[\]()]/g, '').trim();
-
-        if (activeBoxId === boxId && isSpeaking) {
-            stopSpeech(false);
-            return;
-        }
-
-        if (activeBoxId !== boxId) {
-            stopSpeech(true);
-            activeBoxId = boxId;
-            speechQueue = clean.match(/[^.!?]+[.!?]+/g) || [clean];
-            currentSentenceIdx = 0;
-        }
-
-        isSpeaking = true;
-        processQueue(eng, onEnd);
-    }
-
-    function processQueue(eng, onEnd) {
-        if (currentSentenceIdx >= speechQueue.length || !isSpeaking) {
-            isSpeaking = false;
-            if (onEnd && isSpeaking) onEnd();
-            return;
-        }
-
-        const part = speechQueue[currentSentenceIdx];
-        if (eng === 'system') {
-            const u = new SpeechSynthesisUtterance(part);
-            u.lang = 'ru-RU';
-            u.onend = () => { if(isSpeaking) { currentSentenceIdx++; processQueue(eng, onEnd); } };
-            synth.speak(u);
-        } else {
-            currentAudio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(part)}`);
-            currentAudio.onended = () => { if(isSpeaking) { currentSentenceIdx++; processQueue(eng, onEnd); } };
-            currentAudio.play();
-        }
-    }
-
-    function stopSpeech(reset = true) {
+    function stopSpeech() {
         isSpeaking = false;
         synth.cancel();
-        if (currentAudio) currentAudio.pause();
-        if (reset) { currentSentenceIdx = 0; activeBoxId = null; }
-        document.getElementById('status-chat').innerText = reset ? "" : "⏸ Пауза";
+        document.getElementById('status-chat').innerText = "";
     }
 
-    /* --- ЧАТ --- */
+    function speak(text, id) {
+        if (activeId === id && isSpeaking) { stopSpeech(); return; }
+        stopSpeech();
+        activeId = id;
+        isSpeaking = true;
+        const clean = text.replace(/[#*`_{}\[\]()]/g, '').trim();
+        currentQueue = clean.match(/[^.!?]+[.!?]+/g) || [clean];
+        currentSentenceIndex = 0;
+        play();
+    }
+
+    function play() {
+        if (!isSpeaking || currentSentenceIndex >= currentQueue.length) { isSpeaking = false; return; }
+        const u = new SpeechSynthesisUtterance(currentQueue[currentSentenceIndex]);
+        u.lang = 'ru-RU';
+        u.onend = () => { currentSentenceIndex++; play(); };
+        synth.speak(u);
+        document.getElementById('status-chat').innerText = "🔊 Читаю...";
+    }
+
     async function sendMsg() {
-        const i = document.getElementById('i-chat'), b = document.getElementById('hub-box');
+        const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
-        const txt = i.value; i.value = '';
-        const id = "m" + Date.now();
-
-        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.5; font-size:12px;">Вы: ${txt}</div>`);
-        document.getElementById('status-chat').innerText = "Книга думает...";
-
+        const val = i.value; i.value = '';
+        const id = "m-" + Date.now();
+        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.5; margin-bottom:5px;">Вы: ${val}</div>`);
+        
         try {
-            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(txt)}?model=openai`);
+            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
             const d = await r.text();
             const div = document.createElement('div');
-            div.className = "ai-box";
-            div.id = id;
-            div.innerHTML = `<b>AI:</b> ${window.marked ? marked.parse(d) : d}`;
+            div.className = "ai-box"; div.id = id;
+            div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
             div.onclick = () => speak(d, id);
             b.insertAdjacentElement('afterbegin', div);
-            saveChat();
             speak(d, id);
-            document.getElementById('status-chat').innerText = "";
-        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
+        } catch(e) { }
     }
 
-    function saveChat() { localStorage.setItem('boss_book_v2', document.getElementById('hub-box').innerHTML); }
-    function loadChat() {
-        const s = localStorage.getItem('boss_book_v2');
-        if (s) {
-            document.getElementById('hub-box').innerHTML = s;
-            document.querySelectorAll('.ai-box').forEach(el => {
-                el.onclick = () => speak(el.innerText, el.id);
-            });
-        }
+    async function genArt() {
+        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box');
+        if (!i.value) return;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(i.value)}?nologo=true`;
+        b.insertAdjacentHTML('afterbegin', `<img src="${url}" style="width:100%; border-radius:10px; margin-bottom:15px;" onclick="openZ('${url}')">`);
+        i.value = '';
     }
-    function clearChat() { if(confirm('Очистить книгу, Босс?')) { localStorage.removeItem('boss_book_v2'); location.reload(); } }
 
-    /* --- ЖЕСТЫ --- */
+    function openZ(u) {
+        document.getElementById('z-img').src = u;
+        document.getElementById('z-overlay').style.display = 'flex';
+        if(pz) pz.destroy();
+        pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 });
+    }
+
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
         let d = sX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 60) {
-            stopSpeech(false);
+            stopSpeech();
             if (d > 0 && step < 3) { document.getElementById('p'+step).classList.add('flipped'); step++; flipSound.play(); }
             else if (d < 0 && step > 1) { step--; document.getElementById('p'+step).classList.remove('flipped'); flipSound.play(); }
         }
     });
 
-    /* --- РИСОВАНИЕ --- */
-    async function genArt() {
-        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box');
-        let txt = i.value; if(!txt) return; i.value = '';
-        document.getElementById('status-art').innerText = "Рисую...";
-        try {
-            const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
-            const td = await tr.json();
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(td.responseData.translatedText)}?nologo=true&seed=${Date.now()}`;
-            b.insertAdjacentHTML('afterbegin', `<img src="${url}" style="width:100%; border-radius:10px; margin-bottom:15px;" onclick="openZ(this.src)">`);
-            document.getElementById('status-art').innerText = "";
-        } catch(e) { document.getElementById('status-art').innerText = "Ошибка"; }
+    function runMic(id, cb, bId) {
+        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!R) return;
+        const r = new R(); r.lang = 'ru-RU';
+        r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
+        r.start();
     }
-
-    function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; }
 </script>
 </body>
 </html>
