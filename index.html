@@ -3,73 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ULTRA — BOSS FINAL</title>
+    <title>ULTRA — BOSS FINAL EDITION</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
-        body, html { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; font-family: "Georgia", serif; -webkit-tap-highlight-color: transparent; }
         
-        .viewport { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; perspective: 2500px; }
-        .book { width: 94vw; max-width: 420px; height: 88vh; position: relative; transform-style: preserve-3d; }
-
-        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; }
-        .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2), 5px 5px 15px rgba(0,0,0,0.5); border-radius: 0 15px 15px 0; pointer-events: auto; }
+        body, html { 
+            margin: 0; padding: 0; height: 100%; 
+            background: #000; overflow: hidden; 
+            font-family: "Georgia", serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
         
-        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 0 15px 15px 0; overflow: hidden; }
-        .back { transform: rotateY(180deg); background: #e8d5a7; border-radius: 15px 0 0 15px; }
-        .flipped { transform: rotateY(-170deg) skewY(-1deg); }
+        .viewport { 
+            width: 100vw; height: 100vh; 
+            display: flex; justify-content: center; align-items: center; 
+        }
 
+        /* Контейнер для библиотеки StPageFlip */
+        #book-container { 
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            background: transparent;
+        }
+
+        /* Стили страницы для библиотеки */
+        .page { 
+            background: var(--paper); 
+            overflow: hidden;
+        }
+
+        .paper-sheet { 
+            background: var(--paper); 
+            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); 
+            color: var(--ink); 
+            display: flex; flex-direction: column; 
+            height: 100%; 
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        
         /* ОБЛОЖКА */
-        .cover-front { background: #2b0000; border: 8px double var(--gold); display: flex; flex-direction: column; }
-        .v-box { width: 100%; height: 70%; background: #000; border-bottom: 4px solid var(--gold); display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .v-box video { width: 100%; height: 100%; object-fit: contain; }
-        .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; }
+        .cover-front { 
+            background: #2b0000; 
+            border: 8px double var(--gold); 
+            display: flex; flex-direction: column; 
+            height: 100%; width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .v-box { 
+            width: 100%; height: 60%; 
+            background: #000; 
+            border-bottom: 4px solid var(--gold); 
+            display: flex; align-items: center; justify-content: center; 
+            overflow: hidden; 
+        }
+        .v-box video { width: 100%; height: 100%; object-fit: cover; }
+        
+        .c-text { 
+            flex: 1; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; 
+            color: var(--gold); text-align: center; 
+        }
 
-        /* ИНТЕРФЕЙС */
+        /* ИНТЕРФЕЙС ЧАТА И АЛЬБОМА */
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-variant: small-caps; }
         .ai-select { width: 90%; background: #fff9e6; border: 1px solid var(--ink); margin: 8px auto; padding: 10px; border-radius: 8px; font-family: inherit; font-weight: bold; outline: none; }
         
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
         .input-bar { padding: 12px; background: rgba(0,0,0,0.08); display: flex; gap: 10px; align-items: center; border-top: 1px solid rgba(0,0,0,0.1); }
-        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; }
         
-        .btn { background: none; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn { background: none; border: none; font-size: 22px; cursor: pointer; transition: 0.2s; }
         .btn:active { transform: scale(0.9); }
         .mic-active { color: var(--accent); animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 
-        .photo-frame { background: white; padding: 10px 10px 30px 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); margin-bottom: 25px; transform: rotate(-1deg); cursor: zoom-in; }
+        .photo-frame { 
+            background: white; padding: 10px 10px 30px 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+            margin-bottom: 20px; transform: rotate(-1deg); 
+        }
         
         #viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 10000; justify-content: center; align-items: center; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
 
 <div class="viewport">
-    <div class="book">
+    <div id="book-container">
         
-        <div class="page" id="p3" style="z-index: 1;">
-            <div class="front paper-sheet">
-                <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
-                <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Мудрец)</option>
-                    <option value="qwen">Qwen 2.5 (Техник)</option>
-                    <option value="mistral">Mistral (Быстрый)</option>
-                </select>
-                <div id="hub-box" class="scroll-area"></div>
-                <div class="input-bar">
-                    <button onclick="startMic('i-hub', sendMsg)" class="btn" id="m-hub"><i class="fas fa-microphone"></i></button>
-                    <input type="text" id="i-hub" class="field" placeholder="Спроси книгу...">
-                    <button onclick="sendMsg()" class="btn" style="color:var(--accent)"><i class="fas fa-paper-plane"></i></button>
+        <div class="page" data-density="hard">
+            <div class="cover-front">
+                <div class="v-box">
+                    <video autoplay loop muted playsinline>
+                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="c-text">
+                    <h1 style="margin:0; letter-spacing:3px;">ULTRA</h1>
+                    <p style="margin:5px 0; opacity:0.8; font-style:italic;">КНИГА БОССА</p>
+                    <div style="margin-top:20px; font-size:12px; opacity:0.5; animation: pulse 2s infinite;">
+                        <i class="fas fa-hand-pointer"></i> ТЯНИ ЗА КРАЙ
+                    </div>
                 </div>
             </div>
-            <div class="back"></div>
         </div>
 
-        <div class="page" id="p2" style="z-index: 2;">
-            <div class="front paper-sheet">
+        <div class="page">
+            <div class="paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
                 <select id="art-model" class="ai-select">
                     <option value="flux">💎 Flux (Качество)</option>
@@ -83,25 +131,22 @@
                     <button onclick="genArt()" class="btn" style="color:var(--accent)"><i class="fas fa-magic"></i></button>
                 </div>
             </div>
-            <div class="back"></div>
         </div>
 
-        <div class="page" id="p1" style="z-index: 3;">
-            <div class="front cover-front">
-                <div class="v-box">
-                    <video autoplay loop muted playsinline>
-                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
-                    </video>
-                </div>
-                <div class="c-text">
-                    <h1 style="margin:0; letter-spacing:3px;">ULTRA</h1>
-                    <p style="margin:5px 0; opacity:0.8; font-style:italic;">КНИГА БОССА</p>
-                    <div style="margin-top:20px; font-size:12px; opacity:0.5; animation: pulse 2s infinite;">
-                        <i class="fas fa-chevron-left"></i> СМАХНИ ВЛЕВО
-                    </div>
+        <div class="page">
+            <div class="paper-sheet">
+                <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
+                <select id="chat-model" class="ai-select">
+                    <option value="openai">GPT-4o (Мудрец)</option>
+                    <option value="qwen">Qwen 2.5 (Техник)</option>
+                </select>
+                <div id="hub-box" class="scroll-area"></div>
+                <div class="input-bar">
+                    <button onclick="startMic('i-hub', sendMsg)" class="btn" id="m-hub"><i class="fas fa-microphone"></i></button>
+                    <input type="text" id="i-hub" class="field" placeholder="Спроси книгу...">
+                    <button onclick="sendMsg()" class="btn" style="color:var(--accent)"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
-            <div class="back"></div>
         </div>
 
     </div>
@@ -110,62 +155,57 @@
 <div id="viewer" onclick="this.style.display='none'"><img id="v-img" src="" style="max-width:95%; max-height:95%; border:3px solid #fff;"></div>
 
 <script>
-    let startX = 0, currentStep = 1;
-    
-    // ЗВУК ПЕРЕЛИСТЫВАНИЯ
+    let pageFlip;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/page-flip-01a.mp3');
 
-    document.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
-    document.addEventListener('touchend', e => {
-        let diff = startX - e.changedTouches[0].clientX;
-        if (Math.abs(diff) > 100) {
-            if (diff > 0 && currentStep < 3) { 
-                flipSound.play();
-                document.getElementById('p' + currentStep).classList.add('flipped'); 
-                currentStep++; 
-            }
-            else if (diff < 0 && currentStep > 1) { 
-                flipSound.play();
-                currentStep--; 
-                document.getElementById('p' + currentStep).classList.remove('flipped'); 
-            }
-        }
+    // Инициализация библиотеки
+    document.addEventListener('DOMContentLoaded', () => {
+        pageFlip = new St.PageFlip(document.getElementById("book-container"), {
+            width: 400,
+            height: 700,
+            size: "stretch",
+            minWidth: 320,
+            maxWidth: 500,
+            minHeight: 500,
+            maxHeight: 900,
+            maxShadowOpacity: 0.4,
+            showCover: true,
+            mobileScrollSupport: false
+        });
+
+        pageFlip.loadFromHTML(document.querySelectorAll(".page"));
+
+        // Звук при перелистывании
+        pageFlip.on('flip', () => {
+            flipSound.currentTime = 0;
+            flipSound.play();
+        });
     });
 
-    // УЛУЧШЕННЫЙ ГОЛОС
+    // ГОЛОСОВАЯ ФУНКЦИЯ
     function speak(text) {
         window.speechSynthesis.cancel();
-        const msg = new SpeechSynthesisUtterance();
-        msg.text = text.replace(/[#*`_]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
+        const msg = new SpeechSynthesisUtterance(text.replace(/[#*`_]/g, '').replace(/https?:\/\/\S+/g, 'ссылка'));
         msg.lang = 'ru-RU';
-        msg.pitch = 1.05; 
-        msg.rate = 1.0; 
-
-        const voices = window.speechSynthesis.getVoices();
-        const bestVoice = voices.find(v => v.lang.includes('ru') && v.name.includes('Google')) || voices.find(v => v.lang.includes('ru'));
-        if (bestVoice) msg.voice = bestVoice;
-        
         window.speechSynthesis.speak(msg);
     }
 
-    // МИКРОФОН С АВТО-ОТПРАВКОЙ
+    // МИКРОФОН
     function startMic(id, cb) {
         const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Speech) return;
+        if (!Speech) return alert("Голосовой ввод не поддерживается");
         const rec = new Speech();
         rec.lang = 'ru-RU';
-        const btn = event.currentTarget;
-        rec.onstart = () => btn.classList.add('mic-active');
+        rec.onstart = () => document.getElementById('m-' + id.split('-')[1]).classList.add('mic-active');
         rec.onresult = (e) => {
             document.getElementById(id).value = e.results[0][0].transcript;
-            btn.classList.remove('mic-active');
             cb();
         };
-        rec.onend = () => btn.classList.remove('mic-active');
+        rec.onend = () => document.querySelectorAll('.btn').forEach(b => b.classList.remove('mic-active'));
         rec.start();
     }
 
-    // ЧАТ
+    // ЛОГИКА ЧАТА
     async function sendMsg() {
         const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if(!i.value) return;
@@ -176,24 +216,25 @@
             const data = await res.text();
             b.innerHTML = `<div style="border-bottom:1px dashed #ccc; padding-bottom:10px; margin-bottom:15px;"><b>AI:</b> ${marked.parse(data)}</div>` + b.innerHTML;
             speak(data);
-        } catch(e) { b.innerHTML = "<div>Ошибка...</div>" + b.innerHTML; }
+        } catch(e) { b.innerHTML = "<div>Ошибка связи...</div>" + b.innerHTML; }
     }
 
-    // ГЕНЕРАЦИЯ ФОТО
+    // ГЕНЕРАЦИЯ КАРТИНКИ
     function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if(!i.value) return;
         const val = i.value; i.value = '';
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}&nologo=true&seed=${Math.random()}`;
+        
         const f = document.createElement('div');
         f.className = 'photo-frame';
         f.onclick = () => { document.getElementById('v-img').src = url; document.getElementById('viewer').style.display = 'flex'; };
-        f.innerHTML = `<img src="${url}" style="width:100%"><p style="text-align:center; font-family:cursive; margin-top:10px; font-size:12px;">${val}</p>`;
+        f.innerHTML = `<img src="${url}" style="width:100%"><p style="text-align:center; font-family:cursive; margin:10px 0 0 0; font-size:12px;">${val}</p>`;
         b.insertBefore(f, b.firstChild);
     }
-    
-    // Подгрузка голосов
+
     window.speechSynthesis.getVoices();
 </script>
+
 </body>
 </html>
