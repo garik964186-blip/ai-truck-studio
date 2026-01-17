@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ОТ ИГРУШКИ ДО ФУРЫ — ULTRA</title>
+    <title>ФУРА-BOOK ULTRA: TRANSLATE EDITION</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
@@ -23,333 +23,179 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         html, body {
-            height: 100%;
-            overflow: hidden;
-            margin: 0;
-            padding: 0;
+            height: 100%; overflow: hidden; margin: 0; padding: 0;
             background: var(--bg);
             font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
             color: var(--text);
         }
 
         .container {
-            width: 100%;
-            height: 100dvh;
+            width: 100%; height: 100dvh;
             background: var(--card);
-            display: flex;
-            flex-direction: column;
-            position: relative;
+            display: flex; flex-direction: column;
         }
 
         /* --- ШАПКА --- */
         .header {
-            position: relative;
-            height: 120px;
-            flex-shrink: 0;
-            background: #000;
+            position: relative; height: 80px; flex-shrink: 0; background: #000;
         }
         
         .banner-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.8;
+            width: 100%; height: 100%; object-fit: cover; opacity: 0.5;
             mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
         }
         
         .header-title {
-            position: absolute;
-            bottom: 5px;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            font-size: 16px;
-            font-weight: 900;
-            color: white;
-            text-transform: uppercase;
-            text-shadow: 0 2px 4px black;
+            position: absolute; bottom: 8px; left: 0; width: 100%;
+            text-align: center; font-size: 13px; font-weight: 900;
+            color: white; text-transform: uppercase; letter-spacing: 2px;
         }
 
-        /* --- ТАБЫ --- */
-        .tabs {
-            display: flex;
-            background: #000;
-            padding: 5px;
-            flex-shrink: 0;
-            border-bottom: 1px solid #333;
-        }
+        .tabs { display: flex; background: #000; padding: 5px; flex-shrink: 0; border-bottom: 1px solid #222; }
         
         .tab-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            background: none;
-            color: #666;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: 0.2s;
+            flex: 1; padding: 12px; border: none; background: none;
+            color: #555; font-weight: 700; font-size: 12px; border-radius: 8px;
+            transition: 0.3s;
         }
         
-        .tab-btn.active {
-            background: var(--accent);
-            color: white;
-        }
+        .tab-btn.active { background: var(--accent); color: white; }
 
-        .content {
-            display: none;
-            flex-direction: column;
-            flex-grow: 1;
-            overflow: hidden;
-            padding: 10px;
-        }
-        
+        .content { display: none; flex-direction: column; flex-grow: 1; overflow: hidden; padding: 10px; }
         .content.active { display: flex; }
 
-        /* --- ЧАТ --- */
-        #chat-box {
-            flex-grow: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding-bottom: 10px;
-            scroll-behavior: smooth;
+        /* --- ГРАФИЧЕСКАЯ ДОСКА (КНИГА) --- */
+        .board-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 5px 10px; font-size: 11px; color: #444;
         }
 
-        .msg {
-            max-width: 88%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 15px;
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-
-        .msg.u {
-            align-self: flex-end;
-            background: var(--user-msg);
-            color: white;
-            border-bottom-right-radius: 2px;
-        }
-        
-        .msg.a {
-            align-self: flex-start;
-            background: var(--ai-msg);
-            color: #eee;
-            border-bottom-left-radius: 2px;
-            border: 1px solid #333;
-            cursor: pointer; 
-        }
-
-        /* --- ГАЛЕРЕЯ --- */
         #imgs {
-            flex-grow: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding-bottom: 10px;
+            flex-grow: 1; display: flex; flex-direction: row;
+            overflow-x: auto; overflow-y: hidden;
+            scroll-snap-type: x mandatory; gap: 15px;
+            padding: 5px 0; scroll-behavior: smooth;
         }
-        
+
+        #imgs::-webkit-scrollbar { display: none; }
+
         .img-card {
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid #333;
-            animation: fadeIn 0.5s ease;
+            min-width: 92%; height: 100%; scroll-snap-align: center;
+            background: #000; border-radius: 20px; overflow: hidden;
+            border: 1px solid #333; display: flex; flex-direction: column;
+            position: relative;
         }
 
-        .gen-img { width: 100%; height: auto; display: block; }
+        .gen-img { width: 100%; height: 100%; object-fit: contain; background: #0c0c0c; }
 
-        .dl-link {
-            display: block;
-            background: #222;
-            color: white;
-            text-align: center;
-            padding: 12px;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: bold;
-            border-top: 1px solid #333;
+        .img-info {
+            position: absolute; bottom: 0; width: 100%;
+            background: rgba(0,0,0,0.85); padding: 15px;
+            backdrop-filter: blur(10px); border-top: 1px solid #333;
         }
 
-        /* --- ПАНЕЛЬ УПРАВЛЕНИЯ --- */
-        .controls-bar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-            flex-shrink: 0;
-        }
-        
-        select {
-            flex-grow: 1;
-            padding: 10px;
-            background: #252525;
-            border: 1px solid #333;
-            color: white;
-            border-radius: 10px;
-            font-size: 14px;
-            outline: none;
-        }
+        /* --- ЧАТ --- */
+        #chat-box { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 15px; }
+        .msg.u { align-self: flex-end; background: var(--user-msg); color: white; border-bottom-right-radius: 4px; }
+        .msg.a { align-self: flex-start; background: var(--ai-msg); border: 1px solid #333; border-bottom-left-radius: 4px; }
 
+        /* --- ВВОД --- */
         .input-area {
-            display: flex;
-            gap: 10px;
-            background: #252525;
-            padding: 8px 12px;
-            border-radius: 25px;
-            border: 1px solid #333;
-            align-items: center;
-            flex-shrink: 0;
-            margin-bottom: env(safe-area-inset-bottom);
+            display: flex; gap: 10px; background: #1c1c1e;
+            padding: 8px 12px; border-radius: 25px; margin: 10px 0;
+            align-items: center; border: 1px solid #333;
         }
 
-        .field {
-            flex: 1;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 16px;
-            padding: 5px;
-            outline: none;
-        }
-
+        .field { flex: 1; background: none; border: none; color: white; font-size: 16px; outline: none; }
+        
         .mic-btn, .send-btn {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            cursor: pointer;
-            color: white;
-            transition: 0.2s;
+            width: 42px; height: 42px; border-radius: 50%; border: none; 
+            display: flex; align-items: center; justify-content: center; color: white;
         }
-
         .mic-btn { background: #333; }
-        .mic-btn.active { background: var(--accent); box-shadow: 0 0 15px var(--accent); }
+        .mic-btn.active { background: var(--accent); box-shadow: 0 0 20px var(--accent); animation: pulse 1s infinite; }
         .send-btn { background: var(--user-msg); }
 
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: black;
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        .status-tag {
+            font-size: 9px; padding: 2px 6px; border-radius: 4px; background: #333; color: #888; text-transform: uppercase;
         }
-        .close-zoom { position: absolute; top: 20px; right: 20px; color: white; font-size: 30px; cursor: pointer; padding: 20px; }
     </style>
 </head>
 <body>
 
-<div class="overlay" id="zoom-overlay">
-    <div class="close-zoom" onclick="closeZoom()">×</div>
-    <div id="zoom-content" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
-</div>
-
 <div class="container">
     <div class="header">
-        <img src="1768422265866.jpg" class="banner-img" onerror="this.src='https://images.unsplash.com/photo-1519003722824-194d4455a60c?q=80&w=1000&auto=format&fit=crop'">
+        <img src="https://images.unsplash.com/photo-1519003722824-194d4455a60c?q=80&w=1000" class="banner-img">
         <div class="header-title">ОТ ИГРУШКИ ДО ФУРЫ</div>
     </div>
     
     <div class="tabs">
-        <button id="b-art" class="tab-btn active" onclick="switchTab('art')"><i class="fas fa-palette"></i> ДОСКА</button>
-        <button id="b-chat" class="tab-btn" onclick="switchTab('chat')"><i class="fas fa-comments"></i> ЧАТ</button>
+        <button id="b-art" class="tab-btn active" onclick="switchTab('art')">ГРАФИЧЕСКАЯ ДОСКА</button>
+        <button id="b-chat" class="tab-btn" onclick="switchTab('chat')">ИНТЕЛЛЕКТ ЧАТ</button>
     </div>
     
     <div id="art" class="content active">
-        <div class="controls-bar">
-            <select id="m-art">
-                <option value="flux">🚛 Flux (Детали)</option>
-                <option value="flux-realism">📸 Реализм</option>
-                <option value="turbo">⚡ Быстро (Turbo)</option>
-            </select>
-            <button onclick="document.getElementById('imgs').innerHTML=''" style="background:#333; border:none; color:white; border-radius:10px; width:40px;"><i class="fas fa-trash"></i></button>
+        <div class="board-header">
+            <span><i class="fas fa-language"></i> АВТО-ПЕРЕВОД: ВКЛ</span>
+            <button style="background:none; border:none; color:#555;" onclick="clearArt()"><i class="fas fa-broom"></i></button>
         </div>
-        
         <div id="imgs">
-            <div style="text-align:center; color:#555; margin-top:50px;">
-                <i class="fas fa-microphone" style="font-size:40px; margin-bottom:10px;"></i><br>
-                Нажми микрофон и скажи, что нарисовать.
+            <div class="img-card" id="welcome">
+                <div style="height:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; padding:30px; text-align:center;">
+                    <i class="fas fa-microchip" style="font-size:40px; color:var(--accent); margin-bottom:15px;"></i>
+                    <h3 style="margin:0;">Бортовой Журнал</h3>
+                    <p style="color:#666; font-size:13px;">Босс, диктуй на русском — я сам переведу техзадание для нейросети.</p>
+                </div>
             </div>
         </div>
 
         <div class="input-area">
             <button id="mic-art" class="mic-btn" onclick="startVoice('art')"><i class="fas fa-microphone"></i></button>
-            <input id="i-art" class="field" placeholder="Скажи запрос..." readonly>
+            <input id="i-art" class="field" placeholder="Диктуй идею..." readonly>
+            <span class="status-tag">TRANSLATE AI</span>
         </div>
     </div>
 
     <div id="chat" class="content">
-        <div class="controls-bar">
-            <select id="m-chat">
-                <option value="openai">⚡ GPT-4o (OpenAI)</option>
-                <option value="mistral">🌪️ Mistral (Баланс)</option>
-                <option value="searchgpt">🌐 SearchGPT (С поиском)</option>
-            </select>
-            <button onclick="document.getElementById('chat-box').innerHTML=''" style="background:#333; border:none; color:white; border-radius:10px; width:40px;"><i class="fas fa-trash"></i></button>
-        </div>
-
         <div id="chat-box">
-            <div class="msg a" onclick="stopSpeaking()">Босс, я обновил системы. Теперь всё должно летать. О чем пообщаемся?</div>
+            <div class="msg a">Системы активны. Кэш оптимизирован. О чем пообщаемся, босс?</div>
         </div>
-
         <div class="input-area">
             <button id="mic-chat" class="mic-btn" onclick="startVoice('chat')"><i class="fas fa-microphone"></i></button>
-            <input id="i-chat" class="field" type="text" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <input id="i-chat" class="field" type="text" placeholder="Задай вопрос..." onkeypress="if(event.key==='Enter') sendMessage()">
             <button onclick="sendMessage()" class="send-btn"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 </div>
 
 <script>
+    const MAX_PAGES = 10;
+
     function switchTab(tab) {
         document.querySelectorAll('.tab-btn, .content').forEach(el => el.classList.remove('active'));
         document.getElementById('b-' + tab).classList.add('active');
         document.getElementById(tab).classList.add('active');
-        stopSpeaking(); 
     }
 
-    function scrollToBottom() {
-        const box = document.getElementById('chat-box');
-        box.scrollTop = box.scrollHeight;
-    }
-
-    function speak(text) {
-        window.speechSynthesis.cancel();
-        let cleanText = text.replace(/```[\s\S]*?```/g, ' код ').replace(/[*#_`]/g, '').trim();
-        if (cleanText.length > 0) {
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            utterance.lang = 'ru-RU';
-            utterance.rate = 1.1; 
-            window.speechSynthesis.speak(utterance);
+    function clearArt() {
+        if(confirm("Очистить все страницы?")) {
+            document.getElementById('imgs').innerHTML = '<div class="img-card"><div style="height:100%; display:flex; align-items:center; justify-content:center; color:#444;">Чистый лист.</div></div>';
         }
-    }
-
-    function stopSpeaking() {
-        window.speechSynthesis.cancel();
     }
 
     function startVoice(mode) {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) return alert("Голос не поддерживается");
-        const rec = new SR();
-        rec.lang = 'ru-RU';
-        const btn = document.getElementById('mic-' + mode);
-        rec.onstart = () => btn.classList.add('active');
-        rec.onend = () => btn.classList.remove('active');
-        rec.onresult = (event) => {
-            const text = event.results[0][0].transcript;
-            if (mode === 'chat') { document.getElementById('i-chat').value = text; sendMessage(); }
-            else { document.getElementById('i-art').value = text; generateImage(); }
+        if (!SR) return alert("Голос недоступен");
+        const rec = new SR(); rec.lang = 'ru-RU';
+        rec.onstart = () => document.getElementById('mic-' + mode).classList.add('active');
+        rec.onend = () => document.getElementById('mic-' + mode).classList.remove('active');
+        rec.onresult = (e) => {
+            const t = e.results[0][0].transcript;
+            if (mode === 'chat') { document.getElementById('i-chat').value = t; sendMessage(); }
+            else { document.getElementById('i-art').value = t; generateImage(); }
         };
         rec.start();
     }
@@ -357,36 +203,49 @@
     async function generateImage() {
         const input = document.getElementById('i-art');
         const container = document.getElementById('imgs');
-        let promptText = input.value.trim();
-        if (!promptText || promptText === "Слушаю...") return;
+        let russianText = input.value.trim();
+        if (!russianText) return;
 
-        const loadDiv = document.createElement('div');
-        loadDiv.className = 'img-card';
-        loadDiv.innerHTML = `<div style="padding:20px; text-align:center; color:#888;"><i class="fas fa-language"></i> Готовлю чертеж...</div>`;
-        container.insertBefore(loadDiv, container.firstChild);
+        // Удаляем старую страницу при лимите
+        const pages = container.getElementsByClassName('img-card');
+        if (pages.length >= MAX_PAGES) pages[0].remove();
+
+        const card = document.createElement('div');
+        card.className = 'img-card';
+        card.innerHTML = `<div style="height:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; color:#555;">
+            <i class="fas fa-language fa-beat" style="font-size:30px; margin-bottom:10px; color:var(--accent);"></i>
+            <span>Перевод и запуск ИИ...</span>
+        </div>`;
+        container.appendChild(card);
+        container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
 
         try {
-            // Перевод для лучшего результата
-            const transRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(promptText)}`);
-            const transData = await transRes.json();
-            const translated = transData[0][0][0];
+            // --- ПЕРЕВОДЧИК ---
+            const trResponse = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=en&dt=t&q=${encodeURIComponent(russianText)}`);
+            const trData = await trResponse.json();
+            const englishPrompt = trData[0][0][0];
 
-            const model = document.getElementById('m-art').value;
-            const seed = Math.floor(Math.random() * 1000000);
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(translated)}?model=${model}&seed=${seed}&nologo=true&width=1024&height=1024`;
+            // --- ГЕНЕРАЦИЯ ---
+            const seed = Math.floor(Math.random() * 999999);
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(englishPrompt)}?model=flux&seed=${seed}&nologo=true&width=1024&height=1280`;
 
             const img = new Image();
             img.src = url;
             img.className = 'gen-img';
-            img.onclick = () => openZoom(url);
             img.onload = () => {
-                loadDiv.innerHTML = '';
-                loadDiv.appendChild(img);
-                loadDiv.innerHTML += `<a href="${url}" target="_blank" class="dl-link"><i class="fas fa-download"></i> СОХРАНИТЬ</a>`;
+                card.innerHTML = `
+                    <img src="${url}" class="gen-img" onclick="window.open('${url}', '_blank')">
+                    <div class="img-info">
+                        <div style="font-size:12px; color:#fff; margin-bottom:8px; opacity:0.9;">${russianText}</div>
+                        <div style="display:flex; gap:8px;">
+                            <a href="${url}" target="_blank" style="flex:1; text-align:center; color:white; text-decoration:none; background:#333; padding:8px; border-radius:10px; font-size:10px; font-weight:bold;">СКАЧАТЬ</a>
+                            <button onclick="this.closest('.img-card').remove()" style="background:none; border:1px solid #444; color:#666; border-radius:10px; padding:0 12px;"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
             };
-            img.onerror = () => { loadDiv.innerHTML = `<div style="padding:20px; color:red;">Ошибка сервера картинок</div>`; };
         } catch (e) {
-            loadDiv.innerHTML = `<div style="padding:20px; color:red;">Ошибка сети</div>`;
+            card.innerHTML = `<div style="padding:20px; color:red; text-align:center;">Сбой перевода или сети.</div>`;
         }
     }
 
@@ -398,43 +257,21 @@
 
         input.value = '';
         box.innerHTML += `<div class="msg u">${text}</div>`;
-        scrollToBottom();
+        box.scrollTop = box.scrollHeight;
 
-        const loadId = 'msg-' + Date.now();
-        box.innerHTML += `<div class="msg a" id="${loadId}" onclick="stopSpeaking()"><i class="fas fa-circle-notch fa-spin"></i></div>`;
-        scrollToBottom();
+        const loadId = 'm' + Date.now();
+        box.innerHTML += `<div class="msg a" id="${loadId}"><i class="fas fa-circle-notch fa-spin"></i></div>`;
 
         try {
-            const model = document.getElementById('m-chat').value;
-            const response = await fetch(`https://text.pollinations.ai/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: [
-                        { role: 'system', content: 'Ты — крутой помощник для Босса. Твой девиз: "Туман похож на обман". Ты эксперт по грузовикам (КамАЗ К5, Dongfeng). Отвечай четко и по делу.' },
-                        { role: 'user', content: text }
-                    ],
-                    model: model
-                })
-            });
-
-            if (!response.ok) throw new Error();
-            const answer = await response.text();
-            const msgDiv = document.getElementById(loadId);
-            msgDiv.innerHTML = marked.parse(answer);
-            msgDiv.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
-            scrollToBottom();
-            speak(answer);
+            const sys = encodeURIComponent("Ты помощник Босса. Твой девиз: 'Туман похож на обман'. Грузовики: КамАЗ К5, Dongfeng.");
+            const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(text)}?model=openai&system=${sys}`);
+            const answer = await res.text();
+            document.getElementById(loadId).innerHTML = marked.parse(answer);
+            box.scrollTop = box.scrollHeight;
         } catch (e) {
-            document.getElementById(loadId).innerHTML = "<span style='color:red'>Сбой связи. Босс, попробуй другую модель в списке.</span>";
+            document.getElementById(loadId).innerHTML = "Ошибка связи.";
         }
     }
-
-    function openZoom(src) {
-        document.getElementById('zoom-content').innerHTML = `<img src="${src}" style="max-width:95%; max-height:95%; border-radius:10px;">`;
-        document.getElementById('zoom-overlay').style.display = 'flex';
-    }
-    function closeZoom() { document.getElementById('zoom-overlay').style.display = 'none'; }
 </script>
 </body>
 </html>
