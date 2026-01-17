@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА</title>
+    <title>НАША КНИГА | BOSS EDITION</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
@@ -13,20 +13,25 @@
         body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 1500px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s ease-in-out; pointer-events: none; z-index: 1; }
+        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; z-index: 1; }
         .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 18px; }
         .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; color: var(--ink); }
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; }
-        .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 25px; font-weight: bold; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; transition: background 0.3s; }
+        .ai-box:active { background: rgba(0,0,0,0.05); }
+        .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 25px; font-weight: bold; padding: 5px; }
         .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
-        .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px; border-radius: 25px; font-size: 16px; }
+        .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px; border-radius: 25px; font-size: 16px; outline: none; }
         .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; width: 45px; }
         #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
+        
+        /* Стили для Markdown */
+        .ai-box table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+        .ai-box td, .ai-box th { border: 1px solid var(--ink); padding: 4px; }
     </style>
 </head>
 <body onclick="wakeAudio()">
@@ -94,7 +99,7 @@
                 </video>
                 <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold); text-align:center;">
                     <h1 style="margin:0; letter-spacing:5px; font-size:28px;">НАША КНИГА</h1>
-                    <div style="font-size:12px; opacity:0.6; margin-top:15px;">⬅ СМАХНИ ВЛЕВО</div>
+                    <div style="font-size:12px; opacity:0.6; margin-top:15px;">⬅ СМАХНИ ВЛЕВО, БОСС</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -106,6 +111,9 @@
     let step = 1, pz = null, audioReady = false;
     const synth = window.speechSynthesis;
 
+    // Настройка Markdown
+    marked.setOptions({ breaks: true, gfm: true });
+
     function wakeAudio() {
         if (audioReady) return;
         const u = new SpeechSynthesisUtterance('');
@@ -115,6 +123,7 @@
         setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
     }
 
+    // Улучшенная озвучка (разбивка на части)
     async function speak(t) {
         wakeAudio();
         const eng = document.getElementById('voice-engine').value;
@@ -122,12 +131,17 @@
         
         if (eng === 'system') {
             synth.cancel();
-            const u = new SpeechSynthesisUtterance(clean);
-            u.lang = 'ru-RU';
-            synth.speak(u);
+            const chunks = clean.match(/[^.!?]+[.!?]+/g) || [clean];
+            chunks.forEach(text => {
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'ru-RU';
+                u.rate = 1.0;
+                synth.speak(u);
+            });
             return;
         }
 
+        // Google TTS ограничение 200 символов - берем первую важную фразу для облака
         const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean.substring(0, 200))}`;
         const a = new Audio(url);
         a.play().catch(() => {
@@ -142,13 +156,14 @@
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
+        
         b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Вы: ${val}</div>`);
         document.getElementById('status-chat').innerText = "Книга думает...";
         
         try {
             const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
             let d = await r.text();
-            // Очистка от технического мусора JSON если он есть
+            
             if(d.includes('"content":')) { try { const j = JSON.parse(d); d = j.choices[0].message.content; } catch(e){} }
 
             const div = document.createElement('div');
@@ -164,26 +179,40 @@
     async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
-        const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Рисую...";
+        let txt = i.value; i.value = '';
+        
+        // Умная добавка для грузовиков (Босс любит КамАЗ и Dongfeng)
+        if (txt.toLowerCase().includes('камаз') || txt.toLowerCase().includes('грузовик') || txt.toLowerCase().includes('dongfeng')) {
+            txt += ", realistic truck photography, 4k, cinematic lighting, shot on Osmo Action 5 Pro style";
+        }
+
+        document.getElementById('status-art').innerText = "Рисую шедевр...";
         try {
             const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
             const td = await tr.json();
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(td.responseData.translatedText)}?model=${m}&nologo=true&seed=${Date.now()}`;
-            b.insertAdjacentHTML('afterbegin', `<div style="background:#fff; padding:10px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1);"><img src="${url}" style="width:100%;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''"><p style="text-align:center; font-size:12px; margin-top:5px;">${txt}</p></div>`);
-        } catch(e) { document.getElementById('status-art').innerText = "Ошибка"; }
+            const finalPrompt = td.responseData.translatedText;
+            
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?model=${m}&nologo=true&seed=${Date.now()}`;
+            
+            const card = `<div style="background:#fff; padding:10px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+                <img src="${url}" style="width:100%; border-radius:4px;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
+                <p style="text-align:center; font-size:12px; margin-top:5px; color:#555;">${txt.split(',')[0]}</p>
+            </div>`;
+            
+            b.insertAdjacentHTML('afterbegin', card);
+        } catch(e) { document.getElementById('status-art').innerText = "Ошибка генерации"; }
     }
 
     function runMic(id, cb, bId) {
         wakeAudio();
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!R) return;
+        if (!R) { alert("Микрофон не поддерживается"); return; }
         const r = new R(); r.lang = 'ru-RU';
         r.onstart = () => document.getElementById(bId).style.color = 'red';
         r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
         r.onend = () => { 
             document.getElementById(bId).style.color = 'inherit';
-            setTimeout(() => { wakeAudio(); }, 100); // Снова "будим" звук после микрофона
+            setTimeout(wakeAudio, 100); 
         };
         r.start();
     }
@@ -192,7 +221,7 @@
         document.getElementById('z-img').src = u;
         document.getElementById('z-overlay').style.display = 'flex';
         if(pz) pz.destroy();
-        pz = new PinchZoom.default(document.getElementById('z-wrap'), {});
+        pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 });
     }
 
     let sX = 0;
@@ -207,4 +236,4 @@
     });
 </script>
 </body>
-    </html>
+                                                                                            </html>
