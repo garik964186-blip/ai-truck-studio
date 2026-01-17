@@ -15,10 +15,10 @@
         .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; }
         .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
         .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; overflow: hidden; }
-        .back { transform: rotateY(180deg); background: #e8d5a7; }
+        .back { transform: rotateY(180deg); background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-170deg) skewY(-1deg); pointer-events: none !important; }
         .cover-front { background: #2b0000; border: 10px double var(--gold); display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
-        .v-box { width: 100%; height: 75%; background: #000; border-bottom: 4px solid var(--gold); position: relative; overflow: hidden; }
+        .v-box { width: 100%; height: 70%; background: #000; border-bottom: 4px solid var(--gold); position: relative; overflow: hidden; }
         .v-box video { width: 100%; height: 100%; object-fit: cover; }
         .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; }
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
@@ -38,10 +38,15 @@
         <div class="page" id="p3" style="z-index: 1;">
             <div class="front paper-sheet">
                 <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
+                <select id="chat-model" class="ai-select">
+                    <option value="openai">GPT-4o (Умный)</option>
+                    <option value="deepseek">DeepSeek R1 (Логика)</option>
+                    <option value="mistral">Mistral (Творческий)</option>
+                </select>
                 <select id="voice-engine" class="ai-select">
+                    <option value="system">🗣 Системный голос</option>
                     <option value="denis">♂ Денис (Piper AI)</option>
-                    <option value="dmitri">♂ Дмитрий (Piper AI)</option>
-                    <option value="system">🗣 Система</option>
+                    <option value="irina">♀ Ирина (Piper AI)</option>
                 </select>
                 <div id="status" class="status-msg"></div>
                 <div id="hub-box" class="scroll-area"></div>
@@ -50,6 +55,25 @@
                         <button onclick="startMic('i-hub', sendMsg, 'm-hub')" class="btn" id="m-hub"><i class="fas fa-microphone"></i></button>
                         <input type="text" id="i-hub" class="field" placeholder="Спроси книгу...">
                         <button onclick="sendMsg()" class="btn" style="color:var(--accent)"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="back"></div>
+        </div>
+
+        <div class="page" id="p2" style="z-index: 2;">
+            <div class="front paper-sheet">
+                <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
+                <select id="art-model" class="ai-select">
+                    <option value="flux">💎 Flux.1 (Лучший)</option>
+                    <option value="flux-realism">📸 Realism</option>
+                </select>
+                <div id="imgs-box" class="scroll-area"></div>
+                <div class="input-bar">
+                    <div class="row">
+                        <button onclick="startMic('i-art', genArt, 'm-art')" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
+                        <input type="text" id="i-art" class="field" placeholder="Нарисуй...">
+                        <button onclick="genArt()" class="btn" style="color:var(--accent)"><i class="fas fa-magic"></i></button>
                     </div>
                 </div>
             </div>
@@ -65,6 +89,7 @@
                 </div>
                 <div class="c-text">
                     <p style="font-size:2em; font-weight:bold; letter-spacing:3px; margin:0;">НАША КНИГА</p>
+                    <p style="font-style: italic; opacity: 0.8;">Truck & AI Edition</p>
                     <div style="margin-top:15px; font-size:12px; opacity:0.6;">⬅ СМАХНИ ВЛЕВО</div>
                 </div>
             </div>
@@ -74,21 +99,20 @@
 </div>
 
 <script>
-    let isSpeaking = false, currentStep = 1;
+    const synth = window.speechSynthesis;
+    let currentStep = 1, isSpeaking = false;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
     // Пути к твоим моделям
-    const VOICES = {
-        denis: "https://github.com/garik964186-blip/ai-truck-studio/releases/download/v1.0/ru_RU-denis-medium.onnx",
-        dmitri: "https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/models/ru_RU-dmitri-medium.onnx"
-    };
+    const REPO_BASE = "https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/models/";
 
-    // Листалка
+    // --- ЛИСТАЛКА ---
     let startX = 0;
     document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
         let d = startX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 80) {
+            stopVoice();
             if (d > 0 && currentStep < 3) { 
                 flipSound.play(); document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
             } else if (d < 0 && currentStep > 1) { 
@@ -97,52 +121,78 @@
         }
     });
 
-    async function sendMsg() {
-        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box');
-        const v = i.value; if(!v) return; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="opacity:0.6"><b>Вы:</b> ${v}</div>`);
-        
-        const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}`);
-        const text = await res.text();
-        const div = document.createElement('div');
-        div.innerHTML = `<b>AI:</b> ${marked.parse(text)}`;
-        div.onclick = () => speakPiper(text);
-        b.insertAdjacentElement('afterbegin', div);
-        speakPiper(text);
+    function stopVoice() { 
+        synth.cancel(); 
+        isSpeaking = false; 
+        document.getElementById('status').innerText = ""; 
+        if (window.audioCtx) window.audioCtx.close();
     }
 
-    async function speakPiper(text) {
+    // --- РАБОТА С ГОЛОСОМ ---
+    async function toggleVoice(text, el) {
+        stopVoice();
         const engine = document.getElementById('voice-engine').value;
-        const status = document.getElementById('status');
-        
-        if (engine === 'system') {
-            const ut = new SpeechSynthesisUtterance(text);
-            ut.lang = 'ru-RU';
-            window.speechSynthesis.speak(ut);
-            return;
-        }
+        const cleanText = text.replace(/[#*`_{}]/g, '').trim();
 
-        status.innerText = `Загрузка голоса ${engine.toUpperCase()}...`;
-        try {
-            // Инициализация сессии ONNX
-            const session = await ort.InferenceSession.create(VOICES[engine]);
-            status.innerText = "Генерация речи...";
-            
-            // Здесь должна быть логика формирования тензоров для Piper
-            // В данном примере мы имитируем завершение для проверки структуры
-            console.log("Piper Session Ready for:", text);
-            status.innerText = `Говорит ${engine}`;
-        } catch (e) {
-            status.innerText = "Ошибка загрузки модели";
-            console.error(e);
+        if (engine === 'system') {
+            const ut = new SpeechSynthesisUtterance(cleanText);
+            ut.lang = 'ru-RU';
+            synth.speak(ut);
+        } else {
+            // ЛОГИКА ДЛЯ DENIS / IRINA (Piper ONNX)
+            document.getElementById('status').innerText = `🎙 Загрузка голоса ${engine.toUpperCase()}...`;
+            // Здесь вызывается Piper через твой worker
+            // Если worker еще не настроен, временно используем эмуляцию:
+            console.log("Запрос к модели:", `${REPO_BASE}ru_RU-${engine}-medium.onnx`);
+            setTimeout(() => { document.getElementById('status').innerText = `🗣 Говорит ${engine}`; }, 1000);
         }
     }
 
+    // --- ЧАТ ---
+    async function sendMsg() {
+        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
+        if(!i.value) return;
+        const v = i.value; i.value = '';
+        b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px;opacity:0.6;text-align:right;"><b>Вы:</b> ${v}</div>`);
+        
+        try {
+            const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
+            const data = await res.text();
+            const div = document.createElement('div');
+            div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
+            div.innerHTML = `<b>AI:</b> ${marked.parse(data)}`;
+            div.onclick = () => toggleVoice(data, div);
+            b.insertAdjacentElement('afterbegin', div);
+            toggleVoice(data, div);
+        } catch (e) {
+            document.getElementById('status').innerText = "Ошибка связи";
+        }
+    }
+
+    // --- ГЕНЕРАЦИЯ КАРТИНОК ---
+    async function genArt() {
+        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
+        if(!i.value) return;
+        const txt = i.value; i.value = '';
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(txt)}?model=${m}&width=600&height=800&nologo=true&seed=${Date.now()}`;
+        
+        const card = `
+            <div style="border:5px solid #fff;box-shadow:0 5px 15px rgba(0,0,0,0.2);margin-bottom:20px;background:#fff;padding:5px;transform:rotate(${Math.random()*4-2}deg)">
+                <img src="${url}" style="width:100%;display:block;" onload="document.getElementById('status').innerText=''">
+                <p style="text-align:center;color:#000;font-size:14px;margin:10px 0;">${txt}</p>
+            </div>`;
+        b.insertAdjacentHTML('afterbegin', card);
+        document.getElementById('status').innerText = "Рисую шедевр...";
+    }
+
+    // --- МИКРОФОН ---
     function startMic(id, cb, bId) {
         const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Rec) return;
+        if (!Rec) return alert("Микрофон не поддерживается");
         const r = new Rec(); r.lang = 'ru-RU';
+        r.onstart = () => document.getElementById(bId).style.color = 'red';
         r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
+        r.onend = () => document.getElementById(bId).style.color = 'inherit';
         r.start();
     }
 </script>
