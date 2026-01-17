@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ULTRA — НАША КНИГА</title>
+    <title>НАША КНИГА</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
         
-        /* Жесткая фиксация экрана */
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             background: #000; overflow: hidden; font-family: "Georgia", serif; 
@@ -30,11 +29,11 @@
         
         .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; overflow: hidden; }
         .back { transform: rotateY(180deg); background: #e8d5a7; }
-        .flipped { transform: rotateY(-170deg) skewY(-1deg); }
+        .flipped { transform: rotateY(-170deg) skewY(-1deg); pointer-events: none !important; }
 
-        /* Обложка с фиксом габаритов */
+        /* Обложка */
         .cover-front { background: #2b0000; border: 10px double var(--gold); display: flex; flex-direction: column; box-sizing: border-box; height: 100%; }
-        .v-box { width: 100%; height: 70%; background: #000; border-bottom: 4px solid var(--gold); position: relative; overflow: hidden; }
+        .v-box { width: 100%; height: 75%; background: #000; border-bottom: 4px solid var(--gold); position: relative; overflow: hidden; }
         .v-box video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
         .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; background: #2b0000; }
 
@@ -55,6 +54,8 @@
 
         .pause-badge { display: none; background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; vertical-align: middle; }
         .is-paused .pause-badge { display: inline-block; }
+
+        .photo-frame { border: 5px solid #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.2); background: #fff; padding: 5px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -111,9 +112,8 @@
                     </video>
                 </div>
                 <div class="c-text">
-                    <h1 style="margin:0; font-size:3em; letter-spacing:3px;">ULTRA</h1>
-                    <p style="font-size:1.2em; font-weight:bold;">НАША КНИГА</p>
-                    <div style="margin-top:15px; font-size:12px; opacity:0.5;">⬅ СМАХНИ ВЛЕВО</div>
+                    <p style="font-size:2em; font-weight:bold; letter-spacing:3px; margin:0;">НАША КНИГА</p>
+                    <div style="margin-top:15px; font-size:12px; opacity:0.6;">⬅ СМАХНИ ВЛЕВО</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -166,7 +166,7 @@
             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(eng)}?model=${m}&width=1024&height=1024&nologo=true&seed=${Date.now()}`;
             const f = document.createElement('div');
             f.className = 'photo-frame';
-            f.innerHTML = `<img src="${url}" style="width:100%" onload="document.getElementById('think-art').style.display='none'"><p style="text-align:center; font-size:14px; margin-top:8px;">${rawText}</p>`;
+            f.innerHTML = `<img src="${url}" style="width:100%" onload="document.getElementById('think-art').style.display='none'"><p style="text-align:center; font-size:14px; margin-top:8px; color:#2c241a;">${rawText}</p>`;
             b.insertAdjacentElement('afterbegin', f);
         } catch(e) { loader.style.display = 'none'; }
     }
