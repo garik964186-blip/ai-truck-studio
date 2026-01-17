@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА ULTRA</title>
+    <title>НАША КНИГА</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -16,18 +16,21 @@
         .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; overflow: hidden; }
         .back { transform: rotateY(180deg); background: #e8d5a7; }
         .flipped { transform: rotateY(-170deg) skewY(-1deg); pointer-events: none !important; }
+        
         .cover-front { background: #2b0000; border: 10px double var(--gold); box-sizing: border-box; display: flex; flex-direction: column; }
-        .v-box { width: 100%; height: 70%; background: #000; border-bottom: 4px solid var(--gold); position: relative; overflow: hidden; }
+        .v-box { width: 100%; height: 70%; background: #000; border-bottom: 4px solid var(--gold); overflow: hidden; position: relative; }
         .v-box video { width: 100%; height: 100%; object-fit: cover; }
         .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; padding: 10px; }
+        
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
-        .ai-select { width: 92%; background: #fff9e6; border: 1px solid var(--ink); margin: 8px auto; padding: 10px; border-radius: 8px; font-family: inherit; font-weight: bold; }
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 120px; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 110px; }
+        
         .input-bar { position: absolute; bottom: 0; left: 0; width: 100%; padding: 10px; background: var(--paper); border-top: 1px solid rgba(0,0,0,0.1); box-sizing: border-box; z-index: 100; padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; }
-        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; color: #000; }
+        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; }
         .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
-        .pause-badge { display: none; background: var(--accent); color: white; padding: 3px 8px; border-radius: 5px; font-size: 11px; vertical-align: middle; margin-right: 8px; }
+        
+        .pause-badge { display: none; background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; vertical-align: middle; margin-right: 5px; }
         .is-paused .pause-badge { display: inline-block; }
     </style>
 </head>
@@ -38,10 +41,6 @@
         <div class="page" id="p3" style="z-index: 1;">
             <div class="front paper-sheet">
                 <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
-                <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Мудрец)</option>
-                    <option value="qwen">Qwen 2.5 (Техник)</option>
-                </select>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
@@ -57,10 +56,6 @@
         <div class="page" id="p2" style="z-index: 2;">
             <div class="front paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
-                <select id="art-model" class="ai-select">
-                    <option value="flux">💎 Flux (Качество)</option>
-                    <option value="turbo">⚡ Turbo (Скорость)</option>
-                </select>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
@@ -79,9 +74,8 @@
                     <video autoplay loop muted playsinline><source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4"></video>
                 </div>
                 <div class="c-text">
-                    <h1 style="font-size: 2.5em; margin: 0; color:var(--gold)">ULTRA</h1>
-                    <p style="font-size: 1.2em; color:var(--gold); margin: 5px 0 15px 0;">НАША КНИГА</p>
-                    <p style="opacity: 0.6; font-size: 0.8em;">⬅ СМАХНИ ВЛЕВО</p>
+                    <h1 style="margin:0; font-size: 2.2em;">НАША КНИГА</h1>
+                    <p style="opacity:0.7;">⬅ СМАХНИ ВЛЕВО</p>
                 </div>
             </div>
             <div class="back"></div>
@@ -92,59 +86,59 @@
 <script>
     const synth = window.speechSynthesis;
     let activeDiv = null, sentences = [], currentSentIdx = 0, isSpeaking = false, currentStep = 1;
+    
+    // Продвинутая загрузка звука
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
+    flipSound.load();
 
-    // Разблокировка звука при первом касании
-    window.addEventListener('touchstart', () => {
+    // Разблокировка аудио при первом же взаимодействии
+    document.addEventListener('touchstart', () => {
         flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; });
+        if (synth.paused) synth.resume(); 
     }, { once: true });
 
     function toggleVoice(text, el) {
         if (activeDiv === el) {
-            if (isSpeaking) {
-                synth.cancel(); // Останавливаем
-                isSpeaking = false;
+            if (synth.speaking && !synth.paused) {
+                synth.pause(); // Используем системную паузу
                 el.classList.add('is-paused');
                 return;
             } else {
-                isSpeaking = true;
+                synth.resume(); // Системное продолжение
                 el.classList.remove('is-paused');
-                runSpeech(); // Продолжаем с того же индекса
+                // Если за 200мс не началось (глюк браузера), перезапускаем с текущего индекса
+                setTimeout(() => { if(!synth.speaking) runSpeech(); }, 200);
                 return;
             }
         }
 
-        // Если нажали на новое сообщение
+        // Новый запуск
         synth.cancel();
         activeDiv = el;
         el.classList.remove('is-paused');
         const clean = text.replace(/[#*`_{}]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
         sentences = clean.match(/[^.!?]+[.!?]+/g) || [clean];
         currentSentIdx = 0;
-        isSpeaking = true;
         runSpeech();
     }
 
     function runSpeech() {
-        if (currentSentIdx >= sentences.length || !isSpeaking) return;
-        
+        if (currentSentIdx >= sentences.length) return;
         const ut = new SpeechSynthesisUtterance(sentences[currentSentIdx].trim());
         ut.lang = 'ru-RU';
         ut.onend = () => {
-            if (isSpeaking) {
-                currentSentIdx++;
-                runSpeech();
-            }
+            currentSentIdx++;
+            if (currentSentIdx < sentences.length) runSpeech();
         };
         synth.speak(ut);
     }
 
     async function sendMsg() {
-        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
+        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box');
         if(!i.value) return;
         const v = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px;opacity:0.6"><b>Вы:</b> ${v}</div>`);
-        const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
+        b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px; opacity:0.6;"><b>Вы:</b> ${v}</div>`);
+        const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}`);
         const data = await res.text();
         const div = document.createElement('div');
         div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:15px; margin-bottom:20px; cursor:pointer;";
@@ -155,13 +149,11 @@
     }
 
     async function genArt() {
-        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
+        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box');
         if(!i.value) return;
         const txt = i.value; i.value = '';
-        const tr = await fetch(`https://text.pollinations.ai/prompt/translate to english: ${txt}`);
-        const eng = await tr.text();
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(eng)}?model=${m}&nologo=true&seed=${Date.now()}`;
-        b.insertAdjacentHTML('afterbegin', `<div class="photo-frame"><img src="${url}" style="width:100%"><p style="text-align:center;font-size:14px;color:#2c241a">${txt}</p></div>`);
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(txt)}?nologo=true`;
+        b.insertAdjacentHTML('afterbegin', `<div class="photo-frame"><img src="${url}" style="width:100%"><p style="text-align:center; font-size:14px;">${txt}</p></div>`);
     }
 
     function startMic(inputId, callback, btnId) {
@@ -180,7 +172,7 @@
     document.addEventListener('touchend', e => {
         let d = startX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 80) {
-            synth.cancel(); isSpeaking = false;
+            synth.cancel();
             if (d > 0 && currentStep < 3) { 
                 flipSound.currentTime = 0; flipSound.play();
                 document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
