@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА | BOSS FINAL</title>
+    <title>НАША КНИГА | BOSS EDITION</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -39,10 +39,6 @@
                     <option value="llama">Llama 3.3</option>
                     <option value="mistral-large">Mistral Large</option>
                 </select>
-                <select id="voice-engine" class="ai-select">
-                    <option value="google">🇷🇺 Голос: Алёна (Premium)</option>
-                    <option value="system">🇷🇺 Голос: Робот (Local)</option>
-                </select>
                 <div id="status-chat" class="status-bar">📢 Нажми экран для звука</div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -59,9 +55,10 @@
             <div class="paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
                 <select id="art-model" class="ai-select">
-                    <option value="flux">💎 Модель: Flux.1</option>
-                    <option value="flux-realism">📸 Модель: Фото</option>
-                    <option value="turbo">⚡ Модель: Турбо</option>
+                    <option value="flux">💎 Модель: Flux.1 (Максимум)</option>
+                    <option value="flux-realism">📸 Модель: Фото-реализм</option>
+                    <option value="flux-anime">🎎 Модель: Аниме</option>
+                    <option value="turbo">⚡ Модель: Турбо (Быстро)</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
                 <div id="imgs-box" class="scroll-area"></div>
@@ -99,8 +96,7 @@
 
     function wakeAudio() {
         if (audioReady) return;
-        const u = new SpeechSynthesisUtterance('');
-        synth.speak(u);
+        synth.speak(new SpeechSynthesisUtterance(''));
         audioReady = true;
         document.getElementById('status-chat').innerText = "✅ Звук активен";
         setTimeout(() => document.getElementById('status-chat').innerText = "", 2000);
@@ -118,36 +114,32 @@
         if (!t) return;
         stopVoice();
         wakeAudio();
-
-        const eng = document.getElementById('voice-engine').value;
         const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
         sentences = clean.match(/[^.!?]+[.!?]+/g) || [clean];
         isSpeaking = true;
-        playNext(eng);
+        playNext();
     }
 
-    function playNext(eng) {
+    function playNext() {
         if (!isSpeaking || currentIdx >= sentences.length) { stopVoice(); return; }
-        
         const txt = sentences[currentIdx];
-        document.getElementById('status-chat').innerText = "📢 Читаю...";
-
-        if (eng === 'google') {
-            const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(txt)}`;
-            currentAudio = new Audio(url);
-            currentAudio.onended = () => { currentIdx++; playNext(eng); };
-            currentAudio.onerror = () => { playSystem(txt, eng); };
-            currentAudio.play().catch(() => playSystem(txt, eng));
-        } else {
-            playSystem(txt, eng);
-        }
-    }
-
-    function playSystem(txt, eng) {
-        const u = new SpeechSynthesisUtterance(txt);
-        u.lang = 'ru-RU';
-        u.onend = () => { currentIdx++; playNext(eng); };
-        synth.speak(u);
+        document.getElementById('status-chat').innerText = "📢 Озвучка...";
+        
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(txt)}`;
+        currentAudio = new Audio(url);
+        currentAudio.onended = () => { currentIdx++; playNext(); };
+        currentAudio.onerror = () => {
+            const u = new SpeechSynthesisUtterance(txt);
+            u.lang = 'ru-RU';
+            u.onend = () => { currentIdx++; playNext(); };
+            synth.speak(u);
+        };
+        currentAudio.play().catch(() => {
+            const u = new SpeechSynthesisUtterance(txt);
+            u.lang = 'ru-RU';
+            u.onend = () => { currentIdx++; playNext(); };
+            synth.speak(u);
+        });
     }
 
     async function sendMsg() {
@@ -174,7 +166,7 @@
             b.insertAdjacentElement('afterbegin', div);
             document.getElementById('status-chat').innerText = "";
             speak(d);
-        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка связи"; }
+        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
     }
 
     async function genArt() {
@@ -186,7 +178,7 @@
             const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(val)}&langpair=ru|en`);
             const td = await tr.json();
             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(td.responseData.translatedText)}?model=${m}&seed=${Date.now()}`;
-            b.insertAdjacentHTML('afterbegin', `<img src="${url}" style="width:100%; border-radius:12px; margin-bottom:15px;">`);
+            b.insertAdjacentHTML('afterbegin', `<img src="${url}" style="width:100%; border-radius:12px; margin-bottom:15px; box-shadow:0 4px 10px rgba(0,0,0,0.3);">`);
             document.getElementById('status-art').innerText = "";
         } catch(e) { document.getElementById('status-art').innerText = "Ошибка"; }
     }
