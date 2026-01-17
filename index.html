@@ -18,30 +18,9 @@
         .back { transform: rotateY(180deg); background: #e8d5a7; }
         .flipped { transform: rotateY(-170deg); z-index: 10 !important; }
 
-        /* ИСПРАВЛЕНИЕ ПОЛЕЙ ТЕКСТА */
-        .scroll-area { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            word-wrap: break-word; /* Перенос длинных слов */
-            overflow-x: hidden;    /* Запрет горизонтальной прокрутки */
-        }
-        .ai-response-box {
-            max-width: 100%;
-            border-bottom: 1px dashed rgba(0,0,0,0.2);
-            padding-bottom: 12px;
-            font-size: 15px;
-            line-height: 1.4;
-        }
-        .ai-response-box pre, .ai-response-box code {
-            white-space: pre-wrap; /* Код тоже не вылетает */
-            background: rgba(0,0,0,0.05);
-            padding: 5px;
-            border-radius: 4px;
-        }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; word-wrap: break-word; overflow-x: hidden; }
+        .ai-response-box { max-width: 100%; border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 12px; font-size: 15px; line-height: 1.4; cursor: pointer; }
+        .ai-response-box pre, .ai-response-box code { white-space: pre-wrap; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 4px; }
 
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
         .ai-select { width: 92%; background: #fff; border: 1px solid var(--ink); margin: 4px auto; padding: 10px; border-radius: 8px; display: block; font-weight: bold; font-size: 14px; }
@@ -73,20 +52,18 @@
                     <option value="openai">GPT-4o (Умный)</option>
                     <option value="deepseek">DeepSeek R1 (Логика)</option>
                     <option value="llama">Llama 3.3 (Быстрая)</option>
-                    <option value="qwen">Qwen 2.5 (Технический)</option>
-                    <option value="mistral">Mistral Nemo</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
-                    <option value="denis">♂ Денис (Piper)</option>
-                    <option value="irina">♀ Ирина (Piper)</option>
-                    <option value="system">🗣 Системный</option>
+                    <option value="denis">♂ Денис (Piper-Нейро)</option>
+                    <option value="irina">♀ Ирина (Piper-Нейро)</option>
+                    <option value="system">🗣 Системный (Робот)</option>
                 </select>
                 <div id="status-chat" class="status-msg"></div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="startMic('i-hub', sendMsg, 'm-hub')" class="btn" id="m-hub"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-hub" class="field" placeholder="Спроси книгу...">
+                        <input type="text" id="i-hub" class="field" placeholder="Спроси книгу, босс...">
                         <button onclick="sendMsg()" class="btn" style="color:var(--accent)"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
@@ -100,15 +77,13 @@
                 <select id="art-model" class="ai-select">
                     <option value="flux">💎 Flux.1 (Лучший)</option>
                     <option value="flux-realism">📸 Realism (Фото)</option>
-                    <option value="any-dark">🌑 AnyDark (Мрачный)</option>
-                    <option value="turbo">⚡ Turbo (Быстрый)</option>
                 </select>
                 <div id="status-art" class="status-msg"></div>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="startMic('i-art', genArt, 'm-art')" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Нарисуй...">
+                        <input type="text" id="i-art" class="field" placeholder="Нарисуй что-то великое...">
                         <button onclick="genArt()" class="btn" style="color:var(--accent)"><i class="fas fa-magic"></i></button>
                     </div>
                 </div>
@@ -124,8 +99,8 @@
                     </video>
                 </div>
                 <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold); text-align:center;">
-                    <p style="font-size:2em; font-weight:bold; letter-spacing:3px; margin:0;">НАША КНИГА</p>
-                    <div style="margin-top:10px; font-size:12px; opacity:0.6;">⬅ СМАХНИ</div>
+                    <p style="font-size:2em; font-weight:bold; letter-spacing:3px; margin:0;">BOSS EDITION</p>
+                    <div style="margin-top:10px; font-size:12px; opacity:0.6;">⬅ СМАХНИ ДЛЯ ВХОДА</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -134,59 +109,50 @@
 </div>
 
 <script>
+    // --- ИНИЦИАЛИЗАЦИЯ НЕЙРО-ГОЛОСА (PIPER) ---
+    const piperWorker = new Worker('https://garik964186-blip.github.io/piper-tts-web/scripts/worker.js');
     const synth = window.speechSynthesis;
     let currentStep = 1, pz = null;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    function forceUnlockAudio() { synth.speak(new SpeechSynthesisUtterance('')); }
-
-    function zoomImg(url) {
-        const overlay = document.getElementById('img-overlay');
-        document.getElementById('full-img').src = url;
-        overlay.style.display = 'flex';
-        if (pz) pz.destroy();
-        pz = new PinchZoom.default(document.getElementById('pinch-box'), { minZoom: 1, maxZoom: 5 });
+    function forceUnlockAudio() { 
+        const silent = new SpeechSynthesisUtterance('');
+        synth.speak(silent); 
     }
 
-    function closeZoom() {
-        document.getElementById('img-overlay').style.display = 'none';
-        if (pz) pz.destroy();
-    }
+    async function speak(text) {
+        const engine = document.getElementById('voice-engine').value;
+        const status = document.getElementById('status-chat');
+        
+        // Очистка текста от Markdown символов для корректной озвучки
+        const cleanText = text.replace(/[#*`_{}\[\]()]/g, '');
 
-    // ЛИСТАЛКА
-    let startX = 0;
-    document.addEventListener('touchstart', e => { if(e.touches.length === 1) startX = e.touches[0].clientX; });
-    document.addEventListener('touchend', e => {
-        if(document.getElementById('img-overlay').style.display === 'flex') return;
-        let d = startX - e.changedTouches[0].clientX;
-        if (Math.abs(d) > 80) {
+        if (engine === 'system') {
             synth.cancel();
-            if (d > 0 && currentStep < 3) { 
-                flipSound.play(); document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
-            } else if (d < 0 && currentStep > 1) { 
-                currentStep--; document.getElementById('p'+currentStep).classList.remove('flipped'); 
-            }
+            const ut = new SpeechSynthesisUtterance(cleanText);
+            ut.lang = 'ru-RU';
+            synth.speak(ut);
+            return;
         }
-    });
 
-    async function translate(text) {
-        try {
-            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
-            const data = await res.json();
-            return data.responseData.translatedText;
-        } catch (e) { return text; }
+        status.innerText = "Книга настраивает нейро-голос...";
+        const modelId = (engine === 'denis') ? 'ru_RU-dmitri-medium' : 'ru_RU-irina-medium';
+
+        piperWorker.postMessage({ text: cleanText, model: modelId });
+
+        piperWorker.onmessage = (e) => {
+            if (e.data.audioUrl) {
+                const audio = new Audio(e.data.audioUrl);
+                audio.play();
+                status.innerText = "";
+            }
+            if (e.data.error) {
+                status.innerText = "Ошибка голоса. Используй системный.";
+            }
+        };
     }
 
-    function speak(text) {
-        synth.cancel();
-        const eng = document.getElementById('voice-engine').value;
-        const ut = new SpeechSynthesisUtterance(text.replace(/[#*`_{}]/g, ''));
-        ut.lang = 'ru-RU';
-        if (eng === 'denis') { ut.pitch = 0.5; ut.rate = 0.9; }
-        else if (eng === 'irina') { ut.pitch = 1.4; ut.rate = 1.0; }
-        synth.speak(ut);
-    }
-
+    // --- ЛОГИКА ЧАТА ---
     async function sendMsg() {
         const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if(!i.value) return;
@@ -204,14 +170,23 @@
             b.insertAdjacentElement('afterbegin', div);
             document.getElementById('status-chat').innerText = "";
             speak(data);
-        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
+        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка связи"; }
+    }
+
+    // --- ЛОГИКА АРТА ---
+    async function translate(text) {
+        try {
+            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
+            const data = await res.json();
+            return data.responseData.translatedText;
+        } catch (e) { return text; }
     }
 
     async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if(!i.value) return;
         const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Перевод и отрисовка...";
+        document.getElementById('status-art').innerText = "Рисуем шедевр...";
         const en = await translate(txt);
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&nologo=true&seed=${Date.now()}`;
         
@@ -221,6 +196,34 @@
                 <p style="text-align:center;font-size:14px;color:#000;margin-top:10px;">${txt}</p>
             </div>`);
     }
+
+    // --- ИНТЕРФЕЙСНЫЕ ФУНКЦИИ ---
+    function zoomImg(url) {
+        const overlay = document.getElementById('img-overlay');
+        document.getElementById('full-img').src = url;
+        overlay.style.display = 'flex';
+        if (pz) pz.destroy();
+        pz = new PinchZoom.default(document.getElementById('pinch-box'), { minZoom: 1, maxZoom: 5 });
+    }
+
+    function closeZoom() {
+        document.getElementById('img-overlay').style.display = 'none';
+        if (pz) pz.destroy();
+    }
+
+    let startX = 0;
+    document.addEventListener('touchstart', e => { if(e.touches.length === 1) startX = e.touches[0].clientX; });
+    document.addEventListener('touchend', e => {
+        if(document.getElementById('img-overlay').style.display === 'flex') return;
+        let d = startX - e.changedTouches[0].clientX;
+        if (Math.abs(d) > 80) {
+            if (d > 0 && currentStep < 3) { 
+                flipSound.play(); document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
+            } else if (d < 0 && currentStep > 1) { 
+                currentStep--; document.getElementById('p'+currentStep).classList.remove('flipped'); 
+            }
+        }
+    });
 
     function startMic(id, cb, bId) {
         const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
