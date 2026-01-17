@@ -20,7 +20,7 @@
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 18px; }
         .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; color: var(--ink); }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; transition: opacity 0.2s; }
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; }
         .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 25px; font-weight: bold; padding: 5px; }
         .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
@@ -49,13 +49,13 @@
                     <option value="gemini">Gemini 1.5 Pro</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
-                    <option value="yandex-alena">🇷🇺 Яндекс Алёна</option>
+                    <option value="yandex-alena">🇷🇺 Яндекс Алёна (Алиса)</option>
                     <option value="yandex-filipp">🇷🇺 Яндекс Филипп</option>
-                    <option value="google">🗣 Google TTS</option>
-                    <option value="system">🗣 Системный (Робот)</option>
+                    <option value="google">🗣 Google TTS (Стабильно)</option>
+                    <option value="system">🗣 Системный Робот</option>
                 </select>
-                <div id="status-chat" class="status-bar" onclick="wakeAudio()">
-                    <span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для активации</span>
+                <div id="status-chat" class="status-bar">
+                    <span id="s-label" style="color:red; cursor:pointer;">⚠️ Нажми экран для активации звука</span>
                 </div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -115,22 +115,17 @@
 
     function wakeAudio() {
         if (audioReady) return;
-        synth.speak(new SpeechSynthesisUtterance(''));
+        const u = new SpeechSynthesisUtterance('');
+        synth.speak(u);
         audioReady = true;
-        document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук активен</span>";
-        setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
+        document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук готов</span>";
+        setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 1500);
     }
 
     function resetVoiceState() {
         synth.cancel();
-        if (currentAudio) {
-            currentAudio.pause();
-            currentAudio.src = "";
-            currentAudio.onended = null;
-            currentAudio = null;
-        }
-        isSpeaking = false;
-        isPaused = false;
+        if (currentAudio) { currentAudio.pause(); currentAudio.src = ""; currentAudio = null; }
+        isSpeaking = false; isPaused = false;
         document.getElementById('status-chat').innerText = "";
     }
 
@@ -145,8 +140,8 @@
                 isPaused = true; document.getElementById('status-chat').innerText = "⏸ Пауза";
             } else {
                 isPaused = false; document.getElementById('status-chat').innerText = "▶️ Продолжаем";
-                if (engine.includes('system')) playSystem(currentSentenceIndex);
-                else playExternal(currentSentenceIndex, engine);
+                if (engine.includes('yandex') || engine === 'google') playExternal(currentSentenceIndex, engine);
+                else playSystem(currentSentenceIndex);
             }
             return;
         }
@@ -157,8 +152,8 @@
         isSpeaking = true;
         isPaused = false;
 
-        if (engine === 'system') playSystem(0);
-        else playExternal(0, engine);
+        if (engine.includes('yandex') || engine === 'google') playExternal(0, engine);
+        else playSystem(0);
     }
 
     function playSystem(index) {
@@ -190,23 +185,22 @@
         }
         
         if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-        
         currentAudio = new Audio();
         currentAudio.src = url;
         document.getElementById('status-chat').innerText = "📢 Загрузка...";
 
-        const watchdog = setTimeout(() => {
-            if (isSpeaking && !isPaused && (!currentAudio || currentAudio.paused)) {
-                console.log("Яндекс не ответил, переключаюсь на систему");
+        // Если не загрузилось за 2 секунды - прыгаем на системный голос
+        const failSafe = setTimeout(() => {
+            if (currentAudio && (currentAudio.paused || currentAudio.readyState < 2)) {
+                console.warn("Внешний голос тупит, включаю систему");
                 playSystem(index);
             }
-        }, 2500);
+        }, 2000);
 
-        currentAudio.onplay = () => { clearTimeout(watchdog); document.getElementById('status-chat').innerText = "📢 Читаю..."; };
+        currentAudio.onplay = () => { clearTimeout(failSafe); document.getElementById('status-chat').innerText = "📢 Читаю..."; };
         currentAudio.onended = () => { if (!isPaused) playExternal(index + 1, engine); };
-        currentAudio.onerror = () => { clearTimeout(watchdog); playSystem(index); };
-        
-        currentAudio.play().catch(() => { playSystem(index); });
+        currentAudio.onerror = () => { clearTimeout(failSafe); playSystem(index); };
+        currentAudio.play().catch(() => playSystem(index));
     }
 
     async function sendMsg() {
