@@ -13,7 +13,7 @@
         body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 1500px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; z-index: 1; }
+        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s ease-in-out; pointer-events: none; z-index: 1; }
         .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
@@ -29,7 +29,7 @@
         #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
     </style>
 </head>
-<body onclick="initAudio()">
+<body onclick="wakeAudio()">
 
 <div id="z-overlay">
     <div style="text-align:right; padding:15px; color:#fff; font-size:35px;" onclick="document.getElementById('z-overlay').style.display='none'">&times;</div>
@@ -50,11 +50,13 @@
                     <option value="cloud">♂ Денис (Нейро-голос)</option>
                     <option value="system">🗣 Системный (Робот)</option>
                 </select>
-                <div id="status-chat" class="status-bar"></div>
+                <div id="status-chat" class="status-bar" onclick="wakeAudio()">
+                    <span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для звука</span>
+                </div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="startMic('i-chat', sendMsg, 'm-chat')" class="btn" id="m-chat"><i class="fas fa-microphone"></i></button>
+                        <button onclick="runMic('i-chat', sendMsg, 'm-chat')" class="btn" id="m-chat"><i class="fas fa-microphone"></i></button>
                         <input type="text" id="i-chat" class="field" placeholder="Слушаю, Босс...">
                         <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
                     </div>
@@ -70,13 +72,13 @@
                     <option value="flux-realism">📸 Фото-реализм</option>
                     <option value="flux-anime">🎎 Аниме-стиль</option>
                     <option value="flux-3d">🧊 3D Рендер</option>
-                    <option value="turbo">⚡ Быстрый набросок</option>
+                    <option value="turbo">⚡ Быстро</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="startMic('i-art', genArt, 'm-art')" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
+                        <button onclick="runMic('i-art', genArt, 'm-art')" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
                         <input type="text" id="i-art" class="field" placeholder="Что нарисовать?">
                         <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
                     </div>
@@ -101,18 +103,20 @@
 </div>
 
 <script>
-    let step = 1, pz = null, audioStarted = false;
+    let step = 1, pz = null, audioReady = false;
     const synth = window.speechSynthesis;
 
-    function initAudio() {
-        if (audioStarted) return;
+    function wakeAudio() {
+        if (audioReady) return;
         const u = new SpeechSynthesisUtterance('');
         synth.speak(u);
-        audioStarted = true;
+        audioReady = true;
+        document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук активен</span>";
+        setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
     }
 
     async function speak(t) {
-        initAudio();
+        wakeAudio();
         const eng = document.getElementById('voice-engine').value;
         const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
         
@@ -124,10 +128,9 @@
             return;
         }
 
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean)}`;
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean.substring(0, 200))}`;
         const a = new Audio(url);
         a.play().catch(() => {
-            synth.cancel();
             const u = new SpeechSynthesisUtterance(clean);
             u.lang = 'ru-RU';
             synth.speak(u);
@@ -135,7 +138,7 @@
     }
 
     async function sendMsg() {
-        initAudio();
+        wakeAudio();
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
@@ -144,7 +147,10 @@
         
         try {
             const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
-            const d = await r.text();
+            let d = await r.text();
+            // Очистка от технического мусора JSON если он есть
+            if(d.includes('"content":')) { try { const j = JSON.parse(d); d = j.choices[0].message.content; } catch(e){} }
+
             const div = document.createElement('div');
             div.className = "ai-box";
             div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
@@ -156,7 +162,6 @@
     }
 
     async function genArt() {
-        initAudio();
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
         const txt = i.value; i.value = '';
@@ -169,14 +174,17 @@
         } catch(e) { document.getElementById('status-art').innerText = "Ошибка"; }
     }
 
-    function startMic(id, cb, bId) {
-        initAudio();
+    function runMic(id, cb, bId) {
+        wakeAudio();
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!R) return;
         const r = new R(); r.lang = 'ru-RU';
         r.onstart = () => document.getElementById(bId).style.color = 'red';
         r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
-        r.onend = () => { document.getElementById(bId).style.color = 'inherit'; initAudio(); };
+        r.onend = () => { 
+            document.getElementById(bId).style.color = 'inherit';
+            setTimeout(() => { wakeAudio(); }, 100); // Снова "будим" звук после микрофона
+        };
         r.start();
     }
 
@@ -199,4 +207,4 @@
     });
 </script>
 </body>
-</html>
+    </html>
