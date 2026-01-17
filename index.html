@@ -11,221 +11,146 @@
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
-        
-        .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2000px; }
+        .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 1500px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        
-        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; z-index: 1; }
-        .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; position: relative; }
+        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s ease-in-out; pointer-events: none; z-index: 1; }
+        .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
-
-        .header { padding: 10px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 16px; flex-shrink: 0; }
-        .ai-select { width: 92%; background: #fff; border: 1.5px solid var(--ink); margin: 6px auto; padding: 10px; border-radius: 12px; font-weight: bold; font-size: 14px; display: block; outline: none; }
-        
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 30px; }
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 10px; cursor: pointer; }
-        
-        .status-bar { font-size: 12px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
-
-        .input-bar { padding: 12px; background: rgba(0,0,0,0.03); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); flex-shrink: 0; }
+        .header { padding: 10px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
+        .ai-select { width: 92%; background: #fff; border: 1.5px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; }
+        .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
+        .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
-        .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px 18px; border-radius: 30px; font-size: 16px; outline: none; }
-        .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; }
-
-        #img-zoom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
-        .zoom-wrap { width: 100%; height: 90%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-
-        @keyframes blink { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+        .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px; border-radius: 25px; font-size: 16px; }
+        .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); }
+        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; display: none; }
     </style>
 </head>
 <body onclick="unlockAudio()" ontouchstart="unlockAudio()">
 
-<div id="img-zoom-overlay">
-    <div style="text-align:right; padding:20px; color:#fff; font-size:35px;" onclick="closeZoom()">&times;</div>
-    <div class="zoom-wrap" id="pz-container"><img id="zoom-img" src="" style="width:100%;"></div>
+<div id="z-overlay" onclick="this.style.display='none'">
+    <div id="z-wrap" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+        <img id="z-img" src="" style="width:95%;">
+    </div>
 </div>
 
 <div class="viewport">
     <div class="book">
-        
-        <div class="page" id="p3" style="z-index: 1;">
+        <div class="page" id="p3">
             <div class="paper-sheet">
                 <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
-                <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Умный)</option>
-                    <option value="deepseek">DeepSeek R1 (Логика)</option>
-                    <option value="llama">Llama 3.3 (Мощная)</option>
-                    <option value="qwen">Qwen 2.5 (Техно)</option>
-                </select>
-                <select id="voice-engine" class="ai-select">
-                    <option value="cloud">♂ Денис (Нейро-голос)</option>
-                    <option value="system">🗣 Системный (Надежный)</option>
-                </select>
+                <select id="chat-model" class="ai-select"><option value="openai">GPT-4o (Умный)</option></select>
+                <select id="voice-engine" class="ai-select"><option value="cloud">♂ Денис (Cloud AI)</option></select>
                 <div id="status-chat" class="status-bar"></div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="startMic('i-hub', sendMsg, 'm-hub')" class="btn" id="m-hub"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-hub" class="field" placeholder="Спроси книгу, босс...">
+                        <button onclick="startMic()" class="btn" id="mic-btn"><i class="fas fa-microphone"></i></button>
+                        <input type="text" id="chat-input" class="field" placeholder="Спроси, босс...">
                         <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="page" id="p2" style="z-index: 2;">
+        <div class="page" id="p2" style="z-index:2;">
             <div class="paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
-                <select id="art-model" class="ai-select">
-                    <option value="flux">💎 Flux.1 (Топ)</option>
-                    <option value="flux-realism">📸 Фото-реализм</option>
-                    <option value="turbo">⚡ Быстрый набросок</option>
-                </select>
                 <div id="status-art" class="status-bar"></div>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="startMic('i-art', genArt, 'm-art')" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Что нарисовать, босс?">
+                        <input type="text" id="art-input" class="field" placeholder="Что нарисовать?">
                         <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
             </div>
             <div class="back"></div>
         </div>
-
-        <div class="page" id="p1" style="z-index: 3;">
-            <div class="paper-sheet" style="background:#2b0000; border:10px double var(--gold); padding:0;">
-                <div style="height:68%; width:100%; overflow:hidden; border-bottom:5px solid var(--gold); position:relative;">
-                    <video autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover;">
-                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
-                    </video>
-                </div>
-                <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold); text-align:center; padding:10px;">
-                    <h2 style="margin:0; letter-spacing:4px; font-size:26px;">НАША КНИГА</h2>
-                    <p style="margin:8px 0; opacity:0.9; font-weight:bold; font-size:14px;">BOSS EDITION</p>
-                    <div style="margin-top:15px; font-size:12px; opacity:0.6; animation: blink 2s infinite;">⬅ СМАХНИ ДЛЯ ЧТЕНИЯ</div>
+        <div class="page" id="p1" style="z-index:3;">
+            <div class="paper-sheet" style="background:#2b0000; border:10px double var(--gold);">
+                <video autoplay loop muted playsinline style="width:100%; height:70%; object-fit:cover; border-bottom:4px solid var(--gold);">
+                    <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
+                </video>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold);">
+                    <h2>НАША КНИГА</h2>
+                    <p>BOSS EDITION</p>
                 </div>
             </div>
             <div class="back"></div>
         </div>
-
     </div>
 </div>
 
 <script>
+    let step = 1, audioUnlocked = false;
     const synth = window.speechSynthesis;
-    let step = 1, pz = null, audioUnlocked = false;
-    const flipSnd = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    // Функция разблокировки звука жестом
     function unlockAudio() {
-        if(audioUnlocked) return;
-        const ut = new SpeechSynthesisUtterance('');
-        synth.speak(ut);
+        if (audioUnlocked) return;
+        synth.speak(new SpeechSynthesisUtterance('')); // Пустая фраза для разблокировки
         audioUnlocked = true;
-        console.log("Audio Unlocked");
     }
 
     async function speak(text) {
-        const engine = document.getElementById('voice-engine').value;
+        unlockAudio();
         const status = document.getElementById('status-chat');
-        const clean = text.replace(/[#*`_{}\[\]()]/g, '').trim();
-
-        if (engine === 'system') {
-            synth.cancel();
-            const ut = new SpeechSynthesisUtterance(clean);
-            ut.lang = 'ru-RU';
-            ut.rate = 1.0;
-            synth.speak(ut);
-            return;
-        }
-
-        status.innerHTML = "🔊 Книга говорит...";
-        // Используем Google TTS
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean)}`;
-        const a = new Audio(url);
-        a.play().catch(() => {
-            status.innerHTML = "<span style='color:red' onclick='this.innerText=\"Повторяю...\"; speak(\""+clean.replace(/"/g, '&quot;')+"\")'>🔈 Нажми сюда для звука</span>";
+        const cleanText = text.replace(/[#*`_{}\[\]()]/g, '').trim();
+        
+        status.innerHTML = "🔊 Озвучка...";
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
+        const audio = new Audio(url);
+        
+        audio.play().catch(() => {
+            status.innerHTML = `<span style="color:red; cursor:pointer;" onclick="speak('${cleanText.replace(/'/g, "\\'")}')">📢 Нажми сюда для звука</span>`;
         });
-        a.onended = () => status.innerText = "";
+        audio.onended = () => status.innerText = "";
     }
 
     async function sendMsg() {
-        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
-        if(!i.value) return;
-        const v = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; margin-bottom:10px; opacity:0.6; font-size:14px;">Вы: ${v}</div>`);
-        document.getElementById('status-chat').innerText = "Книга думает...";
+        const input = document.getElementById('chat-input'), box = document.getElementById('hub-box');
+        if (!input.value) return;
+        const val = input.value; input.value = '';
+        box.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6;">Вы: ${val}</div>`);
         
         try {
-            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
+            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}`);
             const d = await r.text();
-            const div = document.createElement('div');
-            div.className = "ai-box";
-            div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
-            div.onclick = () => speak(d);
-            b.insertAdjacentElement('afterbegin', div);
-            document.getElementById('status-chat').innerText = "";
+            box.insertAdjacentHTML('afterbegin', `<div class="ai-box"><b>AI:</b> ${marked.parse(d)}</div>`);
             speak(d);
-        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
+        } catch(e) { console.error(e); }
     }
 
     async function genArt() {
-        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
-        if(!i.value) return;
-        const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Рисую эскиз...";
+        const input = document.getElementById('art-input'), box = document.getElementById('imgs-box');
+        if (!input.value) return;
+        const val = input.value; input.value = '';
+        document.getElementById('status-art').innerText = "Рисую...";
         
-        try {
-            // ВСТРОЕННЫЙ ПЕРЕВОДЧИК
-            const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
-            const td = await tr.json();
-            const translated = td.responseData.translatedText;
-            
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(translated)}?model=${m}&nologo=true&seed=${Date.now()}`;
-            
-            b.insertAdjacentHTML('afterbegin', `
-                <div style="background:#fff; padding:10px; margin-bottom:20px; box-shadow:0 10px 20px rgba(0,0,0,0.15);">
-                    <img src="${url}" style="width:100%;" onclick="openZoom('${url}')" onload="document.getElementById('status-art').innerText=''">
-                    <p style="text-align:center; font-style:italic; margin-top:10px; color:#555; font-size:13px;">${txt}</p>
-                </div>`);
-        } catch(e) { document.getElementById('status-art').innerText = "Ошибка перевода"; }
+        const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(val)}&langpair=ru|en`);
+        const td = await tr.json();
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(td.responseData.translatedText)}?nologo=true&seed=${Date.now()}`;
+        
+        box.insertAdjacentHTML('afterbegin', `<img src="${url}" style="width:100%; margin-bottom:15px;" onclick="showZoom('${url}')" onload="document.getElementById('status-art').innerText=''">`);
     }
 
-    function openZoom(url) {
-        document.getElementById('zoom-img').src = url;
-        document.getElementById('img-zoom-overlay').style.display = 'flex';
-        if(pz) pz.destroy();
-        pz = new PinchZoom.default(document.getElementById('pz-container'), {draggableUnzoomed: false});
+    function showZoom(url) {
+        document.getElementById('z-img').src = url;
+        document.getElementById('z-overlay').style.display = 'block';
+        new PinchZoom.default(document.getElementById('z-wrap'), {});
     }
-    function closeZoom() { document.getElementById('img-zoom-overlay').style.display = 'none'; }
 
-    // Свайпы страниц
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
-        if(document.getElementById('img-zoom-overlay').style.display === 'flex') return;
-        let delta = sX - e.changedTouches[0].clientX;
-        if (Math.abs(delta) > 80) {
-            if (delta > 0 && step < 3) { 
-                flipSnd.play(); document.getElementById('p'+step).classList.add('flipped'); step++; 
-            } else if (delta < 0 && step > 1) { 
-                step--; document.getElementById('p'+step).classList.remove('flipped'); 
-            }
+        let diff = sX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 70) {
+            if (diff > 0 && step < 3) { document.getElementById('p'+step).classList.add('flipped'); step++; }
+            else if (diff < 0 && step > 1) { step--; document.getElementById('p'+step).classList.remove('flipped'); }
         }
     });
-
-    function startMic(id, cb, bId) {
-        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!R) return;
-        const r = new R(); r.lang = 'ru-RU';
-        r.onstart = () => { document.getElementById(bId).style.color = 'red'; unlockAudio(); };
-        r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
-        r.onend = () => document.getElementById(bId).style.color = 'inherit';
-        r.start();
-    }
 </script>
 </body>
 </html>
