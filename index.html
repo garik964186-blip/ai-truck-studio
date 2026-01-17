@@ -44,7 +44,9 @@
                 <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
                 <select id="chat-model" class="ai-select">
                     <option value="openai">GPT-4o (Умный)</option>
-                    <option value="deepseek">DeepSeek R1 (Логика)</option>
+                    <option value="llama">Llama 3.3 (Мощная)</option>
+                    <option value="mistral-large">Mistral Large (Логика)</option>
+                    <option value="qwen-coder">Qwen (Код/Тех)</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
                     <option value="system">🗣 Системный (Робот)</option>
@@ -70,6 +72,8 @@
                 <select id="art-model" class="ai-select">
                     <option value="flux">💎 Flux.1 (Шедевр)</option>
                     <option value="flux-realism">📸 Фото-реализм</option>
+                    <option value="flux-anime">🎎 Аниме-стиль</option>
+                    <option value="flux-3d">🧊 3D Рендер</option>
                     <option value="turbo">⚡ Быстро</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
@@ -102,6 +106,7 @@
 
 <script>
     let step = 1, pz = null, audioReady = false, currentAudio = null;
+    let chatHistory = []; // Память чата
     const synth = window.speechSynthesis;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
     marked.setOptions({ breaks: true, gfm: true });
@@ -110,7 +115,7 @@
         if (audioReady) return;
         synth.speak(new SpeechSynthesisUtterance(''));
         audioReady = true;
-        document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук готов</span>";
+        document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук активен</span>";
         setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
     }
 
@@ -119,17 +124,16 @@
         const eng = document.getElementById('voice-engine').value;
         const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
 
-        // ЛОГИКА ОСТАНОВКИ: Если уже говорит — выключаем
+        // Стоп, если уже говорит (эффект тапа)
         if (synth.speaking || (currentAudio && !currentAudio.paused)) {
             synth.cancel();
             if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-            document.getElementById('status-chat').innerText = "🔇 Остановлено";
+            document.getElementById('status-chat').innerText = "🔇 Стоп";
             setTimeout(() => { document.getElementById('status-chat').innerText = ""; }, 1000);
             return;
         }
 
         document.getElementById('status-chat').innerText = "📢 Читаю...";
-        
         if (eng === 'system') {
             const u = new SpeechSynthesisUtterance(clean);
             u.lang = 'ru-RU';
@@ -138,11 +142,7 @@
         } else {
             const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean.substring(0, 200))}`;
             currentAudio = new Audio(url);
-            currentAudio.play().catch(() => {
-                const u = new SpeechSynthesisUtterance(clean);
-                u.lang = 'ru-RU';
-                synth.speak(u);
-            });
+            currentAudio.play();
             currentAudio.onended = () => document.getElementById('status-chat').innerText = "";
         }
     }
@@ -151,32 +151,42 @@
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
+        
         b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Вы: ${val}</div>`);
-        document.getElementById('status-chat').innerText = "Книга думает...";
+        document.getElementById('status-chat').innerText = "Книга помнит всё...";
+
+        chatHistory.push({ role: "user", content: val });
+
         try {
-            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
+            const r = await fetch(`https://text.pollinations.ai/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: chatHistory, model: m })
+            });
             let d = await r.text();
+            
+            chatHistory.push({ role: "assistant", content: d });
+            if (chatHistory.length > 10) chatHistory.splice(0, 2); // Лимит памяти
+
             const div = document.createElement('div');
             div.className = "ai-box";
             div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
-            // ТАП ПО СЛОВАМ ДЛЯ ВКЛ/ВЫКЛ ЗВУКА
             div.onclick = () => speak(d);
             b.insertAdjacentElement('afterbegin', div);
             document.getElementById('status-chat').innerText = "";
             speak(d);
-        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
+        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка связи"; }
     }
 
     async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
         let txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Рисую эскиз...";
+        document.getElementById('status-art').innerText = "Рисую...";
         try {
             const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
             const td = await tr.json();
-            const finalPrompt = td.responseData.translatedText;
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?model=${m}&nologo=true&seed=${Date.now()}`;
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(td.responseData.translatedText)}?model=${m}&nologo=true&seed=${Date.now()}`;
             const card = `<div style="background:#fff; padding:10px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
                 <img src="${url}" style="width:100%; border-radius:4px;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
                 <p style="text-align:center; font-size:12px; margin-top:5px; color:#555;">${txt}</p>
@@ -209,11 +219,9 @@
         let d = sX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 60) {
             if (d > 0 && step < 3) { 
-                document.getElementById('p'+step).classList.add('flipped'); 
-                step++; flipSound.play(); 
+                document.getElementById('p'+step).classList.add('flipped'); step++; flipSound.play(); 
             } else if (d < 0 && step > 1) { 
-                step--; document.getElementById('p'+step).classList.remove('flipped'); 
-                flipSound.play(); 
+                step--; document.getElementById('p'+step).classList.remove('flipped'); flipSound.play(); 
             }
         }
     });
