@@ -8,18 +8,16 @@
         body { font-family: sans-serif; background: #1a1a1a; display: flex; justify-content: center; padding: 10px; margin: 0; color: #eee; }
         .chat-container { width: 100%; max-width: 500px; background: #2d2d2d; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid #444; margin-top: 10px; }
         
-        /* Блок обложки */
+        /* Блок обложки с твоего сайта */
         .cover-image {
             width: 100%;
-            height: 120px;
-            background-image: url('https://4186-blip.github.io/1000130882.jpg'); 
-            background-size: cover;
-            background-position: center;
-            border-bottom: 2px solid #d35400;
+            height: 100px;
+            background: url('1000130882.jpg') center/cover no-repeat; /* Прямой путь к файлу в твоем репозитории */
+            border-bottom: 2px solid #007bff;
         }
 
-        /* Кликабельное название */
-        .header { background: #d35400; padding: 0; text-align: center; }
+        /* Синяя кликабельная шапка как на первом скрине */
+        .header { background: #007bff; padding: 0; text-align: center; }
         .header a { 
             display: block; 
             color: white; 
@@ -27,20 +25,21 @@
             text-decoration: none; 
             font-weight: bold; 
             text-transform: uppercase; 
-            letter-spacing: 1px;
-            transition: background 0.3s;
+            font-size: 18px;
         }
-        .header a:hover { background: #e67e22; }
 
-        #chat-output { height: 350px; overflow-y: auto; padding: 15px; border-bottom: 1px solid #444; font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; background: #252525; }
+        #chat-output { height: 380px; overflow-y: auto; padding: 15px; border-bottom: 1px solid #444; font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; background: #252525; }
         .input-area { display: flex; padding: 10px; gap: 8px; background: #2d2d2d; }
         input { flex: 1; padding: 12px; border: 1px solid #444; border-radius: 5px; outline: none; background: #1a1a1a; color: white; }
+        
+        /* Кнопка оранжевая как на скрине */
         button { padding: 10px 15px; background: #d35400; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         
         .msg { margin-bottom: 12px; padding: 10px; border-radius: 8px; max-width: 85%; }
-        .user-msg { background: #007bff; align-self: flex-end; color: white; }
+        .user-msg { background: #3498db; align-self: flex-end; color: white; }
         .ai-msg { background: #3d3d3d; align-self: flex-start; border-left: 4px solid #d35400; }
-        img.generated-img { max-width: 100%; border-radius: 5px; margin-top: 10px; border: 1px solid #d35400; }
+        .system-msg { color: #888; font-style: italic; text-align: center; font-size: 12px; margin-bottom: 10px; }
+        img.generated-img { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #d35400; }
     </style>
 </head>
 <body>
@@ -49,19 +48,21 @@
     <div class="cover-image"></div>
     
     <div class="header">
-        <a href="index.html">ОТ ИГРУШКИ ДО ФУРЫ — AI БОСС</a>
+        <a href="index.html">ОТ ИГРУШКИ ДО ФУРЫ</a>
     </div>
     
-    <div id="chat-output"></div>
+    <div id="chat-output">
+        <div class="system-msg">Система готова, босс. Жду приказа...</div>
+    </div>
 
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="Напиши 'Нарисуй' или задай вопрос..." autocomplete="off">
+        <input type="text" id="user-input" placeholder="Напиши 'Нарисуй' или спроси..." autocomplete="off">
         <button id="send-btn">ОТПРАВИТЬ</button>
     </div>
 </div>
 
 <script>
-    // Твой список моделей и логика (fetchWithRetry) остаются прежними
+    // Твои модели сохранены
     const AI_MODELS = ['openai', 'mistral', 'qwen', 'llama', 'searchgpt'];
     const output = document.getElementById('chat-output');
     const input = document.getElementById('user-input');
@@ -70,6 +71,7 @@
     async function sendMessage() {
         const text = input.value.trim();
         if (!text) return;
+
         input.value = '';
         input.disabled = true;
         btn.disabled = true;
@@ -110,7 +112,9 @@
     async function fetchWithRetry(prompt, modelIdx = 0) {
         if (modelIdx >= AI_MODELS.length) throw new Error("Все нейросети заняты.");
         const model = AI_MODELS[modelIdx];
+        // Используем только GET запросы - они самые стабильные
         const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=${model}&seed=${Math.random()}`;
+        
         try {
             const response = await fetch(url);
             if (!response.ok) return fetchWithRetry(prompt, modelIdx + 1);
