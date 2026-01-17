@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА | BOSS PREMIUM TTS</title>
+    <title>НАША КНИГА | BOSS EDITION</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -17,9 +17,9 @@
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 18px; }
-        .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; }
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 25px; font-weight: bold; }
+        .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; color: var(--ink); }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+        .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 25px; font-weight: bold; padding: 5px; }
         .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
         .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px; border-radius: 25px; font-size: 16px; outline: none; }
@@ -34,19 +34,17 @@
             <div class="paper-sheet">
                 <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
                 <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Лучший интеллект)</option>
-                    <option value="gemini">Gemini 1.5 Pro (Глубокий анализ)</option>
-                    <option value="llama">Llama 3.3 (Скорость)</option>
-                    <option value="mistral-large">Mistral Large (Логика)</option>
+                    <option value="openai">GPT-4o</option>
+                    <option value="gemini">Gemini 1.5 Pro</option>
+                    <option value="llama">Llama 3.3</option>
                     <option value="qwen-coder">Qwen (Код)</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
-                    <option value="edge-svetlana">🇷🇺 Светлана (Edge Premium)</option>
-                    <option value="edge-dmitry">🇷🇺 Дмитрий (Edge Premium)</option>
-                    <option value="google">🗣 Google Standard</option>
-                    <option value="system">🗣 Системный</option>
+                    <option value="edge">🇷🇺 Светлана (Премиум)</option>
+                    <option value="google">🇷🇺 Google TTS</option>
+                    <option value="system">🇷🇺 Системный</option>
                 </select>
-                <div id="status-chat" class="status-bar">📢 Нажми на экран для активации</div>
+                <div id="status-chat" class="status-bar"></div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
@@ -62,9 +60,8 @@
             <div class="paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
                 <select id="art-model" class="ai-select">
-                    <option value="flux">💎 Flux.1 (Максимум)</option>
+                    <option value="flux">💎 Flux.1</option>
                     <option value="flux-realism">📸 Реализм</option>
-                    <option value="flux-anime">🎎 Аниме</option>
                     <option value="turbo">⚡ Быстро</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
@@ -72,7 +69,7 @@
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="runMic('i-art', genArt, 'm-art')" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Что нарисовать?">
+                        <input type="text" id="i-art" class="field" placeholder="Что рисуем?">
                         <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
@@ -107,56 +104,71 @@
         if (audioReady) return;
         synth.speak(new SpeechSynthesisUtterance(''));
         audioReady = true;
+    }
+
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Полная остановка всех звуков
+    function stopVoice() {
+        synth.cancel();
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.onended = null;
+            currentAudio.onerror = null;
+            currentAudio = null;
+        }
+        isSpeaking = false;
+        currentIdx = 0;
+        sentences = [];
         document.getElementById('status-chat').innerText = "";
     }
 
-    function stopAll() {
-        synth.cancel();
-        if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-        isSpeaking = false;
-    }
-
-    async function speak(t) {
+    async function speak(t, auto = false) {
         if (!t) return;
         wakeAudio();
-        if (isSpeaking) { stopAll(); return; }
+
+        // Если это ручной клик по сообщению, а звук уже идет — выключаем
+        if (!auto && isSpeaking) {
+            stopVoice();
+            return;
+        }
+
+        // Если это новый авто-ответ — сбрасываем старый
+        stopVoice();
 
         const eng = document.getElementById('voice-engine').value;
         const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
         sentences = clean.match(/[^.!?]+[.!?]+/g) || [clean];
-        currentIdx = 0;
         isSpeaking = true;
-        playSequence(eng);
+        
+        playNext(eng);
     }
 
-    function playSequence(eng) {
-        if (currentIdx >= sentences.length || !isSpeaking) { isSpeaking = false; return; }
-        
-        const txt = sentences[currentIdx];
-        document.getElementById('status-chat').innerText = "📢 Говорит " + (eng.includes('edge') ? "Светлана" : "ИИ");
+    function playNext(eng) {
+        if (!isSpeaking || currentIdx >= sentences.length) {
+            stopVoice();
+            return;
+        }
 
-        // Имитация Edge TTS через прокси-поток Google Translate с улучшенными параметрами
-        let url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(txt)}`;
-        
+        const txt = sentences[currentIdx];
+        document.getElementById('status-chat').innerText = "📢 Читаю...";
+
         if (eng === 'system') {
             const u = new SpeechSynthesisUtterance(txt);
             u.lang = 'ru-RU';
-            u.onend = () => { currentIdx++; playSequence(eng); };
+            u.onend = () => { currentIdx++; playNext(eng); };
+            u.onerror = () => stopVoice();
             synth.speak(u);
         } else {
+            const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(txt)}`;
             currentAudio = new Audio(url);
-            currentAudio.onended = () => { currentIdx++; playSequence(eng); };
+            currentAudio.onended = () => { if(isSpeaking) { currentIdx++; playNext(eng); } };
             currentAudio.onerror = () => {
+                // Если прокси упал — прыгаем на систему
                 const u = new SpeechSynthesisUtterance(txt);
-                u.lang = 'ru-RU';
-                u.onend = () => { currentIdx++; playSequence(eng); };
+                u.onend = () => { currentIdx++; playNext(eng); };
                 synth.speak(u);
             };
             currentAudio.play().catch(() => {
-                const u = new SpeechSynthesisUtterance(txt);
-                u.lang = 'ru-RU';
-                u.onend = () => { currentIdx++; playSequence(eng); };
-                synth.speak(u);
+                currentIdx++; playNext(eng); // Пропускаем если блок
             });
         }
     }
@@ -164,10 +176,12 @@
     async function sendMsg() {
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
-        stopAll();
+        
+        stopVoice(); // Остановить старую озвучку при новом вопросе
+        
         const val = i.value; i.value = '';
         b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.5; font-size:13px; margin-bottom:10px;">Босс: ${val}</div>`);
-        document.getElementById('status-chat').innerText = "Книга думает...";
+        document.getElementById('status-chat').innerText = "Думаю...";
         chatHistory.push({ role: "user", content: val });
 
         try {
@@ -178,13 +192,16 @@
             });
             let d = await r.text();
             chatHistory.push({ role: "assistant", content: d });
+            
             const div = document.createElement('div');
             div.style.marginBottom = "20px";
             div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
-            div.onclick = () => speak(d);
+            // При клике на текст можно остановить или запустить заново без дублей
+            div.onclick = () => speak(d); 
             b.insertAdjacentElement('afterbegin', div);
+            
             document.getElementById('status-chat').innerText = "";
-            speak(d);
+            speak(d, true); // true означает автоматический запуск
         } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
     }
 
@@ -197,7 +214,7 @@
             const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
             const td = await tr.json();
             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(td.responseData.translatedText)}?model=${m}&nologo=true&seed=${Date.now()}`;
-            b.insertAdjacentHTML('afterbegin', `<img src="${url}" style="width:100%; border-radius:10px; margin-bottom:15px; box-shadow:0 4px 10px rgba(0,0,0,0.3);">`);
+            b.insertAdjacentHTML('afterbegin', `<img src="${url}" style="width:100%; border-radius:10px; margin-bottom:15px;">`);
             document.getElementById('status-art').innerText = "";
         } catch(e) { document.getElementById('status-art').innerText = "Ошибка"; }
     }
