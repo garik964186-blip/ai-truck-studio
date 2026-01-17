@@ -46,7 +46,8 @@
                     <option value="mistral">Mistral (Творческий)</option>
                 </select>
                 <select id="voice-select" class="ai-select">
-                    <option value="">Загрузка голосов...</option>
+                    <option value="male">👨 Робот (Мужской тон)</option>
+                    <option value="female">👩 Фея (Женский тон)</option>
                 </select>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -84,9 +85,7 @@
         <div class="page" id="p1" style="z-index: 3;">
             <div class="front cover-front">
                 <div class="v-box">
-                    <video autoplay loop muted playsinline>
-                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
-                    </video>
+                    <video autoplay loop muted playsinline><source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4"></video>
                 </div>
                 <div class="c-text">
                     <p style="font-size:2em; font-weight:bold; letter-spacing:3px; margin:0;">НАША КНИГА</p>
@@ -100,71 +99,45 @@
 
 <script>
     const synth = window.speechSynthesis;
-    let activeDiv = null, currentStep = 1;
-    let sentences = [], currentSentIdx = 0, isSpeaking = false;
-    let voices = [];
-    
+    let activeDiv = null, currentStep = 1, isSpeaking = false;
+    let sentences = [], currentSentIdx = 0;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    function loadVoices() {
-        const allVoices = synth.getVoices();
-        voices = allVoices.filter(v => v.lang.includes('ru') || v.lang.includes('RU'));
-        const vSelect = document.getElementById('voice-select');
-        vSelect.innerHTML = '';
-        
-        if (voices.length === 0) {
-            vSelect.innerHTML = '<option value="">Системный голос</option>';
-        } else {
-            voices.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v.name;
-                let gender = '👤 ';
-                const n = v.name.toLowerCase();
-                if (n.includes('pavel') || n.includes('alexander') || n.includes('yuri')) gender = '♂ (Мужской) ';
-                if (n.includes('irina') || n.includes('milena') || n.includes('katya')) gender = '♀ (Женский) ';
-                opt.textContent = gender + v.name;
-                vSelect.appendChild(opt);
-            });
-        }
-    }
-
-    if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = loadVoices;
-    }
-    loadVoices();
-
-    document.addEventListener('click', () => {
-        flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; });
-    }, { once: true });
+    document.addEventListener('click', () => { flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; }); }, { once: true });
 
     function toggleVoice(text, el) {
         if (activeDiv === el) {
-            if (isSpeaking) {
-                synth.cancel(); isSpeaking = false;
-                el.classList.add('is-paused');
-            } else {
-                isSpeaking = true; el.classList.remove('is-paused');
-                speakLoop();
-            }
+            if (isSpeaking) { synth.cancel(); isSpeaking = false; el.classList.add('is-paused'); } 
+            else { isSpeaking = true; el.classList.remove('is-paused'); speakLoop(); }
             return;
         }
-        synth.cancel();
-        activeDiv = el;
+        synth.cancel(); activeDiv = el;
         const clean = text.replace(/[#*`_{}]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
         sentences = clean.match(/[^.!?]+[.!?]+/g) || [clean];
-        currentSentIdx = 0;
-        isSpeaking = true;
-        el.classList.remove('is-paused');
+        currentSentIdx = 0; isSpeaking = true; el.classList.remove('is-paused');
         speakLoop();
     }
 
     function speakLoop() {
         if (currentSentIdx >= sentences.length || !isSpeaking) return;
         const ut = new SpeechSynthesisUtterance(sentences[currentSentIdx].trim());
-        const selectedVoiceName = document.getElementById('voice-select').value;
-        const voice = voices.find(v => v.name === selectedVoiceName);
-        if (voice) ut.voice = voice;
+        
+        // Магия модуляции:
+        const mode = document.getElementById('voice-select').value;
+        const allVoices = synth.getVoices();
+        const ruVoice = allVoices.find(v => v.lang.includes('ru'));
+        
+        if (ruVoice) ut.voice = ruVoice;
         ut.lang = 'ru-RU';
+
+        if (mode === 'male') {
+            ut.pitch = 0.5; // Низкий голос
+            ut.rate = 0.9;  // Чуть медленнее
+        } else {
+            ut.pitch = 1.4; // Высокий голос
+            ut.rate = 1.1;  // Чуть быстрее
+        }
+
         ut.onend = () => { if (isSpeaking) { currentSentIdx++; speakLoop(); } };
         synth.speak(ut);
     }
@@ -174,16 +147,14 @@
         if(!i.value) return;
         const v = i.value; i.value = '';
         b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px;opacity:0.6"><b>Вы:</b> ${v}</div>`);
-        try {
-            const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
-            const data = await res.text();
-            const div = document.createElement('div');
-            div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
-            div.innerHTML = `<b>AI:</b> <span class="pause-badge">⏸ ПАУЗА</span> ${marked.parse(data)}`;
-            div.onclick = () => toggleVoice(data, div);
-            b.insertAdjacentElement('afterbegin', div);
-            toggleVoice(data, div);
-        } catch (e) { b.insertAdjacentHTML('afterbegin', `<div>Ошибка связи.</div>`); }
+        const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
+        const data = await res.text();
+        const div = document.createElement('div');
+        div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
+        div.innerHTML = `<b>AI:</b> <span class="pause-badge">⏸ ПАУЗА</span> ${marked.parse(data)}`;
+        div.onclick = () => toggleVoice(data, div);
+        b.insertAdjacentElement('afterbegin', div);
+        toggleVoice(data, div);
     }
 
     async function genArt() {
