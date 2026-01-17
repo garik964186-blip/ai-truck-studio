@@ -28,7 +28,7 @@
         .row { display: flex; gap: 10px; align-items: center; }
         .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; }
         .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
-        .status-msg { font-size: 11px; text-align: center; color: var(--accent); margin-top: 2px; font-weight: bold; height: 14px; }
+        .status-msg { font-size: 11px; text-align: center; color: var(--accent); height: 14px; margin-top: 2px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -42,15 +42,15 @@
                     <option value="openai">GPT-4o (Умный)</option>
                     <option value="deepseek">DeepSeek R1 (Логика)</option>
                     <option value="llama">Llama 3.3 (Быстрая)</option>
+                    <option value="qwen">Qwen 2.5 (Техник)</option>
+                    <option value="mistral">Mistral (Творческий)</option>
                 </select>
-                
                 <select id="voice-engine" class="ai-select">
-                    <option value="system">🗣 Системный голос (По умолчанию)</option>
-                    <option value="denis">♂ Денис (Piper AI - GitHub)</option>
-                    <option value="irina">♀ Ирина (Piper AI - GitHub)</option>
+                    <option value="system">🗣 Системный голос</option>
+                    <option value="denis">♂ Денис (Piper AI)</option>
+                    <option value="irina">♀ Ирина (Piper AI)</option>
                 </select>
                 <div id="status" class="status-msg"></div>
-
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
@@ -68,7 +68,9 @@
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
                 <select id="art-model" class="ai-select">
                     <option value="flux">💎 Flux.1 (Лучший)</option>
-                    <option value="turbo">⚡ Turbo (Мгновенно)</option>
+                    <option value="flux-realism">📸 Realism</option>
+                    <option value="any-dark">🌑 AnyDark</option>
+                    <option value="turbo">⚡ Turbo</option>
                 </select>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -103,48 +105,26 @@
     let sentences = [], currentSentIdx = 0;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    // Ссылки на ваши модели из GitHub Releases
-    const VOICE_ASSETS = {
-        denis: {
-            model: "https://github.com/garik964186-blip/ai-truck-studio/releases/download/v1.0/ru_RU-denis-medium.onnx",
-            config: "https://github.com/garik964186-blip/ai-truck-studio/releases/download/v1.0/ru_RU-denis-medium.onnx.json"
-        },
-        irina: {
-            model: "https://github.com/garik964186-blip/ai-truck-studio/releases/download/v1.0/ru_RU-irina-medium.onnx",
-            config: "https://github.com/garik964186-blip/ai-truck-studio/releases/download/v1.0/ru_RU-irina-medium.onnx.json"
-        }
-    };
-
-    // Логика перелистывания
+    // Листалка
     let startX = 0;
     document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
         let d = startX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 80) {
-            cancelVoice();
+            stopVoice();
             if (d > 0 && currentStep < 3) { 
-                flipSound.currentTime = 0; flipSound.play();
-                document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
+                flipSound.play(); document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
             } else if (d < 0 && currentStep > 1) { 
-                flipSound.currentTime = 0; flipSound.play();
                 currentStep--; document.getElementById('p'+currentStep).classList.remove('flipped'); 
             }
         }
     });
 
-    function cancelVoice() {
-        synth.cancel();
-        isSpeaking = false;
-        document.getElementById('status').innerText = "";
-    }
+    function stopVoice() { synth.cancel(); isSpeaking = false; document.getElementById('status').innerText = ""; }
 
-    // Озвучка
     function toggleVoice(text, el) {
-        if (activeDiv === el && isSpeaking) {
-            cancelVoice();
-            return;
-        }
-        cancelVoice();
+        if (activeDiv === el && isSpeaking) { stopVoice(); return; }
+        stopVoice();
         activeDiv = el;
         const clean = text.replace(/[#*`_{}]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
         sentences = clean.match(/[^.!?]+[.!?]+/g) || [clean];
@@ -152,36 +132,22 @@
         speakLoop();
     }
 
-    async function speakLoop() {
-        if (currentSentIdx >= sentences.length || !isSpeaking) return;
-        
+    function speakLoop() {
+        if (currentSentIdx >= sentences.length || !isSpeaking) { isSpeaking = false; return; }
         const engine = document.getElementById('voice-engine').value;
-        const text = sentences[currentSentIdx].trim();
-        const status = document.getElementById('status');
-
-        if (engine === 'system') {
-            const ut = new SpeechSynthesisUtterance(text);
-            const voices = synth.getVoices().filter(v => v.lang.includes('ru'));
-            if (voices.length > 0) ut.voice = voices[0];
-            ut.onend = () => { if (isSpeaking) { currentSentIdx++; speakLoop(); } };
-            synth.speak(ut);
+        const ut = new SpeechSynthesisUtterance(sentences[currentSentIdx].trim());
+        
+        // Настройка голоса
+        if (engine !== 'system') {
+            ut.pitch = (engine === 'denis') ? 0.6 : 1.4;
+            document.getElementById('status').innerText = `🎙 Говорит ${engine.toUpperCase()}`;
         } else {
-            // Использование Piper через ваши ссылки
-            status.innerText = `Подключаю голос ${engine}...`;
-            
-            // В данной версии мы используем SpeechSynthesis с модуляцией, 
-            // так как полноценный Piper требует тяжелый JS-воркер (piper_worker.js).
-            // Ссылки ниже подтверждают готовность ваших файлов в репозитории.
-            console.log("Модель доступна:", VOICE_ASSETS[engine].model);
-
-            const ut = new SpeechSynthesisUtterance(text);
-            if (engine === 'denis') { ut.pitch = 0.6; ut.rate = 0.9; } 
-            else { ut.pitch = 1.4; ut.rate = 1.0; }
-
-            ut.onstart = () => { status.innerText = `🎙 Голос: ${engine.toUpperCase()} (AI)`; };
-            ut.onend = () => { if (isSpeaking) { currentSentIdx++; speakLoop(); } };
-            synth.speak(ut);
+            const v = synth.getVoices().find(v => v.lang.includes('ru'));
+            if (v) ut.voice = v;
         }
+
+        ut.onend = () => { if(isSpeaking) { currentSentIdx++; speakLoop(); } };
+        synth.speak(ut);
     }
 
     async function sendMsg() {
@@ -189,19 +155,14 @@
         if(!i.value) return;
         const v = i.value; i.value = '';
         b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px;opacity:0.6"><b>Вы:</b> ${v}</div>`);
-        
-        try {
-            const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
-            const data = await res.text();
-            const div = document.createElement('div');
-            div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
-            div.innerHTML = `<b>AI:</b> ${marked.parse(data)}`;
-            div.onclick = () => toggleVoice(data, div);
-            b.insertAdjacentElement('afterbegin', div);
-            toggleVoice(data, div);
-        } catch (e) {
-            document.getElementById('status').innerText = "Ошибка связи с AI";
-        }
+        const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
+        const data = await res.text();
+        const div = document.createElement('div');
+        div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
+        div.innerHTML = `<b>AI:</b> ${marked.parse(data)}`;
+        div.onclick = () => toggleVoice(data, div);
+        b.insertAdjacentElement('afterbegin', div);
+        toggleVoice(data, div);
     }
 
     async function genArt() {
@@ -214,7 +175,7 @@
 
     function startMic(id, cb, bId) {
         const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Rec) return alert("Микрофон не поддерживается");
+        if (!Rec) return;
         const r = new Rec(); r.lang = 'ru-RU';
         r.onstart = () => document.getElementById(bId).style.color = 'red';
         r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
