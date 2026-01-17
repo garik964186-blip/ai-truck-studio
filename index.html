@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА — BOSS EDITION</title>
+    <title>МАГИЧЕСКАЯ КНИГА — BOSS EDITION</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
@@ -56,8 +56,8 @@
                     <option value="mistral">Mistral Nemo</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
-                    <option value="denis">♂ Денис (Piper-Нейро)</option>
-                    <option value="irina">♀ Ирина (Piper-Нейро)</option>
+                    <option value="denis">♂ Денис (Cloud AI)</option>
+                    <option value="irina">♀ Ирина (Cloud AI)</option>
                     <option value="system">🗣 Системный (Робот)</option>
                 </select>
                 <div id="status-chat" class="status-msg"></div>
@@ -114,20 +114,22 @@
 </div>
 
 <script>
-    // Подключаем Piper из твоего репозитория
-    const piperWorker = new Worker('https://garik964186-blip.github.io/piper-tts-web/scripts/worker.js');
     const synth = window.speechSynthesis;
     let currentStep = 1, pz = null;
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
     function forceUnlockAudio() { 
-        synth.speak(new SpeechSynthesisUtterance('')); 
+        // Разблокировка звука на iOS/Android
+        const ut = new SpeechSynthesisUtterance('');
+        synth.speak(ut); 
     }
 
     async function speak(text) {
         const engine = document.getElementById('voice-engine').value;
         const status = document.getElementById('status-chat');
-        const cleanText = text.replace(/[#*`_{}\[\]()]/g, '');
+        
+        // Очистка текста для озвучки
+        const cleanText = text.replace(/[#*`_{}\[\]()]/g, '').trim();
 
         if (engine === 'system') {
             synth.cancel();
@@ -137,18 +139,21 @@
             return;
         }
 
-        status.innerText = "Подготовка нейро-голоса (может занять время)...";
-        const modelId = (engine === 'denis') ? 'ru_RU-dmitri-medium' : 'ru_RU-irina-medium';
+        status.innerText = "Книга говорит...";
 
-        piperWorker.postMessage({ text: cleanText, model: modelId });
+        // МГНОВЕННЫЙ ОБЛАЧНЫЙ ГОЛОС (Аналог Gemini)
+        // Для Ирины и Дениса используем разные параметры тембра
+        const speed = 1.05;
+        const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
 
-        piperWorker.onmessage = (e) => {
-            if (e.data.audioUrl) {
-                new Audio(e.data.audioUrl).play();
-                status.innerText = "";
-            }
-            if (e.data.error) status.innerText = "Ошибка голоса. Проверь интернет.";
-        };
+        const audio = new Audio(audioUrl);
+        audio.playbackRate = speed; 
+        
+        audio.play().catch(() => {
+            status.innerText = "Нажми еще раз для звука";
+        });
+
+        audio.onended = () => { status.innerText = ""; };
     }
 
     async function sendMsg() {
