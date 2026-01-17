@@ -6,11 +6,10 @@
     <title>НАША КНИГА</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: "Georgia", serif; display: flex; justify-content: center; align-items: center; }
-        .viewport { width: 100vw; height: 100dvh; display: flex; justify-content: center; align-items: center; perspective: 2500px; position: relative; overflow: hidden; }
+        .viewport { width: 100vw; height: 100dvh; perspective: 2500px; position: relative; display: flex; justify-content: center; align-items: center; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
         .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; }
         .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; box-sizing: border-box; }
@@ -18,23 +17,18 @@
         .back { transform: rotateY(180deg); background: #e8d5a7; }
         .flipped { transform: rotateY(-170deg) skewY(-1deg); pointer-events: none !important; }
         
-        .cover-front { background: #2b0000; border: 10px double var(--gold); display: flex; flex-direction: column; box-sizing: border-box; height: 100%; }
+        .cover-front { background: #2b0000; border: 10px double var(--gold); display: flex; flex-direction: column; height: 100%; }
         .v-box { width: 100%; height: 75%; background: #000; border-bottom: 4px solid var(--gold); position: relative; overflow: hidden; }
-        .v-box video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
-        .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; background: #2b0000; }
+        .v-box video { width: 100%; height: 100%; object-fit: cover; }
+        .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; }
         
-        .thinking { display: none; text-align: center; font-style: italic; font-size: 13px; color: var(--accent); margin-bottom: 5px; animation: glow 1.5s infinite; }
-        @keyframes glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; text-shadow: 0 0 5px var(--gold); } }
-        
-        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-variant: small-caps; }
+        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
         .ai-select { width: 92%; background: #fff9e6; border: 1px solid var(--ink); margin: 8px auto; padding: 10px; border-radius: 8px; font-family: inherit; font-weight: bold; }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-        .input-bar { padding: 10px; background: rgba(0,0,0,0.08); display: flex; flex-direction: column; border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-        .row { display: flex; gap: 10px; align-items: center; width: 100%; }
-        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; }
+        .input-bar { padding: 10px; background: rgba(0,0,0,0.08); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: env(safe-area-inset-bottom); }
+        .row { display: flex; gap: 10px; align-items: center; }
+        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; }
         .btn { background: none; border: none; font-size: 24px; cursor: pointer; }
-        .mic-active { color: var(--accent); text-shadow: 0 0 15px var(--accent); animation: breathe 1s infinite alternate; }
-        @keyframes breathe { from { transform: scale(1); opacity: 0.7; } to { transform: scale(1.2); opacity: 1; } }
         
         .pause-badge { display: none; background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; vertical-align: middle; margin-right: 5px; }
         .is-paused .pause-badge { display: inline-block; }
@@ -54,14 +48,10 @@
                     <option value="mistral">Mistral (Быстрый)</option>
                 </select>
                 <div id="hub-box" class="scroll-area"></div>
-                <div class="input-bar">
-                    <div id="think-chat" class="thinking">Книга думает...</div>
-                    <div class="row">
-                        <button onclick="startMic('i-hub', sendMsg, 'm-hub')" class="btn" id="m-hub"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-hub" class="field" placeholder="Спроси книгу...">
-                        <button onclick="sendMsg()" class="btn" style="color:var(--accent)"><i class="fas fa-paper-plane"></i></button>
-                    </div>
-                </div>
+                <div class="input-bar"><div class="row">
+                    <input type="text" id="i-hub" class="field" placeholder="Спроси книгу...">
+                    <button onclick="sendMsg()" class="btn" style="color:var(--accent)"><i class="fas fa-paper-plane"></i></button>
+                </div></div>
             </div>
             <div class="back"></div>
         </div>
@@ -74,14 +64,10 @@
                     <option value="turbo">⚡ Turbo (Скорость)</option>
                 </select>
                 <div id="imgs-box" class="scroll-area"></div>
-                <div class="input-bar">
-                    <div id="think-art" class="thinking">Магия в процессе...</div>
-                    <div class="row">
-                        <button onclick="startMic('i-art', genArt, 'm-art')" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Нарисуй...">
-                        <button onclick="genArt()" class="btn" style="color:var(--accent)"><i class="fas fa-magic"></i></button>
-                    </div>
-                </div>
+                <div class="input-bar"><div class="row">
+                    <input type="text" id="i-art" class="field" placeholder="Нарисуй...">
+                    <button onclick="genArt()" class="btn" style="color:var(--accent)"><i class="fas fa-magic"></i></button>
+                </div></div>
             </div>
             <div class="back"></div>
         </div>
@@ -89,13 +75,11 @@
         <div class="page" id="p1" style="z-index: 3;">
             <div class="front cover-front">
                 <div class="v-box">
-                    <video autoplay loop muted playsinline>
-                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
-                    </video>
+                    <video autoplay loop muted playsinline><source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4"></video>
                 </div>
                 <div class="c-text">
                     <p style="font-size:2em; font-weight:bold; letter-spacing:3px; margin:0;">НАША КНИГА</p>
-                    <div style="margin-top:15px; font-size:12px; opacity:0.6;">⬅ СМАХНИ ВЛЕВО</div>
+                    <div style="margin-top:10px; opacity:0.6;">⬅ СМАХНИ ВЛЕВО</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -105,103 +89,83 @@
 
 <script>
     let synth = window.speechSynthesis, activeDiv = null, currentStep = 1;
-    let lastCharIndex = 0; // Для запоминания места остановки
+    let sentences = [], currentSentenceIndex = 0, isPaused = false;
     
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    // Разблокировка звука для мобилок
-    document.addEventListener('touchstart', () => {
-        flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; }).catch(()=>{});
+    // Предзагрузка звука
+    document.addEventListener('click', () => { 
+        flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; });
     }, { once: true });
 
-    function startMic(inputId, callback, btnId) {
-        const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Speech) return;
-        const rec = new Speech(); rec.lang = 'ru-RU';
-        const btn = document.getElementById(btnId);
-        rec.onstart = () => btn.classList.add('mic-active');
-        rec.onresult = (e) => { document.getElementById(inputId).value = e.results[0][0].transcript; callback(); };
-        rec.onend = () => btn.classList.remove('mic-active');
-        rec.start();
-    }
-
-    async function sendMsg() {
-        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value, loader = document.getElementById('think-chat');
-        if(!i.value) return;
-        const val = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px; opacity:0.7;"><b>Вы:</b> ${val}</div>`);
-        loader.style.display = 'block';
-        try {
-            const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}&cache=false`);
-            const data = await res.text();
-            loader.style.display = 'none';
-            const msgDiv = document.createElement('div');
-            msgDiv.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
-            msgDiv.innerHTML = `<b>AI:</b> <span class="pause-badge">⏸ ПАУЗА</span> ${marked.parse(data)}`;
-            msgDiv.onclick = () => toggleVoice(data, msgDiv);
-            b.insertAdjacentElement('afterbegin', msgDiv);
-            toggleVoice(data, msgDiv);
-        } catch(e) { loader.style.display = 'none'; }
-    }
-
-    async function genArt() {
-        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value, loader = document.getElementById('think-art');
-        if(!i.value) return;
-        const rawText = i.value; i.value = '';
-        loader.style.display = 'block';
-        try {
-            const tr = await fetch(`https://text.pollinations.ai/prompt/translate to english: ${rawText}?model=mistral`);
-            const eng = await tr.text();
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(eng)}?model=${m}&width=1024&height=1024&nologo=true&seed=${Date.now()}`;
-            const f = document.createElement('div');
-            f.className = 'photo-frame';
-            f.innerHTML = `<img src="${url}" style="width:100%" onload="document.getElementById('think-art').style.display='none'"><p style="text-align:center; font-size:14px; margin-top:8px; color:#2c241a;">${rawText}</p>`;
-            b.insertAdjacentElement('afterbegin', f);
-        } catch(e) { loader.style.display = 'none'; }
-    }
-
     function toggleVoice(text, el) {
-        const cleanText = text.replace(/[#*`_{}]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
-        
         if (activeDiv === el) {
-            if (synth.speaking && !synth.paused) {
-                synth.pause();
+            if (synth.speaking && !isPaused) {
+                synth.cancel();
+                isPaused = true;
                 el.classList.add('is-paused');
                 return;
-            } else if (synth.paused) {
-                synth.resume();
-                // Если стандартный resume подвел (часто на Android), запускаем заново с обрезкой
-                if (!synth.speaking) {
-                    speakFrom(cleanText.substring(lastCharIndex), el);
-                }
+            } else if (isPaused) {
+                isPaused = false;
                 el.classList.remove('is-paused');
+                speakSentences();
                 return;
             }
         }
 
+        // Новый запуск
         synth.cancel();
-        lastCharIndex = 0;
-        speakFrom(cleanText, el);
+        activeDiv = el;
+        isPaused = false;
+        // Разбиваем текст на предложения
+        const cleanText = text.replace(/[#*`_{}]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
+        sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
+        currentSentenceIndex = 0;
+        speakSentences();
     }
 
-    function speakFrom(textPart, el) {
-        activeDiv = el;
-        const ut = new SpeechSynthesisUtterance(textPart);
+    function speakSentences() {
+        if (currentSentenceIndex >= sentences.length || isPaused) return;
+
+        const ut = new SpeechSynthesisUtterance(sentences[currentSentenceIndex]);
         ut.lang = 'ru-RU';
-        ut.onboundary = (event) => {
-            if (event.name === 'word') {
-                lastCharIndex += event.charIndex;
-            }
-        };
+        
         ut.onend = () => {
-            if (!synth.paused) {
-                el.classList.remove('is-paused');
-                activeDiv = null;
-                lastCharIndex = 0;
-            }
+            currentSentenceIndex++;
+            if (!isPaused) speakSentences();
         };
-        el.classList.remove('is-paused');
+
         synth.speak(ut);
+    }
+
+    async function sendMsg() {
+        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
+        if(!i.value) return;
+        const val = i.value; i.value = '';
+        b.insertAdjacentHTML('afterbegin', `<div style="opacity:0.7;margin-bottom:10px;"><b>Вы:</b> ${val}</div>`);
+        
+        try {
+            const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
+            const data = await res.text();
+            const div = document.createElement('div');
+            div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
+            div.innerHTML = `<b>AI:</b> <span class="pause-badge">⏸</span> ${marked.parse(data)}`;
+            div.onclick = () => toggleVoice(data, div);
+            b.insertAdjacentElement('afterbegin', div);
+            toggleVoice(data, div);
+        } catch(e) {}
+    }
+
+    async function genArt() {
+        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
+        if(!i.value) return;
+        const txt = i.value; i.value = '';
+        try {
+            const tr = await fetch(`https://text.pollinations.ai/prompt/translate to english: ${txt}`);
+            const eng = await tr.text();
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(eng)}?model=${m}&nologo=true&seed=${Date.now()}`;
+            b.insertAdjacentHTML('afterbegin', `<div class="photo-frame"><img src="${url}" style="width:100%"><p style="text-align:center;font-size:14px;">${txt}</p></div>`);
+        } catch(e) {}
     }
 
     let startX = 0;
@@ -210,15 +174,13 @@
         let d = startX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 70) {
             synth.cancel();
+            isPaused = false;
             if (d > 0 && currentStep < 3) { 
-                flipSound.currentTime = 0; flipSound.play().catch(()=>{});
-                document.getElementById('p'+currentStep).classList.add('flipped'); 
-                currentStep++; 
-            }
-            else if (d < 0 && currentStep > 1) { 
-                flipSound.currentTime = 0; flipSound.play().catch(()=>{});
-                currentStep--; 
-                document.getElementById('p'+currentStep).classList.remove('flipped'); 
+                flipSound.currentTime = 0; flipSound.play();
+                document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
+            } else if (d < 0 && currentStep > 1) { 
+                flipSound.currentTime = 0; flipSound.play();
+                currentStep--; document.getElementById('p'+currentStep).classList.remove('flipped'); 
             }
         }
     });
