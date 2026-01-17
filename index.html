@@ -21,7 +21,6 @@
         .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; color: var(--ink); }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
         .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; transition: opacity 0.2s; }
-        .ai-box:active { opacity: 0.6; }
         .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 25px; font-weight: bold; padding: 5px; }
         .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
@@ -51,11 +50,12 @@
                 </select>
                 <select id="voice-engine" class="ai-select">
                     <option value="yandex-alena">🇷🇺 Яндекс Алёна</option>
-                    <option value="google">🗣 Google (Стабильный)</option>
-                    <option value="system">🗣 Системный Робот</option>
+                    <option value="yandex-filipp">🇷🇺 Яндекс Филипп</option>
+                    <option value="google">🗣 Google TTS</option>
+                    <option value="system">🗣 Системный (Робот)</option>
                 </select>
                 <div id="status-chat" class="status-bar" onclick="wakeAudio()">
-                    <span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для звука</span>
+                    <span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для активации</span>
                 </div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -74,7 +74,6 @@
                 <select id="art-model" class="ai-select">
                     <option value="flux">💎 Flux.1 (Шедевр)</option>
                     <option value="flux-realism">📸 Фото-реализм</option>
-                    <option value="flux-anime">🎎 Аниме</option>
                     <option value="turbo">⚡ Быстро</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
@@ -124,7 +123,12 @@
 
     function resetVoiceState() {
         synth.cancel();
-        if (currentAudio) { currentAudio.pause(); currentAudio.onended = null; currentAudio = null; }
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.src = "";
+            currentAudio.onended = null;
+            currentAudio = null;
+        }
         isSpeaking = false;
         isPaused = false;
         document.getElementById('status-chat').innerText = "";
@@ -141,7 +145,7 @@
                 isPaused = true; document.getElementById('status-chat').innerText = "⏸ Пауза";
             } else {
                 isPaused = false; document.getElementById('status-chat').innerText = "▶️ Продолжаем";
-                if (engine === 'system') playSystem(currentSentenceIndex);
+                if (engine.includes('system')) playSystem(currentSentenceIndex);
                 else playExternal(currentSentenceIndex, engine);
             }
             return;
@@ -166,8 +170,9 @@
         const u = new SpeechSynthesisUtterance(sentences[index]);
         u.lang = 'ru-RU';
         u.onend = () => { if (!isPaused) playSystem(index + 1); };
+        u.onerror = () => resetVoiceState();
         synth.speak(u);
-        document.getElementById('status-chat').innerText = "📢 Читает робот...";
+        document.getElementById('status-chat').innerText = "📢 Говорит Робот...";
     }
 
     function playExternal(index, engine) {
@@ -177,24 +182,31 @@
         }
         currentSentenceIndex = index;
         let url;
-        if (engine === 'yandex-alena') {
-            url = `https://tts.voicetech.yandex.net/tts?text=${encodeURIComponent(sentences[index])}&lang=ru_RU&format=mp3&speaker=alena`;
+        if (engine.includes('yandex')) {
+            const v = engine.split('-')[1];
+            url = `https://tts.voicetech.yandex.net/tts?text=${encodeURIComponent(sentences[index])}&lang=ru_RU&format=mp3&speaker=${v}`;
         } else {
             url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(sentences[index])}`;
         }
         
         if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-        currentAudio = new Audio(url);
+        
+        currentAudio = new Audio();
+        currentAudio.src = url;
         document.getElementById('status-chat').innerText = "📢 Загрузка...";
 
-        const loadTimeout = setTimeout(() => {
-            if (currentAudio && currentAudio.paused) playSystem(index);
-        }, 3000);
+        const watchdog = setTimeout(() => {
+            if (isSpeaking && !isPaused && (!currentAudio || currentAudio.paused)) {
+                console.log("Яндекс не ответил, переключаюсь на систему");
+                playSystem(index);
+            }
+        }, 2500);
 
-        currentAudio.onplay = () => { clearTimeout(loadTimeout); document.getElementById('status-chat').innerText = "📢 Читаю..."; };
+        currentAudio.onplay = () => { clearTimeout(watchdog); document.getElementById('status-chat').innerText = "📢 Читаю..."; };
         currentAudio.onended = () => { if (!isPaused) playExternal(index + 1, engine); };
-        currentAudio.onerror = () => { clearTimeout(loadTimeout); playSystem(index); };
-        currentAudio.play().catch(() => playSystem(index));
+        currentAudio.onerror = () => { clearTimeout(watchdog); playSystem(index); };
+        
+        currentAudio.play().catch(() => { playSystem(index); });
     }
 
     async function sendMsg() {
