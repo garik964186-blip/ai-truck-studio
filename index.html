@@ -45,15 +45,15 @@
                 <select id="chat-model" class="ai-select">
                     <option value="openai">GPT-4o (Умный)</option>
                     <option value="llama">Llama 3.3 (Мощная)</option>
-                    <option value="mistral-large">Mistral Large</option>
                     <option value="qwen-coder">Qwen (Код)</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
-                    <option value="system">🗣 Системный (Робот)</option>
-                    <option value="cloud">♂ Денис (Нейро-голос)</option>
+                    <option value="yandex-alena">🇷🇺 Яндекс Алёна</option>
+                    <option value="yandex-filipp">🇷🇺 Яндекс Филипп</option>
+                    <option value="system">🗣 Системный Робот</option>
                 </select>
                 <div id="status-chat" class="status-bar" onclick="wakeAudio()">
-                    <span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для звука</span>
+                    <span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для активации звука</span>
                 </div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -72,8 +72,6 @@
                 <select id="art-model" class="ai-select">
                     <option value="flux">💎 Flux.1 (Шедевр)</option>
                     <option value="flux-realism">📸 Фото-реализм</option>
-                    <option value="flux-anime">🎎 Аниме-стиль</option>
-                    <option value="flux-3d">🧊 3D Рендер</option>
                     <option value="turbo">⚡ Быстро</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
@@ -117,14 +115,13 @@
         if (audioReady) return;
         synth.speak(new SpeechSynthesisUtterance(''));
         audioReady = true;
-        document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук активен</span>";
+        document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук готов</span>";
         setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
     }
 
-    // СБРОС ГОЛОСА
     function resetVoiceState() {
         synth.cancel();
-        if (currentAudio) { currentAudio.pause(); }
+        if (currentAudio) { currentAudio.pause(); currentAudio.src = ""; }
         isSpeaking = false;
         isPaused = false;
         document.getElementById('status-chat').innerText = "";
@@ -132,9 +129,8 @@
 
     async function speak(t) {
         wakeAudio();
-        const eng = document.getElementById('voice-engine').value;
+        const engine = document.getElementById('voice-engine').value;
 
-        // Если уже читаем - переключаем Пауза/Продолжить
         if (isSpeaking) {
             if (!isPaused) {
                 synth.cancel();
@@ -144,31 +140,23 @@
             } else {
                 isPaused = false;
                 document.getElementById('status-chat').innerText = "▶️ Продолжаем";
-                if (eng === 'system') {
-                    playSystemFrom(currentSentenceIndex);
-                } else {
-                    if (currentAudio) currentAudio.play();
-                }
+                if (engine === 'system') playSystem(currentSentenceIndex);
+                else playExternal(currentSentenceIndex, engine);
             }
             return;
         }
 
-        // Новый запуск чтения
         const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
-        // Разбиваем текст на предложения для надежности
         sentences = clean.match(/[^.!?]+[.!?]+/g) || [clean];
         currentSentenceIndex = 0;
         isSpeaking = true;
         isPaused = false;
 
-        if (eng === 'system') {
-            playSystemFrom(0);
-        } else {
-            playCloud(clean);
-        }
+        if (engine === 'system') playSystem(0);
+        else playExternal(0, engine);
     }
 
-    function playSystemFrom(index) {
+    function playSystem(index) {
         if (index >= sentences.length || isPaused) {
             if (index >= sentences.length) resetVoiceState();
             return;
@@ -176,30 +164,35 @@
         currentSentenceIndex = index;
         const u = new SpeechSynthesisUtterance(sentences[index]);
         u.lang = 'ru-RU';
-        u.onend = () => {
-            if (!isPaused) playSystemFrom(index + 1);
-        };
-        u.onerror = () => resetVoiceState();
+        u.onend = () => { if (!isPaused) playSystem(index + 1); };
         synth.speak(u);
-        document.getElementById('status-chat').innerText = "📢 Читаю...";
+        document.getElementById('status-chat').innerText = "📢 Говорит Робот...";
     }
 
-    function playCloud(text) {
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(text.substring(0, 200))}`;
+    function playExternal(index, engine) {
+        if (index >= sentences.length || isPaused) {
+            if (index >= sentences.length) resetVoiceState();
+            return;
+        }
+        currentSentenceIndex = index;
+        const voice = (engine === 'yandex-alena') ? 'alena' : 'filipp';
+        const url = `https://tts.voicetech.yandex.net/tts?text=${encodeURIComponent(sentences[index])}&lang=ru_RU&format=mp3&speaker=${voice}`;
+        
+        if (currentAudio) currentAudio.pause();
         currentAudio = new Audio(url);
         currentAudio.play();
-        document.getElementById('status-chat').innerText = "📢 Читаю...";
-        currentAudio.onended = () => resetVoiceState();
+        document.getElementById('status-chat').innerText = "📢 Яндекс Озвучка...";
+        
+        currentAudio.onended = () => { if (!isPaused) playExternal(index + 1, engine); };
+        currentAudio.onerror = () => resetVoiceState();
     }
 
     async function sendMsg() {
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
-
-        resetVoiceState(); // Остановить голос при новом запросе
-
+        resetVoiceState();
         const val = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Вы: ${val}</div>`);
+        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Босс: ${val}</div>`);
         document.getElementById('status-chat').innerText = "Книга думает...";
         chatHistory.push({ role: "user", content: val });
 
@@ -211,8 +204,6 @@
             });
             let d = await r.text();
             chatHistory.push({ role: "assistant", content: d });
-            if (chatHistory.length > 10) chatHistory.splice(0, 2);
-            
             const div = document.createElement('div');
             div.className = "ai-box";
             div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
