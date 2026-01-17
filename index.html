@@ -6,60 +6,59 @@
     <title>МАГИЧЕСКАЯ КНИГА — BOSS EDITION</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: "Georgia", serif; }
-        .viewport { width: 100vw; height: 100dvh; perspective: 2500px; position: relative; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: "Georgia", serif; -webkit-tap-highlight-color: transparent; }
+        .viewport { width: 100vw; height: 100dvh; perspective: 2000px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.8s ease; pointer-events: none; }
+        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
         .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
-        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; }
-        .back { transform: rotateY(180deg); background: #e8d5a7; }
+        .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; transform: rotateY(180deg); background: #e8d5a7; }
         .flipped { transform: rotateY(-170deg); z-index: 10 !important; }
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; word-wrap: break-word; overflow-x: hidden; }
-        .ai-response-box { max-width: 100%; border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 12px; font-size: 15px; line-height: 1.4; cursor: pointer; }
-        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
-        .ai-select { width: 92%; background: #fff; border: 1px solid var(--ink); margin: 4px auto; padding: 10px; border-radius: 8px; display: block; font-weight: bold; font-size: 14px; }
-        .input-bar { padding: 10px; background: rgba(0,0,0,0.08); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-        .row { display: flex; gap: 10px; align-items: center; }
-        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; }
-        .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
-        .status-msg { font-size: 11px; text-align: center; color: var(--accent); min-height: 14px; font-weight: bold; }
-        #img-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: none; }
+
+        .header { padding: 10px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 16px; flex-shrink: 0; }
+        .ai-select { width: 94%; background: #fff; border: 1px solid var(--ink); margin: 5px auto; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 14px; flex-shrink: 0; }
+        
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .ai-response-box { border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 10px; font-size: 15px; line-height: 1.5; }
+        
+        .status-msg { font-size: 12px; text-align: center; color: var(--accent); min-height: 18px; font-weight: bold; padding: 2px; }
+        
+        .input-bar { padding: 10px; background: rgba(0,0,0,0.05); border-top: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom); }
+        .row { display: flex; gap: 8px; align-items: center; }
+        .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 10px 15px; border-radius: 20px; font-size: 16px; outline: none; }
+        .btn { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; }
+
+        #img-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 999; display: none; align-items: center; justify-content: center; }
     </style>
 </head>
-<body onmousedown="unlockAudio()" ontouchstart="unlockAudio()">
+<body onmousedown="initVoice()" ontouchstart="initVoice()">
 
-<div id="img-overlay">
-    <div style="color:#fff; padding:20px; text-align:right; font-size:30px;" onclick="closeZoom()">×</div>
-    <div id="pinch-box" style="width:100%; height:90%; display:flex; justify-content:center; align-items:center;">
-        <img id="full-img" src="" style="max-width:100%; max-height:100%;">
-    </div>
-</div>
+<div id="img-overlay" onclick="this.style.display='none'"><img id="full-img" src="" style="max-width:95%; max-height:90%;"></div>
 
 <div class="viewport">
     <div class="book">
+        
         <div class="page" id="p3">
-            <div class="front paper-sheet">
+            <div class="paper-sheet">
                 <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
                 <select id="chat-model" class="ai-select">
                     <option value="openai">GPT-4o (Умный)</option>
                     <option value="deepseek">DeepSeek R1 (Логика)</option>
-                    <option value="llama">Llama 3.3 (Быстрая)</option>
-                    <option value="qwen">Qwen 2.5 (Технический)</option>
+                    <option value="llama">Llama 3.3 (Мощная)</option>
+                    <option value="qwen">Qwen 2.5 (Код)</option>
+                    <option value="mistral">Mistral Nemo</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
-                    <option value="denis">♂ Денис (Cloud AI)</option>
-                    <option value="irina">♀ Ирина (Cloud AI)</option>
-                    <option value="system">🗣 Системный (Робот)</option>
+                    <option value="cloud">🗣 Нейро-голос (Cloud)</option>
+                    <option value="system">👤 Системный (Надежный)</option>
                 </select>
                 <div id="status-chat" class="status-msg"></div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="startMic('i-hub', sendMsg, 'm-hub')" class="btn" id="m-hub"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-hub" class="field" placeholder="Спроси книгу, босс...">
+                        <input type="text" id="i-hub" class="field" placeholder="Спроси, босс...">
                         <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
@@ -68,19 +67,20 @@
         </div>
 
         <div class="page" id="p2" style="z-index: 2;">
-            <div class="front paper-sheet">
+            <div class="paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
                 <select id="art-model" class="ai-select">
-                    <option value="flux">💎 Flux.1 (Лучший)</option>
+                    <option value="flux">💎 Flux.1 (Топ)</option>
                     <option value="flux-realism">📸 Realism (Фото)</option>
-                    <option value="turbo">⚡ Turbo (Быстрый)</option>
+                    <option value="any-dark">🌑 AnyDark (Стиль)</option>
+                    <option value="turbo">⚡ Turbo (Быстро)</option>
                 </select>
                 <div id="status-art" class="status-msg"></div>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="startMic('i-art', genArt, 'm-art')" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Нарисуй эскиз...">
+                        <input type="text" id="i-art" class="field" placeholder="Что нарисовать?">
                         <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
@@ -89,35 +89,34 @@
         </div>
 
         <div class="page" id="p1" style="z-index: 3;">
-            <div class="front paper-sheet" style="background:#2b0000; border:10px double var(--gold);">
-                <div style="width:100%; height:70%; overflow:hidden;">
+            <div class="paper-sheet" style="background:#2b0000; border:8px double var(--gold); box-sizing:border-box;">
+                <div style="height:65%; overflow:hidden; border-bottom:4px solid var(--gold);">
                     <video autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover;">
                         <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
                     </video>
                 </div>
-                <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold); text-align:center;">
-                    <p style="font-size:2em; font-weight:bold; margin:0;">НАША КНИГА</p>
-                    <p style="opacity:0.7;">BOSS EDITION</p>
-                    <div style="margin-top:20px; font-size:12px; opacity:0.5;">СМАХНИ ВЛЕВО ⬅</div>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold); text-align:center; padding:10px;">
+                    <h1 style="margin:0; letter-spacing:2px; font-size:24px;">НАША КНИГА</h1>
+                    <p style="margin:5px 0; font-size:14px; opacity:0.8;">BOSS EDITION</p>
+                    <div style="margin-top:15px; font-size:11px; opacity:0.5; animation: pulse 2s infinite;">СМАХНИ ВЛЕВО ⬅</div>
                 </div>
             </div>
             <div class="back"></div>
         </div>
+
     </div>
 </div>
 
 <script>
     const synth = window.speechSynthesis;
-    let currentStep = 1;
-    const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
+    let currentStep = 1, isVoiceInit = false;
 
-    // Функция разблокировки аудио (Браузер требует жеста пользователя)
-    function unlockAudio() {
-        const silent = new Audio();
-        silent.play().catch(()=>{});
-        // Также разблокируем системный голос
+    // Инициализация голоса (нужен клик босса)
+    function initVoice() {
+        if (isVoiceInit) return;
         const ut = new SpeechSynthesisUtterance('');
         synth.speak(ut);
+        isVoiceInit = true;
     }
 
     async function speak(text) {
@@ -129,31 +128,33 @@
             synth.cancel();
             const ut = new SpeechSynthesisUtterance(cleanText);
             ut.lang = 'ru-RU';
+            ut.rate = 1.1;
             synth.speak(ut);
             return;
         }
 
-        status.innerText = "Книга говорит...";
+        status.innerHTML = "🔊 <span onclick='forcePlay(\""+encodeURIComponent(cleanText)+"\")' style='text-decoration:underline; cursor:pointer'>Нажми сюда, если тихо</span>";
         
-        // Используем Google Cloud TTS через прокси-клиент
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
-        const audio = new Audio();
-        audio.src = url;
-        audio.playbackRate = 1.05;
-
-        audio.play().catch(e => {
-            console.log("Audio blocked");
-            status.innerHTML = `<span style="color:red" onclick="this.innerText='Озвучиваю...'; speak('${cleanText.replace(/'/g, "\\'")}')">🔈 Нажми сюда для звука</span>`;
+        const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
+        const audio = new Audio(audioUrl);
+        audio.play().catch(() => {
+            // Если блок — дублируем системным голосом
+            const ut = new SpeechSynthesisUtterance(cleanText);
+            ut.lang = 'ru-RU';
+            synth.speak(ut);
         });
+    }
 
-        audio.onended = () => status.innerText = "";
+    function forcePlay(txt) {
+        const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${txt}`);
+        audio.play();
     }
 
     async function sendMsg() {
         const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if(!i.value) return;
         const v = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right;opacity:0.5;margin-bottom:10px;"><b>Вы:</b> ${v}</div>`);
+        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Босс: ${v}</div>`);
         document.getElementById('status-chat').innerText = "Книга думает...";
         
         try {
@@ -166,43 +167,35 @@
             b.insertAdjacentElement('afterbegin', div);
             document.getElementById('status-chat').innerText = "";
             speak(data);
-        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
+        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка связи"; }
     }
 
     async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if(!i.value) return;
         const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Рисую...";
+        document.getElementById('status-art').innerText = "Рисую эскиз...";
         
-        // Перевод для нейросети
         const trans = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
         const tData = await trans.json();
-        const en = tData.responseData.translatedText;
-
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&nologo=true&seed=${Date.now()}`;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(tData.responseData.translatedText)}?model=${m}&nologo=true&seed=${Date.now()}`;
         
         b.insertAdjacentHTML('afterbegin', `
-            <div style="background:#fff;padding:10px;margin-bottom:20px;box-shadow:0 5px 15px rgba(0,0,0,0.2);">
-                <img src="${url}" style="width:100%;" onclick="zoomImg('${url}')" onload="document.getElementById('status-art').innerText=''">
-                <p style="text-align:center;font-size:14px;margin-top:10px;">${txt}</p>
+            <div style="background:#fff; padding:8px; margin-bottom:15px; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+                <img src="${url}" style="width:100%;" onclick="document.getElementById('full-img').src='${url}'; document.getElementById('img-overlay').style.display='flex'">
+                <p style="text-align:center; font-size:12px; margin:5px 0;">${txt}</p>
             </div>`);
+        document.getElementById('status-art').innerText = "";
     }
 
-    function zoomImg(url) {
-        document.getElementById('full-img').src = url;
-        document.getElementById('img-overlay').style.display = 'block';
-    }
-    function closeZoom() { document.getElementById('img-overlay').style.display = 'none'; }
-
-    // Листание
+    // Листание (улучшенное)
     let startX = 0;
     document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
         let d = startX - e.changedTouches[0].clientX;
-        if (Math.abs(d) > 80) {
+        if (Math.abs(d) > 70) {
             if (d > 0 && currentStep < 3) { 
-                flipSound.play(); document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
+                document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
             } else if (d < 0 && currentStep > 1) { 
                 currentStep--; document.getElementById('p'+currentStep).classList.remove('flipped'); 
             }
@@ -213,7 +206,7 @@
         const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!Rec) return;
         const r = new Rec(); r.lang = 'ru-RU';
-        r.onstart = () => { document.getElementById(bId).style.color = 'red'; unlockAudio(); };
+        r.onstart = () => document.getElementById(bId).style.color = 'red';
         r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
         r.onend = () => document.getElementById(bId).style.color = 'inherit';
         r.start();
