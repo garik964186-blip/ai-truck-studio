@@ -1,0 +1,7 @@
+{
+    "audio": { "sample_rate": 22050 },
+    "espeak": { "voice": "ru" },
+    "language": { "code": "ru_RU", "family": "ru", "region": "RU", "name": "Russian" },
+    "num_speakers": 1,
+    "piper_version": "1.0.0"
+}
