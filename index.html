@@ -3,215 +3,287 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ULTRA — КНИГА</title>
+    <title>ULTRA — МАГИЧЕСКАЯ КНИГА</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
             --bg: #0b0b0e;
             --accent: #ff3b30;
+            --text: #e0e0e0;
             --user-msg: #007aff;
             --ai-msg: #2c2c2e;
-            /* Цвет состаренной бумаги как на видео */
-            --paper-texture: #e2d7b5; 
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body {
-            height: 100vh; margin: 0; background: #000;
-            display: flex; justify-content: center; align-items: center;
-            overflow: hidden; perspective: 2500px;
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            background: #111; overflow: hidden;
             font-family: -apple-system, sans-serif;
         }
 
-        .book {
-            width: 95vw; max-width: 420px; height: 85vh;
-            position: relative; transform-style: preserve-3d;
+        .viewport {
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            perspective: 2500px;
         }
 
+        /* Контейнер книги */
+        .book {
+            width: 90vw; max-width: 400px; height: 80vh;
+            position: relative; transform-style: preserve-3d;
+            box-shadow: 20px 20px 60px rgba(0,0,0,0.5);
+        }
+
+        /* Общий стиль всех страниц */
         .page {
-            width: 100%; height: 100%;
-            position: absolute; transform-origin: left;
+            position: absolute; width: 100%; height: 100%;
+            top: 0; left: 0; transform-origin: left;
             transform-style: preserve-3d;
             transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 10;
         }
 
         .front, .back {
             position: absolute; width: 100%; height: 100%;
-            backface-visibility: hidden; border-radius: 0 15px 15px 0;
-            overflow: hidden;
+            backface-visibility: hidden;
+            border-radius: 0 15px 15px 0;
         }
 
-        /* ЗАДНЯЯ СТОРОНА (ЛИСТ БУМАГИ) */
+        /* Изнанка страницы (то, что видим при повороте) */
         .back {
             transform: rotateY(180deg);
-            background: var(--paper-texture);
+            background: #1a1a1a;
             border-radius: 15px 0 0 15px;
-            /* Добавляем эффект текстуры и тени в центре (корешок) */
-            background-image: linear-gradient(to right, rgba(0,0,0,0.15) 0%, transparent 15%);
-            box-shadow: inset 10px 0 20px rgba(0,0,0,0.2);
-            border-left: 2px solid rgba(0,0,0,0.1);
+            border-left: 2px solid #333;
         }
 
-        .page.cover .front {
-            background: linear-gradient(135deg, #3d0000 0%, #1a0000 100%);
-            border: 6px double #d4af37;
-            display: flex; flex-direction: column; justify-content: center;
-            align-items: center; color: #d4af37; text-align: center;
-            box-shadow: inset -5px 0 30px rgba(0,0,0,0.5);
-        }
+        /* Состояние перевернутой страницы */
+        .flipped { transform: rotateY(-175deg); }
 
-        .flipped { transform: rotateY(-178deg); z-index: 1 !important; }
-
-        /* ВНУТРЕННИЙ ИНТЕРФЕЙС */
-        .app-page { background: var(--bg); color: #fff; display: flex; flex-direction: column; height: 100%; }
+        /* --- СТИЛИ КОНТЕНТА --- */
         
-        .page-header {
-            padding: 15px; background: #000; border-bottom: 1px solid #333;
-            text-align: center; font-weight: 900; text-transform: uppercase; font-size: 14px;
+        /* 1. ОБЛОЖКА */
+        .cover-page .front {
+            background: linear-gradient(135deg, #4b0000 0%, #1a0000 100%);
+            border: 6px double #d4af37;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #d4af37; text-align: center; padding: 20px;
+            z-index: 10;
         }
 
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; }
+        /* 2. ВНУТРЕННИЕ СТРАНИЦЫ (Доска и Чат) */
+        .app-content {
+            background: var(--bg);
+            color: var(--text);
+            display: flex; flex-direction: column; height: 100%;
+            border-right: 1px solid #333;
+        }
+
+        .header {
+            padding: 15px; background: #000; border-bottom: 1px solid #333;
+            text-align: center; font-weight: 900; font-size: 14px;
+        }
+
+        .selector-bar {
+            padding: 10px; background: #16161a; display: flex; gap: 5px;
+        }
+
+        select {
+            flex: 1; background: #222; color: #fff; border: 1px solid #444;
+            padding: 8px; border-radius: 10px; font-size: 12px; outline: none;
+        }
+
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
 
         .input-bar {
-            display: flex; gap: 8px; background: #252525; padding: 12px;
-            align-items: center; border-top: 1px solid #333;
-        }
-        .field {
-            flex: 1; background: #111; border: none; color: white;
-            padding: 10px 15px; border-radius: 20px; outline: none;
+            padding: 12px; background: #16161a; display: flex; gap: 8px; align-items: center;
+            border-top: 1px solid #333;
         }
 
-        .msg { max-width: 85%; padding: 10px; border-radius: 12px; margin-bottom: 10px; font-size: 14px; }
-        .msg.u { align-self: flex-end; background: var(--user-msg); margin-left: auto; }
-        .msg.a { align-self: flex-start; background: var(--ai-msg); border: 1px solid #333; }
+        .field {
+            flex: 1; background: #000; border: 1px solid #333;
+            color: #fff; padding: 10px 15px; border-radius: 20px; outline: none;
+        }
+
+        /* Сообщения */
+        .msg { padding: 10px 14px; border-radius: 15px; font-size: 14px; max-width: 85%; line-height: 1.4; }
+        .msg.u { background: var(--user-msg); align-self: flex-end; color: white; }
+        .msg.a { background: var(--ai-msg); align-self: flex-start; border: 1px solid #333; }
 
         .btn-mic {
             width: 40px; height: 40px; border-radius: 50%; border: none;
-            background: #333; color: white; cursor: pointer;
+            background: #333; color: white; display: flex; align-items: center; justify-content: center;
         }
-        .btn-mic.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        .btn-mic.active { background: var(--accent); box-shadow: 0 0 15px var(--accent); }
+
+        /* Анимация текста на обложке */
+        .glow-text { text-shadow: 0 0 10px #d4af37; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
     </style>
 </head>
 <body>
 
-<div class="book" id="myBook">
-    
-    <div class="page" id="p1" style="z-index: 10;">
-        <div class="front">
-            <i class="fas fa-truck-moving" style="font-size: 50px; margin-bottom: 20px;"></i>
-            <h2>ОТ ИГРУШКИ ДО ФУРЫ</h2>
-            <p>ULTRA — КНИГА</p>
-            <div style="margin-top: 30px; font-size: 10px; opacity: 0.6;">СВАЙПНИ ВЛЕВО</div>
-        </div>
-        <div class="back"></div> </div>
+<div class="viewport">
+    <div class="book">
 
-    <div class="page" id="p2" style="z-index: 9;">
-        <div class="front app-page">
-            <div class="page-header"><i class="fas fa-palette"></i> ДОСКА</div>
-            <div class="scroll-area" id="imgs-container">
-                <div style="text-align:center; color:#555; margin-top:50px;">
-                    <i class="fas fa-paint-brush" style="font-size:30px;"></i><br>Рисуем здесь
+        <div class="page" id="p3" style="z-index: 1;">
+            <div class="front app-content">
+                <div class="header">ИНТЕЛЛЕКТУАЛЬНЫЙ ЧАТ</div>
+                <div class="selector-bar">
+                    <select id="m-chat">
+                        <option value="openai">⚡ GPT-4o</option>
+                        <option value="gemini">✨ Gemini 1.5</option>
+                        <option value="qwen-coder">💻 Qwen Code</option>
+                    </select>
+                </div>
+                <div class="scroll-area" id="chat-box">
+                    <div class="msg a">Босс, я готов. Спрашивай про грузовики или код!</div>
+                </div>
+                <div class="input-bar">
+                    <button id="mic-chat" class="btn-mic" onclick="startVoice('chat')"><i class="fas fa-microphone"></i></button>
+                    <input type="text" id="i-chat" class="field" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
                 </div>
             </div>
-            <div class="input-bar">
-                <button id="mic-art" class="btn-mic" onclick="startVoice('art')"><i class="fas fa-microphone"></i></button>
-                <input id="i-art" class="field" placeholder="Запрос для арта..." readonly>
-            </div>
+            <div class="back"></div>
         </div>
-        <div class="back"></div> </div>
 
-    <div class="page" id="p3" style="z-index: 1;">
-        <div class="front app-page" style="border-radius: 0 15px 15px 0;">
-            <div class="page-header"><i class="fas fa-comments"></i> ЧАТ</div>
-            <div class="scroll-area" id="chat-box" style="display: flex; flex-direction: column;">
-                <div class="msg a">Босс, мы на последней странице. Что скажешь?</div>
+        <div class="page" id="p2" style="z-index: 2;">
+            <div class="front app-content">
+                <div class="header">ГЕНЕРАТОР ОБРАЗОВ</div>
+                <div class="selector-bar">
+                    <select id="m-art">
+                        <option value="flux">🚛 Flux High-Res</option>
+                        <option value="flux-realism">📸 Фото-реализм</option>
+                        <option value="any-dark">🎨 Тёмный Арт</option>
+                    </select>
+                </div>
+                <div class="scroll-area" id="imgs-box">
+                    <div style="text-align:center; color:#444; margin-top:50px;">
+                        <i class="fas fa-wand-sparkles" style="font-size:40px; margin-bottom:10px;"></i><br>
+                        Нажми микрофон и опиши фуру...
+                    </div>
+                </div>
+                <div class="input-bar">
+                    <button id="mic-art" class="btn-mic" onclick="startVoice('art')"><i class="fas fa-microphone"></i></button>
+                    <input type="text" id="i-art" class="field" placeholder="Жду команду..." readonly>
+                </div>
             </div>
-            <div class="input-bar">
-                <button id="mic-chat" class="btn-mic" onclick="startVoice('chat')"><i class="fas fa-microphone"></i></button>
-                <input id="i-chat" class="field" type="text" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
-                <button onclick="sendMessage()" style="background:var(--user-msg); border:none; color:white; width:40px; height:40px; border-radius:50%;"><i class="fas fa-paper-plane"></i></button>
-            </div>
+            <div class="back"></div>
         </div>
+
+        <div class="page cover-page" id="p1" style="z-index: 3;">
+            <div class="front">
+                <div style="border: 2px solid #d4af37; padding: 40px 20px; width: 80%;">
+                    <i class="fas fa-truck-bolt" style="font-size: 70px; margin-bottom: 20px;"></i>
+                    <h1 class="glow-text" style="font-size: 28px; letter-spacing: 3px;">ULTRA</h1>
+                    <p style="font-size: 14px; letter-spacing: 1px;">ОТ ИГРУШКИ ДО ФУРЫ</p>
+                    <hr style="border: 0; border-top: 1px solid #d4af37; margin: 30px 0;">
+                    <div style="font-size: 12px; text-transform: uppercase;">Листай, чтобы начать</div>
+                </div>
+            </div>
+            <div class="back"></div>
+        </div>
+
     </div>
-
 </div>
 
 <script>
     let startX = 0;
-    let currentPage = 1;
-    const totalPages = 2; // Сколько листов можно перевернуть
+    let currentStep = 1;
 
+    // --- ЛОГИКА СВАЙПОВ ---
     document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
         let diff = startX - e.changedTouches[0].clientX;
         if (Math.abs(diff) > 60) {
-            if (diff > 0 && currentPage <= totalPages) {
-                document.getElementById('p' + currentPage).classList.add('flipped');
-                currentPage++;
-            } else if (diff < 0 && currentPage > 1) {
-                currentPage--;
-                document.getElementById('p' + currentPage).classList.remove('flipped');
+            if (diff > 0 && currentStep < 3) { // Вперед
+                document.getElementById('p' + currentStep).classList.add('flipped');
+                currentStep++;
+            } else if (diff < 0 && currentStep > 1) { // Назад
+                currentStep--;
+                document.getElementById('p' + currentStep).classList.remove('flipped');
             }
         }
     });
 
-    // --- ФУНКЦИИ ИИ (ЧАТ И АРТ) ---
+    // --- ГОЛОСОВОЕ УПРАВЛЕНИЕ ---
     function startVoice(mode) {
-        const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Speech) return alert("Браузер не поддерживает голос");
+        
+        const rec = new Speech();
         rec.lang = 'ru-RU';
         const btn = document.getElementById('mic-' + mode);
+        
         rec.onstart = () => btn.classList.add('active');
         rec.onend = () => btn.classList.remove('active');
+        
         rec.onresult = (e) => {
-            const t = e.results[0][0].transcript;
-            if (mode === 'chat') { document.getElementById('i-chat').value = t; sendMessage(); }
-            else { document.getElementById('i-art').value = t; generateImage(t); }
+            const text = e.results[0][0].transcript;
+            if (mode === 'art') {
+                document.getElementById('i-art').value = text;
+                generateArt(text);
+            } else {
+                document.getElementById('i-chat').value = text;
+                sendMessage(text);
+            }
         };
         rec.start();
     }
 
-    async function generateImage(prompt) {
-        const container = document.getElementById('imgs-container');
-        container.innerHTML = `<div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> Магия...</div>`;
-        const tr = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(prompt)}`);
-        const trData = await tr.json();
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(trData[0][0][0])}?width=1024&height=1024&nologo=true&seed=${Math.random()}`;
-        const img = new Image();
-        img.src = url;
-        img.onload = () => { container.innerHTML = `<img src="${url}" style="width:100%; border-radius:10px;">`; };
+    // --- ГЕНЕРАЦИЯ АРТА ---
+    async function generateArt(prompt) {
+        const box = document.getElementById('imgs-box');
+        const model = document.getElementById('m-art').value;
+        box.innerHTML = `<div class="msg a"><i class="fas fa-sync fa-spin"></i> Рисую: ${prompt}</div>`;
+        
+        try {
+            // Перевод на лету
+            const tr = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(prompt)}`);
+            const trJson = await tr.json();
+            const enPrompt = trJson[0][0][0];
+
+            const seed = Math.floor(Math.random() * 999999);
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enPrompt)}?model=${model}&seed=${seed}&nologo=true`;
+            
+            const img = new Image();
+            img.src = url;
+            img.onload = () => {
+                box.innerHTML = `<img src="${url}" style="width:100%; border-radius:10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
+                                 <p style="text-align:center; font-size:12px; color:#666; margin-top:10px;">${prompt}</p>`;
+            };
+        } catch (err) { box.innerHTML = "Ошибка генерации."; }
     }
 
-    async function sendMessage() {
-        const input = document.getElementById('i-chat');
+    // --- ЧАТ ---
+    async function sendMessage(text) {
         const box = document.getElementById('chat-box');
-        const text = input.value.trim();
-        if (!text) return;
+        const model = document.getElementById('m-chat').value;
+        const input = document.getElementById('i-chat');
+        const val = text || input.value;
+        if (!val) return;
+
         input.value = '';
-        box.innerHTML += `<div class="msg u">${text}</div>`;
+        box.innerHTML += `<div class="msg u">${val}</div>`;
         const aiMsg = document.createElement('div');
         aiMsg.className = 'msg a';
-        aiMsg.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+        aiMsg.innerHTML = `<i class="fas fa-robot"></i> Думаю...`;
         box.appendChild(aiMsg);
         box.scrollTop = box.scrollHeight;
+
         try {
             const res = await fetch('https://text.pollinations.ai/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{role:'user', content:text}], model: 'openai' })
+                body: JSON.stringify({
+                    messages: [{role: 'system', content: 'Ты помощник по грузовикам.'}, {role: 'user', content: val}],
+                    model: model
+                })
             });
-            const answer = await res.text();
-            aiMsg.innerHTML = marked.parse(answer);
-            const utter = new SpeechSynthesisUtterance(answer.replace(/[*#_`]/g, ''));
-            utter.lang = 'ru-RU';
-            window.speechSynthesis.speak(utter);
-        } catch (e) { aiMsg.innerText = "Ошибка."; }
+            const data = await res.text();
+            aiMsg.innerHTML = marked.parse(data);
+        } catch (e) { aiMsg.innerText = "Ошибка связи."; }
         box.scrollTop = box.scrollHeight;
     }
 </script>
