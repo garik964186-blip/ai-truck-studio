@@ -1,189 +1,176 @@
 <!DOCTYPE html>
-<html lang="ru" translate="no">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="google" content="notranslate">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ОТ ИГРУШКИ ДО ФУРЫ</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>От игрушки до фуры — Чат</title>
     <style>
-        :root { --bg: #0b0b0e; --card: #16161a; --accent: #ff0055; --text: #e0e0e0; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; overflow-x: hidden; }
+        /* Индустриальный стиль: темный фон и оранжевые акценты (как спецтехника) */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #1a1a1a; 
+            color: #e0e0e0;
+            display: flex; 
+            justify-content: center; 
+            padding: 20px; 
+            margin: 0;
+        }
+        .chat-container { 
+            width: 100%; 
+            max-width: 600px; 
+            background: #2d2d2d; 
+            border-radius: 8px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            overflow: hidden;
+            border: 1px solid #444;
+        }
+        .header { 
+            background: #d35400; /* Оранжевый, как дорожная техника */
+            color: white; 
+            padding: 20px; 
+            text-align: center; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 3px solid #a04000;
+        }
+        #chat-output { 
+            height: 400px; 
+            overflow-y: auto; 
+            padding: 20px; 
+            background: #252525;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        /* Стили сообщений */
+        .msg { padding: 10px 15px; border-radius: 5px; max-width: 85%; line-height: 1.4; }
+        .system-msg { color: #aaa; font-style: italic; align-self: center; font-size: 0.9em; }
+        .user-msg { 
+            background: #3498db; 
+            color: white; 
+            align-self: flex-end; 
+            border-bottom-right-radius: 0;
+        }
+        .ai-msg { 
+            background: #3d3d3d; 
+            color: #f1f1f1; 
+            align-self: flex-start; 
+            border-bottom-left-radius: 0;
+            border-left: 4px solid #d35400;
+        }
         
-        .container { max-width: 500px; margin: 0 auto; background: var(--card); padding: 12px; border-radius: 20px; border: 1px solid #333; min-height: 95vh; display: flex; flex-direction: column; position: relative; }
-        
-        /* Шапка и баннер */
-        .header { text-align: center; }
-        .banner-img { width: 100%; border-radius: 15px; border: 1px solid var(--accent); height: 160px; object-fit: cover; background: #000; }
-        .main-title { color: var(--accent); font-weight: 900; font-size: 20px; margin: 15px 0; display: block; text-transform: uppercase; }
+        .input-area { display: flex; padding: 15px; gap: 10px; background: #2d2d2d; }
+        input { 
+            flex: 1; 
+            padding: 12px; 
+            border: 1px solid #444; 
+            border-radius: 4px; 
+            outline: none; 
+            background: #1a1a1a; 
+            color: white;
+        }
+        input:focus { border-color: #d35400; }
+        button { 
+            padding: 10px 25px; 
+            background: #d35400; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: 0.2s; 
+        }
+        button:hover { background: #e67e22; }
+        button:disabled { background: #555; cursor: not-allowed; }
 
-        /* Вкладки */
-        .tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #000; padding: 5px; border-radius: 15px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: #666; font-weight: bold; cursor: pointer; border-radius: 10px; font-size: 14px; transition: 0.3s; }
-        .tab-btn.active { background: linear-gradient(135deg, #ff0055, #ff5500); color: white; }
-
-        .content { display: none; flex-direction: column; flex-grow: 1; }
-        .content.active { display: flex; }
-
-        /* Интерфейс */
-        .controls { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 10px; }
-        select, .btn-s { padding: 12px; background: #25252b; border: 1px solid #444; color: white; border-radius: 12px; font-size: 13px; outline: none; }
-        
-        .input-box { display: flex; gap: 8px; background: #000; padding: 10px; border-radius: 18px; border: 1px solid #444; align-items: center; margin-bottom: 10px; }
-        textarea, .field { flex: 1; background: none; border: none; color: white; outline: none; font-size: 16px; padding: 5px; resize: none; }
-        
-        /* Чат и сообщения */
-        #chat-box { flex-grow: 1; height: 380px; overflow-y: auto; background: #08080a; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 90%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
-        .msg.u { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
-        .msg.a { align-self: flex-start; background: #2a2a2e; border: 1px solid #444; color: #eee; border-bottom-left-radius: 4px; }
-        
-        /* Оформление кода */
-        code { background: #000; padding: 2px 5px; border-radius: 4px; font-family: monospace; color: #ff9d00; }
-        pre code { display: block; padding: 12px; overflow-x: auto; background: #000; color: #fff; border-radius: 10px; border: 1px solid #444; font-size: 13px; }
-
-        .gen-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #ff0055, #ff5500); border: none; border-radius: 15px; color: white; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; }
-        .gen-btn:disabled { opacity: 0.5; }
-
-        /* Галерея и Zoom */
-        #imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-        .img-wrap { background: #111; padding: 5px; border-radius: 14px; border: 1px solid #222; }
-        .gen-img { width: 100%; border-radius: 10px; cursor: zoom-in; transition: 0.3s; display: block; }
-        
-        .gen-img.zoomed { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95vw; max-width: 480px; z-index: 9999; border: 2px solid var(--accent); box-shadow: 0 0 100px #000; cursor: zoom-out; }
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9998; }
-        
-        .mic { width: 48px; height: 48px; border-radius: 12px; border: none; background: #333; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .mic.active { background: var(--accent); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0px rgba(255, 0, 85, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(255, 0, 85, 0); } }
-        .dl-btn { width: 100%; padding: 8px; background: #25252b; color: #fff; border-radius: 8px; font-size: 11px; text-decoration: none; display: block; text-align: center; margin-top: 5px; border: 1px solid #444; }
+        /* Полоса прокрутки */
+        #chat-output::-webkit-scrollbar { width: 6px; }
+        #chat-output::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div id="overlay" onclick="closeAllZooms()"></div>
-
-<div class="container">
-    <div class="header">
-        <img src="1768422265866.jpg" class="banner-img" alt="Banner">
-        <div class="main-title">ОТ ИГРУШКИ ДО ФУРЫ</div>
+<div class="chat-container">
+    <div class="header">ОТ ИГРУШКИ ДО ФУРЫ</div>
+    <div id="chat-output">
+        <div class="system-msg">Система готова. Жду указаний, босс.</div>
     </div>
-    
-    <div class="tabs">
-        <button id="b-art" class="tab-btn active" onclick="tab('art')">🎨 ДОСКА</button>
-        <button id="b-chat" class="tab-btn" onclick="tab('chat')">💬 ЧАТ</button>
-    </div>
-    
-    <div id="art" class="content active">
-        <div class="controls">
-            <select id="m-art"><option value="flux-pro">🚛 ФУРЫ</option><option value="dalle-3">🦊 АРТ</option><option value="realism">📸 ФОТО</option></select>
-            <button class="btn-s" onclick="clr()">🗑️</button>
-        </div>
-        <div class="input-box">
-            <button id="mic-art" class="mic" onclick="voice('art')">🎤</button>
-            <textarea id="i-art" rows="1" placeholder="Что нарисовать?"></textarea>
-        </div>
-        <button id="go-art" onclick="make()" class="gen-btn">🚀 СОЗДАТЬ КАРТИНКУ</button>
-        <div id="imgs"></div>
-    </div>
-
-    <div id="chat" class="content">
-        <div class="controls">
-            <select id="m-chat"><option value="openai">⚡ GPT-4o</option><option value="gemini">✨ Gemini</option><option value="mistral-large">🌀 Code AI</option></select>
-            <button class="btn-s" onclick="document.getElementById('chat-box').innerHTML=''">🗑️</button>
-        </div>
-        <div id="chat-box"></div>
-        <div class="input-box">
-            <button id="mic-chat" class="mic" onclick="voice('chat')">🎤</button>
-            <input id="i-chat" class="field" type="text" placeholder="Задай вопрос или скинь код..." onkeypress="if(event.key==='Enter') send()">
-            <button onclick="send()" class="mic" style="background:var(--accent)">➤</button>
-        </div>
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="Введите команду или вопрос..." autocomplete="off">
+        <button id="send-btn">ОТПРАВИТЬ</button>
     </div>
 </div>
 
 <script>
-    // Настройка озвучки
-    function speak(t) {
-        window.speechSynthesis.cancel();
-        const clean = t.replace(/```[\s\S]*?```/g, ' [код] ').replace(/[*#`_]/g, '').trim();
-        const u = new SpeechSynthesisUtterance(clean);
-        u.lang = 'ru-RU'; u.rate = 1.1; window.speechSynthesis.speak(u);
-    }
+    const AI_MODELS = ['openai', 'mistral', 'qwen', 'llama', 'searchgpt'];
+    const output = document.getElementById('chat-output');
+    const input = document.getElementById('user-input');
+    const btn = document.getElementById('send-btn');
 
-    // Логика увеличения картинок
-    function toggleImageZoom(img) {
-        const overlay = document.getElementById('overlay');
-        img.classList.toggle('zoomed');
-        overlay.style.display = img.classList.contains('zoomed') ? 'block' : 'none';
-    }
+    async function sendMessage() {
+        const text = input.value.trim();
+        if (!text) return;
 
-    function closeAllZooms() {
-        document.querySelectorAll('.gen-img').forEach(i => i.classList.remove('zoomed'));
-        document.getElementById('overlay').style.display = 'none';
-    }
+        input.value = '';
+        input.disabled = true;
+        btn.disabled = true;
+        
+        appendMessage('ВЫ', text, 'user-msg');
+        const aiDiv = appendMessage('AI', 'Связь со спутником...', 'ai-msg');
 
-    function tab(t){
-        document.querySelectorAll('.tab-btn, .content').forEach(e=>e.classList.remove('active'));
-        document.getElementById('b-'+t).classList.add('active');
-        document.getElementById(t).classList.add('active');
-        window.speechSynthesis.cancel();
-    }
-
-    // Генерация изображений
-    async function make(){
-        const inp = document.getElementById('i-art'); const btn = document.getElementById('go-art');
-        if(!inp.value) return; btn.disabled = true; btn.innerText = "⏳ ГЕНЕРАЦИЯ...";
         try {
-            let p = inp.value; if(/[а-я]/.test(p)) {
-                const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(p)}`);
-                const d = await r.json(); p = d[0][0][0];
+            const response = await fetchWithRetry(text);
+            aiDiv.innerText = response;
+        } catch (error) {
+            aiDiv.innerText = "ОШИБКА: " + error.message;
+            aiDiv.style.color = '#ff4d4d';
+        } finally {
+            input.disabled = false;
+            btn.disabled = false;
+            input.focus();
+            output.scrollTop = output.scrollHeight;
+        }
+    }
+
+    function appendMessage(sender, text, className) {
+        const msg = document.createElement('div');
+        msg.className = `msg ${className}`;
+        msg.innerHTML = `<strong>${sender}:</strong> <br><span>${text}</span>`;
+        output.appendChild(msg);
+        output.scrollTop = output.scrollHeight;
+        return msg.querySelector('span');
+    }
+
+    async function fetchWithRetry(prompt, modelIdx = 0) {
+        if (modelIdx >= AI_MODELS.length) {
+            throw new Error("Все каналы связи заняты. Попробуйте позже.");
+        }
+
+        const model = AI_MODELS[modelIdx];
+        const seed = Math.floor(Math.random() * 99999);
+        // Используем GET запрос, так как он стабильнее для этого API
+        const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=${model}&seed=${seed}`;
+        
+        try {
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                console.warn(`Модель ${model} недоступна. Переключаюсь...`);
+                return fetchWithRetry(prompt, modelIdx + 1);
             }
-            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?model=${document.getElementById('m-art').value}&seed=${Math.floor(Math.random()*1e6)}&nologo=true`;
-            const wrap = document.createElement('div'); wrap.className = 'img-wrap';
-            wrap.innerHTML = `<img src="${url}" class="gen-img" onclick="toggleImageZoom(this)"><a href="${url}" target="_blank" class="dl-btn">📥 СКАЧАТЬ</a>`;
-            document.getElementById('imgs').prepend(wrap);
-            btn.disabled = false; btn.innerText = "🚀 СОЗДАТЬ КАРТИНКУ"; inp.value = '';
-        } catch(e) { btn.disabled = false; btn.innerText = "🚀 СОЗДАТЬ КАРТИНКУ"; }
+
+            return await response.text();
+        } catch (e) {
+            return fetchWithRetry(prompt, modelIdx + 1);
+        }
     }
 
-    // Работа чата с поддержкой кода
-    async function send(){
-        const inp = document.getElementById('i-chat'); const box = document.getElementById('chat-box');
-        if(!inp.value) return; const m = inp.value;
-        box.innerHTML += `<div class="msg u">${m}</div>`; inp.value=''; box.scrollTop=box.scrollHeight;
-        try {
-            const model = document.getElementById('m-chat').value;
-            const sys = "Ты - помощник 'ОТ ИГРУШКИ ДО ФУРЫ'. Твой босс - пользователь. Ты мастер в коде HTML/JS. Отвечай ТОЛЬКО текстом и кодом в блоках ```. Не генерируй картинки.";
-            const r = await fetch(`https://text.pollinations.ai/${encodeURIComponent(sys + " Вопрос: " + m)}?model=${model}`);
-            const t = await r.text();
-            const ai = document.createElement('div'); ai.className='msg a';
-            ai.innerHTML = marked.parse(t);
-            box.appendChild(ai); 
-            ai.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
-            box.scrollTop = box.scrollHeight;
-            speak(t); 
-        } catch(e){ box.innerHTML += `<div class="msg a">Ошибка связи.</div>`; }
-    }
-
-    function voice(m){
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if(!SR) return;
-        const rec = new SR(); rec.lang='ru-RU';
-        rec.onstart = () => document.getElementById('mic-'+m).classList.add('active');
-        rec.onend = () => document.getElementById('mic-'+m).classList.remove('active');
-        rec.onresult = (e) => { 
-            const v = e.results[0][0].transcript; 
-            if(m==='art'){ document.getElementById('i-art').value=v; make(); } 
-            else { document.getElementById('i-chat').value=v; send(); }
-        };
-        rec.start();
-    }
-    function clr(){ if(confirm("Очистить?")) document.getElementById('imgs').innerHTML=''; }
+    btn.addEventListener('click', sendMessage);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
 </script>
+
 </body>
 </html>
