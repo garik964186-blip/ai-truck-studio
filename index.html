@@ -123,7 +123,7 @@
 </div>
 
 <script>
-    let synth = window.speechSynthesis, activeDiv = null, pausedAtChar = 0, fullText = "", currentStep = 1;
+    let synth = window.speechSynthesis, activeDiv = null, currentStep = 1;
 
     function startMic(inputId, callback, btnId) {
         const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -173,12 +173,24 @@
 
     function toggleVoice(text, el) {
         const cleanText = text.replace(/[#*`_{}]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
-        if (synth.speaking && activeDiv === el) { synth.cancel(); el.classList.add('is-paused'); return; }
-        if (activeDiv !== el) { synth.cancel(); activeDiv = el; fullText = cleanText; pausedAtChar = 0; }
-        const ut = new SpeechSynthesisUtterance(fullText.substring(pausedAtChar));
+        
+        if (activeDiv === el) {
+            if (synth.speaking && !synth.paused) {
+                synth.pause();
+                el.classList.add('is-paused');
+                return;
+            } else if (synth.paused) {
+                synth.resume();
+                el.classList.remove('is-paused');
+                return;
+            }
+        }
+
+        synth.cancel();
+        activeDiv = el;
+        const ut = new SpeechSynthesisUtterance(cleanText);
         ut.lang = 'ru-RU';
-        ut.onboundary = (ev) => { if(ev.name === 'word') pausedAtChar += ev.charIndex; };
-        ut.onend = () => { if(!synth.paused) { el.classList.remove('is-paused'); pausedAtChar = 0; } };
+        ut.onend = () => { if(!synth.paused) { el.classList.remove('is-paused'); activeDiv = null; } };
         el.classList.remove('is-paused');
         synth.speak(ut);
     }
