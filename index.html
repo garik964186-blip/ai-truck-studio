@@ -47,10 +47,11 @@
                     <option value="llama">Llama 3.3 (Мощная)</option>
                     <option value="mistral-large">Mistral Large</option>
                     <option value="qwen-coder">Qwen (Код)</option>
+                    <option value="gemini">Gemini 1.5 Pro</option>
                 </select>
                 <select id="voice-engine" class="ai-select">
                     <option value="yandex-alena">🇷🇺 Яндекс Алёна</option>
-                    <option value="yandex-filipp">🇷🇺 Яндекс Филипп</option>
+                    <option value="google">🗣 Google (Стабильный)</option>
                     <option value="system">🗣 Системный Робот</option>
                 </select>
                 <div id="status-chat" class="status-bar" onclick="wakeAudio()">
@@ -106,8 +107,8 @@
 
 <script>
     let step = 1, pz = null, audioReady = false, currentAudio = null;
-    let chatHistory = [];
-    let sentences = [], currentSentenceIndex = 0, isSpeaking = false, isPaused = false;
+    let chatHistory = [], sentences = [], currentSentenceIndex = 0;
+    let isSpeaking = false, isPaused = false;
     
     const synth = window.speechSynthesis;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
@@ -123,25 +124,23 @@
 
     function resetVoiceState() {
         synth.cancel();
-        if (currentAudio) { currentAudio.pause(); currentAudio.src = ""; }
+        if (currentAudio) { currentAudio.pause(); currentAudio.onended = null; currentAudio = null; }
         isSpeaking = false;
         isPaused = false;
         document.getElementById('status-chat').innerText = "";
     }
 
     async function speak(t) {
+        if (!t) return;
         wakeAudio();
         const engine = document.getElementById('voice-engine').value;
 
         if (isSpeaking) {
             if (!isPaused) {
-                synth.cancel();
-                if (currentAudio) currentAudio.pause();
-                isPaused = true;
-                document.getElementById('status-chat').innerText = "⏸ Пауза";
+                synth.cancel(); if (currentAudio) currentAudio.pause();
+                isPaused = true; document.getElementById('status-chat').innerText = "⏸ Пауза";
             } else {
-                isPaused = false;
-                document.getElementById('status-chat').innerText = "▶️ Продолжаем";
+                isPaused = false; document.getElementById('status-chat').innerText = "▶️ Продолжаем";
                 if (engine === 'system') playSystem(currentSentenceIndex);
                 else playExternal(currentSentenceIndex, engine);
             }
@@ -168,7 +167,7 @@
         u.lang = 'ru-RU';
         u.onend = () => { if (!isPaused) playSystem(index + 1); };
         synth.speak(u);
-        document.getElementById('status-chat').innerText = "📢 Говорит Робот...";
+        document.getElementById('status-chat').innerText = "📢 Читает робот...";
     }
 
     function playExternal(index, engine) {
@@ -177,16 +176,25 @@
             return;
         }
         currentSentenceIndex = index;
-        const voice = (engine === 'yandex-alena') ? 'alena' : 'filipp';
-        const url = `https://tts.voicetech.yandex.net/tts?text=${encodeURIComponent(sentences[index])}&lang=ru_RU&format=mp3&speaker=${voice}`;
+        let url;
+        if (engine === 'yandex-alena') {
+            url = `https://tts.voicetech.yandex.net/tts?text=${encodeURIComponent(sentences[index])}&lang=ru_RU&format=mp3&speaker=alena`;
+        } else {
+            url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(sentences[index])}`;
+        }
         
-        if (currentAudio) currentAudio.pause();
+        if (currentAudio) { currentAudio.pause(); currentAudio = null; }
         currentAudio = new Audio(url);
-        currentAudio.play();
-        document.getElementById('status-chat').innerText = "📢 Яндекс Озвучка...";
-        
+        document.getElementById('status-chat').innerText = "📢 Загрузка...";
+
+        const loadTimeout = setTimeout(() => {
+            if (currentAudio && currentAudio.paused) playSystem(index);
+        }, 3000);
+
+        currentAudio.onplay = () => { clearTimeout(loadTimeout); document.getElementById('status-chat').innerText = "📢 Читаю..."; };
         currentAudio.onended = () => { if (!isPaused) playExternal(index + 1, engine); };
-        currentAudio.onerror = () => resetVoiceState();
+        currentAudio.onerror = () => { clearTimeout(loadTimeout); playSystem(index); };
+        currentAudio.play().catch(() => playSystem(index));
     }
 
     async function sendMsg() {
