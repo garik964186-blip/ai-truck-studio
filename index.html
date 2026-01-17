@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА</title>
+    <title>AI TRUCK STUDIO - BOOK</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -11,7 +11,7 @@
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: "Georgia", serif; display: flex; justify-content: center; align-items: center; }
         .viewport { width: 100vw; height: 100dvh; perspective: 2500px; position: relative; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; }
+        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 1.1s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; }
         .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
         .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; overflow: hidden; }
         .back { transform: rotateY(180deg); background: #e8d5a7; }
@@ -21,14 +21,11 @@
         .v-box video { width: 100%; height: 100%; object-fit: cover; }
         .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; }
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
-        .ai-select { width: 92%; background: #fff9e6; border: 1px solid var(--ink); margin: 4px auto; padding: 8px; border-radius: 8px; font-family: inherit; font-weight: bold; display: block; font-size: 13px; }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
         .input-bar { padding: 10px; background: rgba(0,0,0,0.08); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; }
         .field { flex: 1; background: #fff; border: 1px solid #aaa; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; }
         .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
-        .pause-badge { display: none; background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; vertical-align: middle; margin-right: 5px; }
-        .is-paused .pause-badge { display: inline-block; }
     </style>
 </head>
 <body>
@@ -38,17 +35,6 @@
         <div class="page" id="p3" style="z-index: 1;">
             <div class="front paper-sheet">
                 <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
-                <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Умный)</option>
-                    <option value="deepseek">DeepSeek R1 (Логика)</option>
-                    <option value="llama">Llama 3.3 (Быстрая)</option>
-                    <option value="qwen">Qwen 2.5 (Техник)</option>
-                    <option value="mistral">Mistral (Творческий)</option>
-                </select>
-                <select id="voice-select" class="ai-select">
-                    <option value="male">👨 Робот (Мужской тон)</option>
-                    <option value="female">👩 Фея (Женский тон)</option>
-                </select>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
@@ -64,17 +50,11 @@
         <div class="page" id="p2" style="z-index: 2;">
             <div class="front paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
-                <select id="art-model" class="ai-select">
-                    <option value="flux">💎 Flux.1 (Лучший)</option>
-                    <option value="flux-realism">📸 Flux Realism (Фото)</option>
-                    <option value="any-dark">🌑 AnyDark (Аниме/Тень)</option>
-                    <option value="turbo">⚡ Turbo (Мгновенно)</option>
-                </select>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="startMic('i-art', genArt, 'm-art')" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Нарисуй...">
+                        <input type="text" id="i-art" class="field" placeholder="Нарисуй грузовик...">
                         <button onclick="genArt()" class="btn" style="color:var(--accent)"><i class="fas fa-magic"></i></button>
                     </div>
                 </div>
@@ -88,8 +68,8 @@
                     <video autoplay loop muted playsinline><source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4"></video>
                 </div>
                 <div class="c-text">
-                    <p style="font-size:2em; font-weight:bold; letter-spacing:3px; margin:0;">НАША КНИГА</p>
-                    <div style="margin-top:15px; font-size:12px; opacity:0.6;">⬅ СМАХНИ ВЛЕВО</div>
+                    <p style="font-size:1.8em; font-weight:bold; letter-spacing:2px; margin:0;">AI TRUCK STUDIO</p>
+                    <div style="margin-top:10px; font-size:12px; opacity:0.6;">ЛИСТАЙ ВЛЕВО ⬅</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -101,68 +81,70 @@
     const synth = window.speechSynthesis;
     let activeDiv = null, currentStep = 1, isSpeaking = false;
     let sentences = [], currentSentIdx = 0;
-    const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    document.addEventListener('click', () => { flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; }); }, { once: true });
-
-    function toggleVoice(text, el) {
-        if (activeDiv === el) {
-            if (isSpeaking) { synth.cancel(); isSpeaking = false; el.classList.add('is-paused'); } 
-            else { isSpeaking = true; el.classList.remove('is-paused'); speakLoop(); }
-            return;
-        }
-        synth.cancel(); activeDiv = el;
-        const clean = text.replace(/[#*`_{}]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
-        sentences = clean.match(/[^.!?]+[.!?]+/g) || [clean];
-        currentSentIdx = 0; isSpeaking = true; el.classList.remove('is-paused');
-        speakLoop();
-    }
-
+    // ГЛАВНЫЙ МОЗГ ОЗВУЧКИ
     function speakLoop() {
         if (currentSentIdx >= sentences.length || !isSpeaking) return;
-        const ut = new SpeechSynthesisUtterance(sentences[currentSentIdx].trim());
         
-        // Магия модуляции:
-        const mode = document.getElementById('voice-select').value;
-        const allVoices = synth.getVoices();
-        const ruVoice = allVoices.find(v => v.lang.includes('ru'));
+        const text = sentences[currentSentIdx].trim();
+        const ut = new SpeechSynthesisUtterance(text);
+        const voices = synth.getVoices();
         
-        if (ruVoice) ut.voice = ruVoice;
-        ut.lang = 'ru-RU';
+        // 1. Ищем РУССКИЙ голос, который НЕ "Punjabi"
+        let bestVoice = voices.find(v => v.lang.includes('ru') && !v.name.toLowerCase().includes('punjabi'));
+        
+        // 2. Если такого нет, берем любой русский
+        if (!bestVoice) bestVoice = voices.find(v => v.lang.includes('ru'));
+        
+        if (bestVoice) ut.voice = bestVoice;
 
-        if (mode === 'male') {
-            ut.pitch = 0.5; // Низкий голос
-            ut.rate = 0.9;  // Чуть медленнее
-        } else {
-            ut.pitch = 1.4; // Высокий голос
-            ut.rate = 1.1;  // Чуть быстрее
-        }
+        // 3. МАГИЯ: Принудительно делаем голос Дмитрием (низкий, мужественный)
+        ut.pitch = 0.75; // Делаем ниже
+        ut.rate = 0.9;   // Делаем солиднее
+        ut.lang = 'ru-RU';
 
         ut.onend = () => { if (isSpeaking) { currentSentIdx++; speakLoop(); } };
         synth.speak(ut);
     }
 
+    function toggleVoice(text, el) {
+        if (activeDiv === el && isSpeaking) { synth.cancel(); isSpeaking = false; return; }
+        synth.cancel(); 
+        activeDiv = el;
+        // Чистим текст для озвучки
+        const cleanText = text.replace(/[#*`_{}]/g, '').replace(/https?:\/\/\S+/g, 'ссылка');
+        sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
+        currentSentIdx = 0; 
+        isSpeaking = true;
+        speakLoop();
+    }
+
     async function sendMsg() {
-        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
+        const i = document.getElementById('i-hub'), b = document.getElementById('hub-box');
         if(!i.value) return;
         const v = i.value; i.value = '';
         b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px;opacity:0.6"><b>Вы:</b> ${v}</div>`);
-        const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
+        
+        // Используем самую мощную модель GPT-4o
+        const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=openai`);
         const data = await res.text();
+        
         const div = document.createElement('div');
         div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
-        div.innerHTML = `<b>AI:</b> <span class="pause-badge">⏸ ПАУЗА</span> ${marked.parse(data)}`;
+        div.innerHTML = `<b>Книга:</b> ${marked.parse(data)}`;
         div.onclick = () => toggleVoice(data, div);
         b.insertAdjacentElement('afterbegin', div);
+        
+        // Авто-озвучка при ответе
         toggleVoice(data, div);
     }
 
     async function genArt() {
-        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
+        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box');
         if(!i.value) return;
-        const txt = i.value; i.value = '';
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(txt)}?model=${m}&nologo=true&seed=${Date.now()}`;
-        b.insertAdjacentHTML('afterbegin', `<div style="border:5px solid #fff;box-shadow:0 5px 15px rgba(0,0,0,0.2);margin-bottom:15px;background:#fff;padding:5px;"><img src="${url}" style="width:100%"><p style="text-align:center;color:#000;font-size:14px;">${txt}</p></div>`);
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(i.value)}?model=flux&nologo=true&seed=${Date.now()}`;
+        b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:15px;background:#fff;padding:5px;box-shadow:0 5px 15px rgba(0,0,0,0.2)"><img src="${url}" style="width:100%"><p style="color:#000;font-size:12px;text-align:center">${i.value}</p></div>`);
+        i.value = '';
     }
 
     function startMic(id, cb, bId) {
@@ -175,17 +157,16 @@
         r.start();
     }
 
-    let startX = 0;
-    document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+    // УПРАВЛЕНИЕ СТРАНИЦАМИ
+    let sX = 0;
+    document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
-        let d = startX - e.changedTouches[0].clientX;
+        let d = sX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 80) {
             synth.cancel(); isSpeaking = false;
             if (d > 0 && currentStep < 3) { 
-                flipSound.currentTime = 0; flipSound.play();
                 document.getElementById('p'+currentStep).classList.add('flipped'); currentStep++; 
             } else if (d < 0 && currentStep > 1) { 
-                flipSound.currentTime = 0; flipSound.play();
                 currentStep--; document.getElementById('p'+currentStep).classList.remove('flipped'); 
             }
         }
