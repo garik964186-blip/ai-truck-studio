@@ -21,7 +21,7 @@
         .v-box video { width: 100%; height: 100%; object-fit: cover; }
         .c-text { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); text-align: center; }
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
-        .ai-select { width: 92%; background: #fff9e6; border: 1px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 8px; font-family: inherit; font-weight: bold; display: block; font-size: 14px; }
+        .ai-select { width: 92%; background: #fff9e6; border: 1px solid var(--ink); margin: 4px auto; padding: 8px; border-radius: 8px; font-family: inherit; font-weight: bold; display: block; font-size: 13px; }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
         .input-bar { padding: 10px; background: rgba(0,0,0,0.08); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; }
@@ -42,6 +42,8 @@
                     <option value="openai">GPT-4o (Умный)</option>
                     <option value="deepseek">DeepSeek R1 (Логика)</option>
                     <option value="llama">Llama 3.3 (Быстрая)</option>
+                    <option value="qwen">Qwen 2.5 (Техник)</option>
+                    <option value="mistral">Mistral (Творческий)</option>
                 </select>
                 <select id="voice-select" class="ai-select">
                     <option value="">Загрузка голосов...</option>
@@ -64,6 +66,7 @@
                 <select id="art-model" class="ai-select">
                     <option value="flux">💎 Flux.1 (Лучший)</option>
                     <option value="flux-realism">📸 Flux Realism (Фото)</option>
+                    <option value="any-dark">🌑 AnyDark (Аниме/Тень)</option>
                     <option value="turbo">⚡ Turbo (Мгновенно)</option>
                 </select>
                 <div id="imgs-box" class="scroll-area"></div>
@@ -103,24 +106,32 @@
     
     const flipSound = new Audio('https://www.soundjay.com/misc/sounds/paper-flip-1.mp3');
 
-    // Настройка голосов
     function loadVoices() {
-        voices = synth.getVoices().filter(v => v.lang.includes('ru'));
+        const allVoices = synth.getVoices();
+        voices = allVoices.filter(v => v.lang.includes('ru') || v.lang.includes('RU'));
         const vSelect = document.getElementById('voice-select');
         vSelect.innerHTML = '';
+        
         if (voices.length === 0) {
-            vSelect.innerHTML = '<option>Голоса не найдены</option>';
+            vSelect.innerHTML = '<option value="">Системный голос</option>';
         } else {
-            voices.forEach(voice => {
+            voices.forEach(v => {
                 const opt = document.createElement('option');
-                opt.textContent = voice.name;
-                opt.value = voice.name;
+                opt.value = v.name;
+                let gender = '👤 ';
+                const n = v.name.toLowerCase();
+                if (n.includes('pavel') || n.includes('alexander') || n.includes('yuri')) gender = '♂ (Мужской) ';
+                if (n.includes('irina') || n.includes('milena') || n.includes('katya')) gender = '♀ (Женский) ';
+                opt.textContent = gender + v.name;
                 vSelect.appendChild(opt);
             });
         }
     }
+
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = loadVoices;
+    }
     loadVoices();
-    if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
 
     document.addEventListener('click', () => {
         flipSound.play().then(() => { flipSound.pause(); flipSound.currentTime = 0; });
@@ -150,11 +161,10 @@
     function speakLoop() {
         if (currentSentIdx >= sentences.length || !isSpeaking) return;
         const ut = new SpeechSynthesisUtterance(sentences[currentSentIdx].trim());
-        
         const selectedVoiceName = document.getElementById('voice-select').value;
-        ut.voice = voices.find(v => v.name === selectedVoiceName);
+        const voice = voices.find(v => v.name === selectedVoiceName);
+        if (voice) ut.voice = voice;
         ut.lang = 'ru-RU';
-        
         ut.onend = () => { if (isSpeaking) { currentSentIdx++; speakLoop(); } };
         synth.speak(ut);
     }
@@ -164,14 +174,16 @@
         if(!i.value) return;
         const v = i.value; i.value = '';
         b.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:10px;opacity:0.6"><b>Вы:</b> ${v}</div>`);
-        const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
-        const data = await res.text();
-        const div = document.createElement('div');
-        div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
-        div.innerHTML = `<b>AI:</b> <span class="pause-badge">⏸ ПАУЗА</span> ${marked.parse(data)}`;
-        div.onclick = () => toggleVoice(data, div);
-        b.insertAdjacentElement('afterbegin', div);
-        toggleVoice(data, div);
+        try {
+            const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(v)}?model=${m}`);
+            const data = await res.text();
+            const div = document.createElement('div');
+            div.style.cssText = "border-bottom:1px dashed #ccc; padding-bottom:12px; margin-bottom:15px; cursor:pointer;";
+            div.innerHTML = `<b>AI:</b> <span class="pause-badge">⏸ ПАУЗА</span> ${marked.parse(data)}`;
+            div.onclick = () => toggleVoice(data, div);
+            b.insertAdjacentElement('afterbegin', div);
+            toggleVoice(data, div);
+        } catch (e) { b.insertAdjacentHTML('afterbegin', `<div>Ошибка связи.</div>`); }
     }
 
     async function genArt() {
