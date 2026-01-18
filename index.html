@@ -18,7 +18,6 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         
-        /* Улучшение №3: Динамический туман */
         @keyframes fogMove {
             0% { background-position: 0% 0%; }
             100% { background-position: 100% 100%; }
@@ -27,7 +26,7 @@
             content: ""; position: fixed; inset: 0; 
             background: url('https://www.transparenttextures.com/patterns/stardust.png');
             opacity: 0.08; pointer-events: none; z-index: 10000;
-            animation: fogMove 120s linear infinite; /* Медленное движение тумана */
+            animation: fogMove 120s linear infinite;
         }
 
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2000px; }
@@ -56,9 +55,8 @@
 
         .scroll-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
         
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 15px; line-height: 1.5; font-size: 15px; cursor: pointer; position: relative; }
-        .ai-box:active { background: rgba(0,0,0,0.02); }
-        .ai-box h1, .ai-box h2 { font-size: 18px; margin: 10px 0; color: var(--accent); }
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 15px; line-height: 1.5; font-size: 15px; cursor: pointer; }
+        .ai-box:active { background: rgba(0,0,0,0.03); }
 
         .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; text-transform: uppercase; }
 
@@ -126,15 +124,15 @@
             <div class="paper-sheet" style="background:var(--leather); border:12px double var(--gold); align-items:center; justify-content:center;">
                 <div style="width: 88%; background: #fff; padding: 10px 10px 45px 10px; box-shadow: 0 25px 60px rgba(0,0,0,0.9); transform: rotate(-1deg); position: relative;">
                     <div style="width:100%; aspect-ratio:16/9; background:#000; overflow:hidden;">
-                        <video autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover; filter: contrast(1.1);">
+                        <video autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover;">
                             <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
                         </video>
                     </div>
                     <div style="position:absolute; bottom:10px; right:15px; font-family:serif; font-style:italic; font-size:12px; color:#555;">K5 Edition</div>
                 </div>
                 <div style="margin-top:50px; text-align:center; color:var(--gold);">
-                    <h1 style="margin:0; letter-spacing:6px; font-size:32px; text-shadow: 3px 3px 5px #000;">НАША КНИГА</h1>
-                    <div style="font-size:13px; opacity:0.7; margin-top:12px; font-weight:bold; letter-spacing:2px;">BOSS EDITION FULL</div>
+                    <h1 style="margin:0; letter-spacing:6px; font-size:32px;">НАША КНИГА</h1>
+                    <div style="font-size:13px; opacity:0.7; margin-top:12px; font-weight:bold;">BOSS EDITION FULL</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -146,10 +144,7 @@
     let step = 1, pz = null, audioReady = false;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
 
-    // Улучшение №2: Функция вибрации
-    function vibrate(ms = 50) {
-        if (navigator.vibrate) navigator.vibrate(ms);
-    }
+    function vibrate(ms = 50) { if (navigator.vibrate) navigator.vibrate(ms); }
 
     function wakeAudio() { 
         if(!audioReady) { 
@@ -157,6 +152,11 @@
             window.speechSynthesis.speak(u); 
             audioReady = true; 
         } 
+    }
+
+    // Остановка всего звука при перелистывании
+    function stopAllSpeech() {
+        window.speechSynthesis.cancel();
     }
 
     async function translateText(txt) {
@@ -183,20 +183,29 @@
             div.className = "ai-box";
             div.innerHTML = `<b>AI (${m.toUpperCase()}):</b><br>${marked.parse(d)}`;
             
-            // Улучшение: Функция Пауза/Стоп при тапе
-            div.onclick = () => {
+            // НОВАЯ ЛОГИКА: Пауза и продолжение с того же места
+            div.onclick = (e) => {
+                e.stopPropagation();
                 if (window.speechSynthesis.speaking) {
-                    window.speechSynthesis.cancel(); // Если говорит — останавливаем
-                    vibrate(20);
+                    if (window.speechSynthesis.paused) {
+                        window.speechSynthesis.resume(); // Продолжить
+                        vibrate(40);
+                    } else {
+                        window.speechSynthesis.pause(); // На паузу
+                        vibrate(20);
+                    }
                 } else {
+                    // Если еще не начинал говорить этот блок
+                    stopAllSpeech();
                     const u = new SpeechSynthesisUtterance(d.replace(/[#*`]/g,''));
                     u.lang = 'ru-RU';
                     window.speechSynthesis.speak(u);
-                    vibrate(40);
+                    vibrate(50);
                 }
             };
+            
             b.insertAdjacentElement('afterbegin', div);
-            vibrate(100); // Вибрация при получении ответа
+            vibrate(100);
         } catch(e) { document.getElementById('status-chat').innerText = "Ошибка соединения"; }
         document.getElementById('status-chat').innerText = "";
     }
@@ -207,13 +216,10 @@
         let txt = i.value; i.value = '';
         vibrate(30);
         document.getElementById('status-art').innerText = "Перевод промпта...";
-        
         let en = await translateText(txt);
         if(m === 'midjourney') en += " --ar 16:9 --v 6.0 --stylize 750";
-        
         document.getElementById('status-art').innerText = "Создание шедевра...";
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&seed=${Date.now()}&nologo=true`;
-        
         const card = `<div style="background:#fff; padding:8px; margin-bottom:20px; border:1px solid #ccc; box-shadow:0 10px 20px rgba(0,0,0,0.15); transform:rotate(${Math.random()*2-1}deg);">
             <img src="${url}" style="width:100%; display:block;" onclick="openZ('${url}')" onload="vibrate(150); document.getElementById('status-art').innerText=''">
             <p style="text-align:center; font-size:12px; margin:8px 0; color:#333; font-weight:bold;">${txt.toUpperCase()}</p>
@@ -223,7 +229,7 @@
 
     function runMic(id, cb, bId) {
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!R) { alert("Микрофон не поддерживается"); return; }
+        if (!R) return;
         const r = new R(); r.lang = 'ru-RU';
         r.onstart = () => { document.getElementById(bId).style.color = 'red'; vibrate(20); };
         r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
@@ -239,7 +245,6 @@
         pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 });
     }
 
-    // Свайп и перелистывание
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
@@ -247,9 +252,11 @@
         let d = sX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 70) {
             if (d > 0 && step < 3) { 
+                stopAllSpeech(); // СТОП ПРИ ПЕРЕЛИСТЫВАНИИ
                 document.getElementById('p'+step).classList.add('flipped'); 
                 step++; flipSound.play(); vibrate(40);
             } else if (d < 0 && step > 1) { 
+                stopAllSpeech(); // СТОП ПРИ ПЕРЕЛИСТЫВАНИИ
                 step--; 
                 document.getElementById('p'+step).classList.remove('flipped'); 
                 flipSound.play(); vibrate(40);
