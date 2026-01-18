@@ -3,418 +3,1071 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА | TELEGRAM BOSS EDITION</title>
+    <title>НАША КНИГА | BOSS AI EDITION</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
-    <!-- Telegram Web App SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <style>
         :root { 
             --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; 
             --leather: #2a0505; --pause-color: #d4af37;
-            --tg-bg: var(--tg-theme-bg-color, #000);
-            --tg-text: var(--tg-theme-text-color, #ffffff);
-            --tg-hint: var(--tg-theme-hint-color, #aaaaaa);
-            --tg-link: var(--tg-theme-link-color, #3390ec);
-            --tg-button: var(--tg-theme-button-color, #3390ec);
-            --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: var(--tg-bg); overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100dvh; 
+            background: #000; overflow: hidden; 
+            font-family: "Georgia", serif; 
+        }
         
+        /* Эффект фона */
+        .bg-fog {
+            position: fixed; inset: 0; 
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/></filter></defs><rect width="100" height="100" filter="url(%23noise)" opacity="0.08"/></svg>');
+            opacity: 0.15; pointer-events: none; z-index: 10000;
+            animation: fogMove 120s linear infinite;
+        }
         @keyframes fogMove { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
-        body::after {
-            content: ""; position: fixed; inset: 0; background: url('https://www.transparenttextures.com/patterns/stardust.png');
-            opacity: 0.08; pointer-events: none; z-index: 10000; animation: fogMove 120s linear infinite;
+
+        /* Основной контейнер */
+        .app-container {
+            width: 100vw; height: 100dvh; position: relative;
+            display: flex; flex-direction: column;
         }
 
-        .tg-header { 
-            height: 56px; background: var(--tg-bg); color: var(--tg-text); 
-            display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid rgba(255,255,255,0.1);
-            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+        /* Заголовок */
+        .app-header {
+            height: 50px; background: linear-gradient(to bottom, #1a1a1a, #000);
+            color: var(--gold); display: flex; align-items: center;
+            justify-content: space-between; padding: 0 15px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            z-index: 100; position: relative;
         }
-        .tg-back-btn { background: none; border: none; color: var(--tg-text); font-size: 20px; margin-right: 12px; }
-        .tg-title { font-weight: 600; font-size: 18px; flex: 1; }
-        .tg-subtitle { font-size: 12px; opacity: 0.7; margin-left: 8px; }
+        .header-title { 
+            font-weight: bold; font-size: 18px; 
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+        .header-btn {
+            background: none; border: none; color: var(--gold);
+            font-size: 20px; cursor: pointer; padding: 5px 10px;
+        }
 
-        .viewport { width: 100vw; height: calc(100dvh - 56px); position: relative; perspective: 2000px; margin-top: 56px; }
-        .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
+        /* Контент */
+        .content-area {
+            flex: 1; overflow: hidden; position: relative;
+            display: flex;
+        }
+
+        /* Страницы */
+        .page {
+            position: absolute; width: 100%; height: 100%;
+            top: 0; left: 0; transition: transform 0.5s ease;
+            display: none;
+        }
+        .page.active { display: flex; flex-direction: column; }
         
-        .page { 
-            position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
-            transform-origin: left; transform-style: preserve-3d; 
-            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
-            pointer-events: none; z-index: 1; 
+        /* Обложка */
+        .cover-page {
+            background: var(--leather); align-items: center;
+            justify-content: center; color: var(--gold);
+            padding: 20px; text-align: center;
+            border: 12px double var(--gold);
         }
-        
-        .paper-sheet { 
-            background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); 
-            color: var(--ink); display: flex; flex-direction: column; height: 100%; 
-            box-shadow: inset 20px 0 50px rgba(0,0,0,0.2); pointer-events: auto; position: relative; overflow: hidden;
+        .cover-video {
+            width: 90%; max-width: 400px; background: #000;
+            border-radius: 10px; overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            margin-bottom: 30px;
+        }
+        .cover-video video {
+            width: 100%; display: block;
+        }
+        .swipe-hint {
+            position: absolute; bottom: 30px;
+            font-size: 14px; opacity: 0.7;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 
+            0%, 100% { opacity: 0.7; } 
+            50% { opacity: 1; } 
         }
 
-        .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
-        .flipped { transform: rotateY(-180deg) !important; z-index: 10 !important; }
-
-        .header { 
-            padding: 12px; background: rgba(0,0,0,0.07); border-bottom: 2px solid var(--ink); 
-            text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; 
+        /* Чат страница */
+        .chat-page { background: var(--paper); }
+        .chat-header {
+            padding: 12px 15px; background: rgba(0,0,0,0.07);
+            border-bottom: 2px solid var(--ink); text-align: center;
+            font-weight: bold; display: flex; justify-content: space-between;
+            align-items: center;
         }
-        .header-btn { background: none; border: none; font-size: 18px; color: var(--accent); cursor: pointer; padding: 5px; }
-        
-        .ai-select { width: 92%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 8px; font-weight: bold; outline: none; }
-        .style-row { display: flex; gap: 5px; width: 92%; margin: 0 auto; padding-top: 5px; }
-        .style-select { flex: 1; padding: 8px; border-radius: 8px; border: 2px solid var(--ink); font-weight: bold; background: #fff; }
-
-        .scroll-area { 
-            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; 
-            scroll-behavior: smooth; 
+        .chat-container {
+            flex: 1; overflow-y: auto; padding: 15px;
+            display: flex; flex-direction: column; gap: 10px;
         }
-        
-        .ai-box { 
-            border-bottom: 1px dashed rgba(0,0,0,0.1); padding: 12px; line-height: 1.6; font-size: 15px; 
-            cursor: pointer; position: relative; transition: all 0.3s ease; border-left: 0px solid transparent;
-            background: rgba(255,255,255,0.8); border-radius: 12px; margin-bottom: 8px;
+        .message { 
+            padding: 10px 14px; border-radius: 15px;
+            max-width: 85%; word-wrap: break-word;
+            line-height: 1.4;
         }
-        .user-msg { 
-            text-align: right; background: rgba(212, 175, 55, 0.1); padding: 10px 14px; 
-            border-radius: 12px; font-size: 14px; margin-bottom: 5px; color: var(--accent);
+        .user-message {
+            background: rgba(212, 175, 55, 0.15);
+            align-self: flex-end; color: var(--accent);
             border: 1px solid rgba(212, 175, 55, 0.3);
+            text-align: right;
         }
-        .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
+        .ai-message {
+            background: rgba(255,255,255,0.9);
+            align-self: flex-start; color: var(--ink);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .ai-thinking {
+            opacity: 0.6; font-style: italic;
+        }
 
-        .input-bar { 
-            padding: 15px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); 
-            padding-bottom: calc(15px + env(safe-area-inset-bottom)); 
+        /* Генератор изображений */
+        .image-page { background: var(--paper); }
+        .image-container {
+            flex: 1; overflow-y: auto; padding: 15px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
         }
-        .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
-        .field { 
-            flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px 15px; 
-            border-radius: 25px; font-size: 16px; outline: none; 
+        .image-item {
+            background: #fff; border-radius: 8px; overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            position: relative;
         }
-        .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
+        .image-item img {
+            width: 100%; height: 150px; object-fit: cover;
+            display: block;
+        }
+        .image-prompt {
+            padding: 8px; font-size: 11px;
+            text-align: center; font-weight: bold;
+        }
 
-        .nav-dots { 
-            position: fixed; bottom: 85px; left: 0; right: 0; display: flex; justify-content: center; 
-            gap: 15px; z-index: 5000; 
+        /* Панель ввода */
+        .input-panel {
+            padding: 15px; background: rgba(255,255,255,0.3);
+            border-top: 1px solid rgba(0,0,0,0.1);
         }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); opacity: 0.3; border: 1px solid #000; transition: 0.3s; }
-        .dot.active { opacity: 1; transform: scale(1.3); }
+        .input-row {
+            display: flex; gap: 10px; align-items: center;
+        }
+        .text-input {
+            flex: 1; background: #fff; border: 2px solid var(--ink);
+            padding: 12px 15px; border-radius: 25px;
+            font-size: 16px; outline: none;
+        }
+        .action-btn {
+            background: none; border: none; font-size: 24px;
+            cursor: pointer; color: var(--ink);
+            width: 50px; height: 50px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .mic-btn.active { color: #ff0000; }
 
-        #z-overlay { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 9999; 
-            display: none; flex-direction: column; 
+        /* Селекторы */
+        .select-row {
+            padding: 10px 15px; display: flex; gap: 10px;
+            background: rgba(255,255,255,0.1);
         }
-        
-        .tg-loading { 
-            position: fixed; inset: 0; background: var(--tg-bg); display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 10000; color: var(--tg-text);
+        .model-select, .style-select {
+            flex: 1; padding: 10px; border-radius: 10px;
+            border: 2px solid var(--ink); background: #fff;
+            font-weight: bold;
         }
-        .tg-spinner { width: 40px; height: 40px; border: 4px solid rgba(212, 175, 55, 0.3); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .tg-toast {
-            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
-            background: var(--tg-button); color: var(--tg-button-text); padding: 12px 24px;
-            border-radius: 25px; font-weight: 500; z-index: 10000; animation: fadeIn 0.3s;
+
+        /* Навигация */
+        .nav-dots {
+            position: fixed; bottom: 80px; left: 0; right: 0;
+            display: flex; justify-content: center; gap: 12px;
+            z-index: 50;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
-        
-        .tg-menu {
-            position: fixed; top: 56px; right: 16px; background: var(--tg-bg); border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: none; flex-direction: column;
-            z-index: 1001; overflow: hidden; min-width: 200px;
+        .nav-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--gold); opacity: 0.3;
+            border: 1px solid #000; transition: 0.3s;
+            cursor: pointer;
         }
-        .tg-menu-item {
-            padding: 14px 20px; color: var(--tg-text); text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1);
-            display: flex; align-items: center; gap: 12px;
+        .nav-dot.active { opacity: 1; transform: scale(1.3); }
+
+        /* Модальное окно */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            z-index: 1000; display: none; flex-direction: column;
         }
-        .tg-menu-item:last-child { border-bottom: none; }
-        .tg-menu-item:hover { background: rgba(255,255,255,0.1); }
-        
-        .context-menu {
-            position: fixed; background: var(--tg-bg); border-radius: 8px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5); display: none; flex-direction: column;
-            z-index: 1002; min-width: 150px;
+        .modal-content {
+            flex: 1; display: flex; align-items: center;
+            justify-content: center; padding: 20px;
         }
-        .context-item {
-            padding: 12px 16px; color: var(--tg-text); cursor: pointer;
-            display: flex; align-items: center; gap: 10px;
+        .modal-img {
+            max-width: 100%; max-height: 100%;
+            border-radius: 10px;
         }
-        .context-item:hover { background: rgba(255,255,255,0.1); }
-        
-        .tg-credits { position: fixed; bottom: 20px; right: 20px; font-size: 10px; opacity: 0.5; color: var(--tg-text); }
+        .modal-close {
+            padding: 20px; text-align: right;
+            color: #fff; font-size: 40px; cursor: pointer;
+        }
+
+        /* Уведомления */
+        .toast {
+            position: fixed; bottom: 120px; left: 50%;
+            transform: translateX(-50%); background: var(--accent);
+            color: #fff; padding: 12px 24px; border-radius: 25px;
+            font-weight: 500; z-index: 1000;
+            animation: toastIn 0.3s;
+            display: none;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 480px) {
+            .header-title { font-size: 16px; }
+            .message { max-width: 95%; }
+            .image-container { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
 <body>
 
-<!-- Telegram Header -->
-<div class="tg-header">
-    <button class="tg-back-btn" onclick="goBack()"><i class="fas fa-chevron-left"></i></button>
-    <div class="tg-title">НАША КНИГА <span class="tg-subtitle" id="page-subtitle">BOSS EDITION</span></div>
-    <button onclick="toggleMenu()" style="background:none; border:none; color:var(--tg-text); font-size:20px;">
-        <i class="fas fa-ellipsis-v"></i>
-    </button>
-</div>
+<!-- Эффект фона -->
+<div class="bg-fog"></div>
 
-<!-- Loading Screen -->
-<div class="tg-loading" id="loading">
-    <div class="tg-spinner"></div>
-    <div>Загрузка Босс-Редакции...</div>
-</div>
+<!-- Уведомления -->
+<div class="toast" id="toast"></div>
 
-<!-- Menu -->
-<div class="tg-menu" id="tg-menu">
-    <a href="javascript:void(0)" class="tg-menu-item" onclick="saveSession()">
-        <i class="fas fa-save"></i> Сохранить сессию
-    </a>
-    <a href="javascript:void(0)" class="tg-menu-item" onclick="loadSession()">
-        <i class="fas fa-history"></i> Загрузить историю
-    </a>
-    <a href="javascript:void(0)" class="tg-menu-item" onclick="exportData()">
-        <i class="fas fa-file-export"></i> Экспорт данных
-    </a>
-    <a href="javascript:void(0)" class="tg-menu-item" onclick="toggleDarkMode()">
-        <i class="fas fa-moon"></i> Темная тема
-    </a>
-    <a href="javascript:void(0)" class="tg-menu-item" onclick="showCredits()">
-        <i class="fas fa-info-circle"></i> О проекте
-    </a>
-</div>
-
-<!-- Context Menu -->
-<div class="context-menu" id="context-menu"></div>
-
-<!-- Zoom Overlay -->
-<div id="z-overlay" onclick="closeZ()">
-    <div style="text-align:right; padding:20px; color:#fff; font-size:40px; cursor:pointer;">×</div>
-    <div id="z-wrap" style="width:100%; height:85%; display:flex; align-items:center; justify-content:center;">
-        <img id="z-img" src="" style="max-width:100%; max-height:100%;">
+<!-- Модальное окно для изображений -->
+<div class="modal-overlay" id="modal">
+    <div class="modal-close" onclick="closeModal()">×</div>
+    <div class="modal-content">
+        <img class="modal-img" id="modal-img" src="">
     </div>
 </div>
 
-<!-- Navigation Dots -->
-<div class="nav-dots">
-    <div class="dot active" onclick="jumpTo(1)"></div>
-    <div class="dot" onclick="jumpTo(2)"></div>
-    <div class="dot" onclick="jumpTo(3)"></div>
-</div>
+<!-- Основной интерфейс -->
+<div class="app-container">
+    
+    <!-- Заголовок -->
+    <div class="app-header">
+        <div class="header-title" id="page-title">НАША КНИГА</div>
+        <div>
+            <button class="header-btn" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
 
-<!-- Main Content -->
-<div class="viewport">
-    <div class="book">
+    <!-- Контент -->
+    <div class="content-area">
         
-        <!-- Page 3: AI Chat -->
-        <div class="page" id="p3">
-            <div class="paper-sheet">
-                <div class="header">
-                    <button class="header-btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
-                    <span>⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</span>
-                    <button class="header-btn" onclick="showModelInfo()"><i class="fas fa-info-circle"></i></button>
+        <!-- Страница 1: Обложка -->
+        <div class="page active" id="page-1">
+            <div class="cover-page">
+                <div class="cover-video">
+                    <video autoplay loop muted playsinline>
+                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
+                    </video>
                 </div>
-                <select id="chat-model" class="ai-select">
-                    <option value="gpt-4">GPT-4 Turbo (Универсал)</option>
-                    <option value="claude-3">Claude 3.5 (Аналитик)</option>
-                    <option value="gemini">Gemini Pro (Креатив)</option>
-                    <option value="llama-3">Llama 3.1 (Мощный)</option>
-                </select>
-                <div id="status-chat" class="status-bar"></div>
-                <div id="hub-box" class="scroll-area"></div>
-                <div class="input-bar">
-                    <div class="row">
-                        <button onclick="runMic('i-chat', sendMsg, 'm-chat')" id="m-chat" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-chat" class="field" placeholder="Запрос..." onkeypress="if(event.key==='Enter') sendMsg()">
-                        <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
+                <h1 style="margin: 0 0 10px 0; letter-spacing: 3px;">
+                    НАША КНИГА
+                </h1>
+                <div style="font-size: 14px; opacity: 0.9;">
+                    BOSS AI EDITION
+                </div>
+                <div class="swipe-hint">
+                    ← СВАЙП ВПРАВО ДЛЯ НАЧАЛА →
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница 2: Генератор изображений -->
+        <div class="page" id="page-2">
+            <div class="image-page">
+                <div class="chat-header">
+                    <button class="header-btn" onclick="clearImages()">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <span>ВИЗУАЛИЗАТОР</span>
+                    <button class="header-btn" onclick="showImageHelp()">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
+                </div>
+                <div class="select-row">
+                    <select class="model-select" id="image-model">
+                        <option value="unsplash">Unsplash (Фото)</option>
+                        <option value="dummy">Демо-режим</option>
+                    </select>
+                    <select class="style-select" id="image-style">
+                        <option value="any">Любой стиль</option>
+                        <option value="nature">Природа</option>
+                        <option value="abstract">Абстракция</option>
+                        <option value="art">Искусство</option>
+                    </select>
+                </div>
+                <div class="image-container" id="image-gallery">
+                    <!-- Изображения будут добавляться здесь -->
+                </div>
+                <div class="input-panel">
+                    <div class="input-row">
+                        <button class="action-btn mic-btn" onclick="startVoiceInput('image-prompt')" id="mic-image">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <input type="text" class="text-input" id="image-prompt" 
+                               placeholder="Опишите изображение..." 
+                               onkeypress="if(event.key === 'Enter') generateImage()">
+                        <button class="action-btn" onclick="generateImage()" style="color: var(--accent);">
+                            <i class="fas fa-magic"></i>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Page 2: Image Generator -->
-        <div class="page" id="p2" style="z-index: 2;">
-            <div class="paper-sheet">
-                <div class="header">
-                    <button class="header-btn" onclick="clearArt()"><i class="fas fa-trash"></i></button>
-                    <span>⬥ ВИЗУАЛИЗАТОР ⬥</span>
-                    <button class="header-btn" onclick="showStyleInfo()"><i class="fas fa-info-circle"></i></button>
+        <!-- Страница 3: ИИ Чат -->
+        <div class="page" id="page-3">
+            <div class="chat-page">
+                <div class="chat-header">
+                    <button class="header-btn" onclick="clearChat()">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <span>ИИ ИНТЕЛЛЕКТ</span>
+                    <button class="header-btn" onclick="showChatHelp()">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
                 </div>
-                <div class="style-row">
-                    <select id="art-model" class="style-select">
-                        <option value="dall-e-3">🖌️ DALL-E 3</option>
-                        <option value="midjourney">🌌 MJ Style</option>
-                        <option value="stable-diffusion">🎨 SDXL</option>
-                    </select>
-                    <select id="art-style" class="style-select">
-                        <option value="none">🎯 Как есть</option>
-                        <option value="photorealistic">📸 Фотореализм</option>
-                        <option value="anime">🎨 Аниме</option>
-                        <option value="vector">🔷 Вектор</option>
-                        <option value="cinematic">🎬 Кино</option>
+                <div class="select-row">
+                    <select class="model-select" id="chat-model">
+                        <option value="gpt">GPT-4 (Универсал)</option>
+                        <option value="assistant">Ассистент</option>
+                        <option value="creative">Креативный</option>
+                        <option value="analyst">Аналитик</option>
                     </select>
                 </div>
-                <div id="status-art" class="status-bar"></div>
-                <div id="imgs-box" class="scroll-area"></div>
-                <div class="input-bar">
-                    <div class="row">
-                        <button onclick="runMic('i-art', genArt, 'm-art')" id="m-art" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Опишите образ..." onkeypress="if(event.key==='Enter') genArt()">
-                        <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
+                <div class="chat-container" id="chat-messages">
+                    <!-- Сообщения будут добавляться здесь -->
+                </div>
+                <div class="input-panel">
+                    <div class="input-row">
+                        <button class="action-btn mic-btn" onclick="startVoiceInput('chat-input')" id="mic-chat">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <input type="text" class="text-input" id="chat-input" 
+                               placeholder="Задайте вопрос..." 
+                               onkeypress="if(event.key === 'Enter') sendMessage()">
+                        <button class="action-btn" onclick="sendMessage()" style="color: var(--accent);">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
                     </div>
                 </div>
             </div>
-            <div class="back"></div>
         </div>
 
-        <!-- Page 1: Cover -->
-        <div class="page" id="p1" style="z-index: 3;">
-            <div class="paper-sheet" style="background:var(--leather); border:12px double var(--gold); align-items:center; justify-content:center;">
-                <div style="width: 85%; background: #fff; padding: 10px 10px 40px 10px; box-shadow: 0 25px 50px rgba(0,0,0,0.8); transform: rotate(-1deg);">
-                    <div id="cover-video"></div>
-                </div>
-                <div style="margin-top:40px; text-align:center; color:var(--gold);">
-                    <h1 style="margin:0; letter-spacing:5px; font-size:28px;">НАША КНИГА</h1>
-                    <div style="font-size:11px; opacity:0.8; margin-top:10px; font-weight:bold;">TELEGRAM BOSS EDITION</div>
-                    <div id="user-info" style="margin-top:20px; font-size:12px;"></div>
-                </div>
-                <div style="margin-top:30px; font-size:12px; color:var(--gold); opacity:0.5; animation: pulse 2s infinite;">
-                    ← СВАЙП ДЛЯ ВХОДА
-                </div>
-            </div>
-            <div class="back"></div>
-        </div>
-        
     </div>
-</div>
 
-<!-- Credits -->
-<div class="tg-credits">BOSS AI Studio © 2024</div>
+    <!-- Навигационные точки -->
+    <div class="nav-dots">
+        <div class="nav-dot active" onclick="switchPage(1)"></div>
+        <div class="nav-dot" onclick="switchPage(2)"></div>
+        <div class="nav-dot" onclick="switchPage(3)"></div>
+    </div>
+
+</div>
 
 <script>
-    // Инициализация Telegram Web App
-    let tg = window.Telegram.WebApp;
-    let userData = null;
-    let step = 1;
-    let pz = null;
-    let speechData = { isPaused: false, lastIndex: 0, currentText: "", activeElement: null };
-    let currentContext = null;
-    
-    // Инициализация при загрузке
-    document.addEventListener('DOMContentLoaded', async () => {
-        await initializeTelegramApp();
-        setTimeout(() => {
-            document.getElementById('loading').style.display = 'none';
-            tg.ready();
-        }, 1500);
+    // Инициализация приложения
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Приложение загружено');
+        
+        // Инициализация переменных
+        window.currentPage = 1;
+        window.speechActive = false;
+        window.recognition = null;
+        
+        // Инициализация свайпов
+        initSwipe();
+        
+        // Загрузка сохраненных данных
+        loadSavedData();
+        
+        // Показываем первую страницу
+        updatePageTitle();
+        
+        console.log('Приложение готово к работе');
     });
 
-    // Инициализация Telegram Web App
-    async function initializeTelegramApp() {
-        try {
-            tg.expand();
-            tg.enableClosingConfirmation();
-            tg.BackButton.onClick(goBack);
-            
-            userData = tg.initDataUnsafe?.user;
-            if (userData) {
-                document.getElementById('user-info').innerHTML = `
-                    👤 ${userData.first_name || ''} ${userData.last_name || ''}
-                    <br><small>@${userData.username || 'user'}</small>
-                `;
+    // Навигация между страницами
+    function switchPage(pageNum) {
+        if (pageNum === window.currentPage) return;
+        
+        // Скрываем текущую страницу
+        document.getElementById(`page-${window.currentPage}`).classList.remove('active');
+        document.querySelectorAll('.nav-dot')[window.currentPage - 1].classList.remove('active');
+        
+        // Показываем новую страницу
+        window.currentPage = pageNum;
+        document.getElementById(`page-${pageNum}`).classList.add('active');
+        document.querySelectorAll('.nav-dot')[pageNum - 1].classList.add('active');
+        
+        // Обновляем заголовок
+        updatePageTitle();
+        
+        // Виброотклик (если поддерживается)
+        if (navigator.vibrate) {
+            navigator.vibrate(30);
+        }
+    }
+
+    function updatePageTitle() {
+        const titles = ['НАША КНИГА', 'ВИЗУАЛИЗАТОР', 'ИИ ИНТЕЛЛЕКТ'];
+        document.getElementById('page-title').textContent = titles[window.currentPage - 1];
+    }
+
+    // Инициализация свайпов
+    function initSwipe() {
+        let startX = 0;
+        let startY = 0;
+        
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+        
+        document.addEventListener('touchend', (e) => {
+            if (document.getElementById('modal').style.display === 'flex') {
+                return;
             }
             
-            // Настройка темы
-            applyTheme();
-            tg.onEvent('themeChanged', applyTheme);
+            const endX = e.changedTouches[0].clientX;
+            const endY = e.changedTouches[0].clientY;
             
-            // Инициализация сохранений
-            await loadSavedSession();
+            const diffX = startX - endX;
+            const diffY = startY - endY;
             
-            // Создание видео-квера
-            createVideoCover();
+            // Проверяем, что это горизонтальный свайп (не вертикальный)
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                if (diffX > 0 && window.currentPage < 3) {
+                    // Свайп влево - следующая страница
+                    switchPage(window.currentPage + 1);
+                } else if (diffX < 0 && window.currentPage > 1) {
+                    // Свайп вправо - предыдущая страница
+                    switchPage(window.currentPage - 1);
+                }
+            }
+        }, { passive: true });
+        
+        // Поддержка клавиатуры для десктопа
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' && window.currentPage < 3) {
+                switchPage(window.currentPage + 1);
+            } else if (e.key === 'ArrowLeft' && window.currentPage > 1) {
+                switchPage(window.currentPage - 1);
+            }
+        });
+    }
+
+    // Голосовой ввод
+    function startVoiceInput(inputId) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            showToast('Голосовой ввод не поддерживается в вашем браузере');
+            return;
+        }
+        
+        // Останавливаем предыдущее распознавание
+        if (window.recognition) {
+            window.recognition.stop();
+        }
+        
+        // Создаем новый экземпляр
+        window.recognition = new SpeechRecognition();
+        window.recognition.lang = 'ru-RU';
+        window.recognition.interimResults = false;
+        window.recognition.continuous = false;
+        
+        // Обновляем UI
+        const micBtn = document.querySelector(`#${inputId === 'chat-input' ? 'mic-chat' : 'mic-image'}`);
+        micBtn.classList.add('active');
+        micBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+        
+        showToast('Говорите...');
+        
+        window.recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById(inputId).value = transcript;
+            
+            // Если это поле чата, автоматически отправляем
+            if (inputId === 'chat-input') {
+                setTimeout(() => sendMessage(), 500);
+            }
+        };
+        
+        window.recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            showToast('Ошибка распознавания: ' + event.error);
+        };
+        
+        window.recognition.onend = () => {
+            // Восстанавливаем UI
+            micBtn.classList.remove('active');
+            micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        };
+        
+        window.recognition.start();
+    }
+
+    // Чат с ИИ
+    async function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const message = input.value.trim();
+        
+        if (!message) {
+            showToast('Введите сообщение');
+            return;
+        }
+        
+        input.value = '';
+        
+        // Добавляем сообщение пользователя
+        addChatMessage('user', message);
+        
+        // Показываем индикатор "думает"
+        const thinkingId = 'thinking-' + Date.now();
+        addChatMessage('ai', 'Думаю...', thinkingId);
+        
+        try {
+            // Используем локальный API или fallback
+            let response;
+            
+            if (message.toLowerCase().includes('привет') || message.toLowerCase().includes('здравствуй')) {
+                response = `Привет! Я ваш ИИ помощник. Чем могу помочь?`;
+            } else if (message.toLowerCase().includes('погода')) {
+                response = `Я пока не могу получать актуальные данные о погоде. Но в будущем эта функция появится!`;
+            } else if (message.toLowerCase().includes('время')) {
+                const now = new Date();
+                response = `Сейчас ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            } else {
+                // Используем text-pollinations.ai как fallback
+                const encoded = encodeURIComponent(`Ответь на русском кратко и понятно: ${message}`);
+                const apiUrl = `https://text.pollinations.ai/prompt/${encoded}`;
+                
+                const res = await fetch(apiUrl);
+                response = await res.text();
+                
+                // Если ответ слишком длинный, обрезаем его
+                if (response.length > 500) {
+                    response = response.substring(0, 500) + '...';
+                }
+            }
+            
+            // Удаляем индикатор "думает"
+            const thinkingElem = document.getElementById(thinkingId);
+            if (thinkingElem) {
+                thinkingElem.remove();
+            }
+            
+            // Добавляем ответ ИИ
+            addChatMessage('ai', response);
+            
+            // Сохраняем в историю
+            saveChatHistory('user', message);
+            saveChatHistory('ai', response);
             
         } catch (error) {
-            console.error('Telegram init error:', error);
-            showToast('Telegram не обнаружен. Используем локальный режим.');
+            console.error('Chat error:', error);
+            
+            // Удаляем индикатор "думает"
+            const thinkingElem = document.getElementById(thinkingId);
+            if (thinkingElem) {
+                thinkingElem.remove();
+            }
+            
+            // Показываем fallback ответ
+            const fallbackResponses = [
+                "Я понял ваш запрос, но сейчас произошла небольшая техническая неполадка.",
+                "Интересный вопрос! Давайте вернемся к нему чуть позже.",
+                "Пока я обучаюсь отвечать на такие вопросы. Спросите что-нибудь другое!",
+                "К сожалению, я не могу обработать этот запрос прямо сейчас."
+            ];
+            
+            const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+            addChatMessage('ai', randomResponse);
+            
+            saveChatHistory('ai', randomResponse);
         }
     }
 
-    function applyTheme() {
-        document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color || '#000000');
-        document.documentElement.style.setProperty('--tg-text', tg.themeParams.text_color || '#ffffff');
-        document.documentElement.style.setProperty('--tg-hint', tg.themeParams.hint_color || '#aaaaaa');
-        document.documentElement.style.setProperty('--tg-link', tg.themeParams.link_color || '#3390ec');
-        document.documentElement.style.setProperty('--tg-button', tg.themeParams.button_color || '#3390ec');
-        document.documentElement.style.setProperty('--tg-button-text', tg.themeParams.button_text_color || '#ffffff');
-    }
-
-    function createVideoCover() {
-        const videoDiv = document.getElementById('cover-video');
-        const video = document.createElement('video');
-        video.autoplay = true;
-        video.loop = true;
-        video.muted = true;
-        video.playsInline = true;
-        video.style.width = '100%';
-        video.style.display = 'block';
-        video.style.objectFit = 'cover';
+    function addChatMessage(sender, text, id = null) {
+        const container = document.getElementById('chat-messages');
+        const messageDiv = document.createElement('div');
         
-        const source = document.createElement('source');
-        source.src = 'https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4';
-        source.type = 'video/mp4';
+        messageDiv.className = `message ${sender}-message`;
+        if (id) {
+            messageDiv.id = id;
+        }
         
-        video.appendChild(source);
-        videoDiv.appendChild(video);
-    }
-
-    // Навигация
-    function jumpTo(s) {
-        if(s === step) return;
-        stopAllSpeech();
-        vibrate(30);
-        
-        // Обновление подзаголовка
-        const subtitles = ['BOSS EDITION', 'ВИЗУАЛИЗАТОР', 'ИНТЕЛЛЕКТ-ХАБ'];
-        document.getElementById('page-subtitle').textContent = subtitles[s-1];
-        
-        // Показ/скрытие кнопки назад
-        if (s > 1) {
-            tg.BackButton.show();
+        if (sender === 'ai' && text === 'Думает...') {
+            messageDiv.className += ' ai-thinking';
+            messageDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${text}`;
         } else {
-            tg.BackButton.hide();
+            messageDiv.textContent = text;
+            
+            // Делаем кликабельным для озвучивания
+            if (sender === 'ai') {
+                messageDiv.style.cursor = 'pointer';
+                messageDiv.onclick = () => speakText(text);
+            }
         }
         
-        // Анимация перелистывания
-        const dots = document.querySelectorAll('.dot');
-        dots.forEach((d, i) => d.classList.toggle('active', i === s-1));
-        document.getElementById('p1').classList.toggle('flipped', s > 1);
-        document.getElementById('p2').classList.toggle('flipped', s > 2);
-        step = s;
+        container.appendChild(messageDiv);
+        container.scrollTop = container.scrollHeight;
     }
 
-    function goBack() {
-        if (step > 1) {
-            jumpTo(step - 1);
+    // Генерация изображений
+    async function generateImage() {
+        const input = document.getElementById('image-prompt');
+        const prompt = input.value.trim();
+        
+        if (!prompt) {
+            showToast('Введите описание изображения');
+            return;
+        }
+        
+        input.value = '';
+        
+        // Показываем индикатор загрузки
+        showToast('Создаю изображение...');
+        
+        const model = document.getElementById('image-model').value;
+        const style = document.getElementById('image-style').value;
+        
+        try {
+            let imageUrl;
+            
+            if (model === 'unsplash') {
+                // Используем Unsplash для демо-изображений
+                const keywords = encodeURIComponent(prompt.split(' ').slice(0, 3).join(','));
+                imageUrl = `https://source.unsplash.com/600x400/?${keywords}`;
+            } else {
+                // Демо-режим с фиксированными изображениями
+                const demoImages = [
+                    'https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+                    'https://images.unsplash.com/photo-1579546929662-711aa81148cf?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+                    'https://images.unsplash.com/photo-1552152974-19b9caf99137?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+                    'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+                    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
+                ];
+                imageUrl = demoImages[Math.floor(Math.random() * demoImages.length)];
+            }
+            
+            // Создаем элемент изображения
+            const gallery = document.getElementById('image-gallery');
+            const imageItem = document.createElement('div');
+            imageItem.className = 'image-item';
+            
+            imageItem.innerHTML = `
+                <img src="${imageUrl}" alt="${prompt}" 
+                     onclick="openModal('${imageUrl}')"
+                     onerror="this.src='https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'">
+                <div class="image-prompt">${prompt.substring(0, 30)}${prompt.length > 30 ? '...' : ''}</div>
+                <div style="position: absolute; top: 5px; right: 5px; display: flex; gap: 5px;">
+                    <button onclick="downloadImage('${imageUrl}', '${prompt.replace(/'/g, "")}')" 
+                            style="background: rgba(255,255,255,0.9); border: none; border-radius: 50%; 
+                                   width: 30px; height: 30px; font-size: 14px;">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Добавляем в начало галереи
+            gallery.insertBefore(imageItem, gallery.firstChild);
+            
+            // Сохраняем в историю
+            saveImageHistory(prompt, imageUrl, model, style);
+            
+            // Виброотклик
+            if (navigator.vibrate) {
+                navigator.vibrate(100);
+            }
+            
+            showToast('Изображение создано!');
+            
+        } catch (error) {
+            console.error('Image generation error:', error);
+            showToast('Ошибка при создании изображения');
         }
     }
 
-    // Свайпы для навигации
-    let startX = 0;
-    document.addEventListener('touchstart', e => {
-        startX = e.touches[0].clientX;
-    }, { passive: true });
-    
-    document.addEventListener('touchend', e => {
-        if(document.getElementById('z-overlay').style.display === 'flex') return;
-        let diff = startX - e.changedTouches[0].clientX;
-        if (Math.abs(diff) > 60) {
-            if (diff > 0 && step < 3) jumpTo(step + 1);
-            else if (diff < 0 && step > 1) jumpTo(step - 1);
+    // Озвучивание текста
+    function speakText(text) {
+        if ('speechSynthesis' in window) {
+            // Останавливаем предыдущее озвучивание
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ru-RU';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            
+            // Находим доступный голос для русского языка
+            const voices = window.speechSynthesis.getVoices();
+            const russianVoice = voices.find(voice => voice.lang.startsWith('ru'));
+            if (russianVoice) {
+                utterance.voice = russianVoice;
+            }
+            
+            window.speechSynthesis.speak(utterance);
+            showToast('Озвучиваю...');
+        } else {
+            showToast('Озвучивание не поддерживается');
         }
-    }, { passive: true });
+    }
+
+    // Модальное окно для изображений
+    function openModal(imageUrl) {
+        document.getElementById('modal-img').src = imageUrl;
+        document.getElementById('modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
+
+    // Скачивание изображений
+    async function downloadImage(url, prompt) {
+        try {
+            showToast('Скачиваю...');
+            
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const objectUrl = window.URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = objectUrl;
+            link.download = (prompt ? prompt.substring(0, 20) : 'image') + '.jpg';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            window.URL.revokeObjectURL(objectUrl);
+            
+            // Виброотклик
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            
+            setTimeout(() => showToast('Скачано!'), 500);
+            
+        } catch (error) {
+            console.error('Download error:', error);
+            showToast('Ошибка скачивания');
+        }
+    }
+
+    // Уведомления
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.style.display = 'block';
+        
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+
+    // Сохранение данных
+    function saveChatHistory(sender, message) {
+        const history = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+        history.push({
+            sender: sender,
+            message: message,
+            timestamp: new Date().toISOString()
+        });
+        
+        // Сохраняем только последние 100 сообщений
+        if (history.length > 100) {
+            history.splice(0, history.length - 100);
+        }
+        
+        localStorage.setItem('chatHistory', JSON.stringify(history));
+    }
+
+    function saveImageHistory(prompt, url, model, style) {
+        const history = JSON.parse(localStorage.getItem('imageHistory') || '[]');
+        history.push({
+            prompt: prompt,
+            url: url,
+            model: model,
+            style: style,
+            timestamp: new Date().toISOString()
+        });
+        
+        // Сохраняем только последние 50 изображений
+        if (history.length > 50) {
+            history.splice(0, history.length - 50);
+        }
+        
+        localStorage.setItem('imageHistory', JSON.stringify(history));
+    }
+
+    function loadSavedData() {
+        try {
+            // Загружаем историю чата
+            const chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+            const chatContainer = document.getElementById('chat-messages');
+            
+            chatHistory.slice(-20).forEach(item => {
+                addChatMessage(item.sender, item.message);
+            });
+            
+            // Загружаем историю изображений
+            const imageHistory = JSON.parse(localStorage.getItem('imageHistory') || '[]');
+            const gallery = document.getElementById('image-gallery');
+            
+            imageHistory.slice(-10).forEach(item => {
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-item';
+                imageItem.innerHTML = `
+                    <img src="${item.url}" alt="${item.prompt}" 
+                         onclick="openModal('${item.url}')"
+                         onerror="this.src='https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'">
+                    <div class="image-prompt">${item.prompt.substring(0, 30)}${item.prompt.length > 30 ? '...' : ''}</div>
+                `;
+                gallery.appendChild(imageItem);
+            });
+            
+        } catch (error) {
+            console.error('Error loading saved data:', error);
+        }
+    }
+
+    // Очистка данных
+    function clearChat() {
+        if (confirm('Очистить всю историю чата?')) {
+            localStorage.removeItem('chatHistory');
+            document.getElementById('chat-messages').innerHTML = '';
+            showToast('Чат очищен');
+        }
+    }
+
+    function clearImages() {
+        if (confirm('Удалить все сгенерированные изображения?')) {
+            localStorage.removeItem('imageHistory');
+            document.getElementById('image-gallery').innerHTML = '';
+            showToast('Изображения удалены');
+        }
+    }
 
     // Меню
     function toggleMenu() {
-        const menu = document.getEle
+        const menuItems = [
+            { text: 'Сохранить все данные', icon: 'save', action: saveAllData },
+            { text: 'Очистить все', icon: 'trash', action: clearAllData },
+            { text: 'Инструкция', icon: 'info-circle', action: showInstructions },
+            { text: 'О проекте', icon: 'code', action: showAbout }
+        ];
+        
+        const menuHtml = `
+            <div style="position: fixed; top: 50px; right: 15px; background: #000; 
+                        color: #fff; border-radius: 10px; padding: 10px 0; 
+                        box-shadow: 0 5px 20px rgba(0,0,0,0.5); z-index: 1000; 
+                        min-width: 200px; border: 1px solid rgba(212, 175, 55, 0.3);">
+                ${menuItems.map(item => `
+                    <div onclick="${item.action.name}()" 
+                         style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); 
+                                display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <i class="fas fa-${item.icon}" style="width: 20px;"></i>
+                        ${item.text}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        // Удаляем существующее меню
+        const existingMenu = document.querySelector('.context-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+            return;
+        }
+        
+        // Создаем новое меню
+        const menu = document.createElement('div');
+        menu.className = 'context-menu';
+        menu.innerHTML = menuHtml;
+        document.body.appendChild(menu);
+        
+        // Закрытие при клике вне меню
+        setTimeout(() => {
+            const closeHandler = (e) => {
+                if (!e.target.closest('.context-menu') && !e.target.closest('.header-btn')) {
+                    menu.remove();
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            document.addEventListener('click', closeHandler);
+        }, 100);
+    }
+
+    function saveAllData() {
+        const data = {
+            chatHistory: JSON.parse(localStorage.getItem('chatHistory') || '[]'),
+            imageHistory: JSON.parse(localStorage.getItem('imageHistory') || '[]'),
+            exportDate: new Date().toISOString()
+        };
+        
+        const dataStr = JSON.stringify(data, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        
+        const link = document.createElement('a');
+        link.href = dataUri;
+        link.download = 'boss_book_data_' + new Date().toISOString().slice(0, 10) + '.json';
+        link.click();
+        
+        showToast('Данные экспортированы');
+        
+        // Закрываем меню
+        document.querySelector('.context-menu')?.remove();
+    }
+
+    function clearAllData() {
+        if (confirm('Удалить ВСЕ данные (чат и изображения)?')) {
+            localStorage.clear();
+            document.getElementById('chat-messages').innerHTML = '';
+            document.getElementById('image-gallery').innerHTML = '';
+            showToast('Все данные удалены');
+            
+            // Закрываем меню
+            document.querySelector('.context-menu')?.remove();
+        }
+    }
+
+    function showInstructions() {
+        const instructions = `
+            <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); 
+                        display: flex; align-items: center; justify-content: center; 
+                        z-index: 1000; padding: 20px;">
+                <div style="background: #000; color: #fff; padding: 25px; border-radius: 15px; 
+                            max-width: 500px; max-height: 80vh; overflow-y: auto; 
+                            border: 2px solid var(--gold);">
+                    <h3 style="color: var(--gold); margin-top: 0;">📖 ИНСТРУКЦИЯ</h3>
+                    
+                    <h4>Навигация:</h4>
+                    <ul>
+                        <li><b>Свайп влево/вправо</b> - переключение страниц</li>
+                        <li><b>Кнопки-точки снизу</b> - быстрый переход</li>
+                        <li><b>Стрелки ← → на клавиатуре</b> - для десктопа</li>
+                    </ul>
+                    
+                    <h4>ИИ Чат (страница 3):</h4>
+                    <ul>
+                        <li>Введите вопрос в текстовое поле</li>
+                        <li>Нажмите микрофон для голосового ввода</li>
+                        <li>Кликните на ответ ИИ для озвучивания</li>
+                        <li>Выберите модель ИИ из выпадающего списка</li>
+                    </ul>
+                    
+                    <h4>Генератор изображений (страница 2):</h4>
+                    <ul>
+                        <li>Опишите изображение текстом или голосом</li>
+                        <li>Выберите стиль генерации</li>
+                        <li>Нажмите на изображение для увеличения</li>
+                        <li>Скачайте изображение кнопкой ↓</li>
+                    </ul>
+                    
+                    <h4>Функции:</h4>
+                    <ul>
+                        <li><b>Автосохранение</b> - все данные сохраняются автоматически</li>
+                        <li><b>Голосовой ввод</b> - поддерживается в современных браузерах</li>
+                        <li><b>Озвучивание</b> - клик на текст ИИ для голосового воспроизведения</li>
+                    </ul>
+                    
+                    <p style="text-align: center; margin-top: 20px; color: var(--gold);">
+                        Для полной функциональности используйте современный браузер
+                    </p>
+                    
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="display: block; margin: 20px auto 0; padding: 10px 20px; 
+                                   background: var(--accent); color: white; border: none; 
+                                   border-radius: 20px; cursor: pointer;">
+                        ПОНЯТНО
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        const modal = document.createElement('div');
+        modal.innerHTML = instructions;
+        document.body.appendChild(modal);
+        
+        // Закрываем меню
+        document.querySelector('.context-menu')?.remove();
+    }
+
+    function showAbout() {
+        const about = `
+            <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); 
+                        display: flex; align-items: center; justify-content: center; 
+                        z-index: 1000; padding: 20px;">
+                <div style="background: #000; color: #fff; padding: 25px; border-radius: 15px; 
+                            max-width: 400px; border: 2px solid var(--gold); text-align: center;">
+                    <h3 style="color: var(--gold); margin-top: 0;">НАША КНИГА</h3>
+                    <p><b>BOSS AI EDITION</b></p>
+                    
+                    <p>Интерактивное приложение с ИИ возможностями:</p>
+                    
+                    <div style="margin: 20px 0;">
+                        <p>🤖 Умный чат с ИИ</p>
+                        <p>🎨 Генератор изображений</p>
+                        <p>🎤 Голосовой ввод</p>
+                        <p>🗣️ Озвучивание текста</p>
+                        <p>💾 Автосохранение данных</p>
+                    </div>
+                    
+                    <p style="font-size: 12px; opacity: 0.7;">
+                        Версия: 1.0<br>
+                        Совместимо с GitHub Pages<br>
+                        Работает в любом современном браузере
+                    </p>
+                    
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="display: block; margin: 20px auto 0; padding: 10px 20px; 
+                                   background: var(--accent); color: white; border: none; 
+                                   border-radius: 20px; cursor: pointer;">
+                        ЗАКРЫТЬ
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        const modal = document.createElement('div');
+        modal.innerHTML = about;
+        document.body.appendChild(modal);
+        
+        // Закрываем меню
+        document.querySelector('.context-menu')?.remove();
+    }
+
+    function showImageHelp() {
+        showToast('Опишите изображение и нажмите кнопку генерации');
+    }
+
+    function showChatHelp() {
+        showToast('Задайте вопрос ИИ или используйте голосовой ввод');
+    }
+
+    // Предзагрузка видео для обложки
+    window.addEventListener('load', () => {
+        const video = document.querySelector('video');
+        if (video) {
+            video.play().catch(e => {
+                console.log('Автовоспроизведение видео заблокировано');
+            });
+        }
+    });
+</script>
+</body>
+</html>
