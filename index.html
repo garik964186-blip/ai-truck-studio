@@ -9,8 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
     
-    <script src="./sherpa-onnx-wasm-main.js"></script>
-
     <style>
         :root { 
             --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; 
@@ -47,10 +45,7 @@
         .header { padding: 12px; background: rgba(0,0,0,0.07); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .header-btn { background: none; border: none; font-size: 18px; color: var(--accent); cursor: pointer; padding: 5px; }
         
-        /* Контейнер настроек */
-        .settings-panel { padding: 10px; background: rgba(0,0,0,0.03); border-bottom: 1px solid rgba(0,0,0,0.1); }
-        .ai-select, .voice-select { width: 100%; background: #fff; border: 2px solid var(--ink); margin-bottom: 5px; padding: 8px; border-radius: 8px; font-weight: bold; outline: none; font-size: 14px; }
-
+        .ai-select { width: 92%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 8px; font-weight: bold; outline: none; }
         .style-row { display: flex; gap: 5px; width: 92%; margin: 0 auto; padding-top: 5px; }
         .style-select { flex: 1; padding: 8px; border-radius: 8px; border: 2px solid var(--ink); font-weight: bold; background: #fff; }
 
@@ -58,7 +53,7 @@
         
         .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.1); padding: 10px 10px; line-height: 1.5; font-size: 15px; cursor: pointer; position: relative; transition: all 0.3s ease; border-left: 0px solid transparent; }
         .user-msg { text-align: right; opacity: 0.6; font-style: italic; font-size: 14px; margin-bottom: 5px; color: var(--accent); }
-        .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
 
         .input-bar { padding: 15px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
@@ -70,10 +65,6 @@
         .dot.active { opacity: 1; transform: scale(1.3); }
 
         #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
-        
-        /* Анимация пульсации для загрузки */
-        .loading-pulse { animation: pulse 1.5s infinite; color: var(--gold); }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
     </style>
 </head>
 <body onclick="wakeAudio()">
@@ -99,21 +90,14 @@
                 <div class="header">
                     <button class="header-btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
                     <span>⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</span>
-                    <button class="header-btn" onclick="initOfflineTTS()"><i class="fas fa-sync-alt"></i></button>
+                    <span style="width:30px"></span>
                 </div>
-                <div class="settings-panel">
-                    <select id="chat-model" class="ai-select">
-                        <option value="openai">GPT-4o (Универсал)</option>
-                        <option value="p1">DeepSeek R1 (Аналитик)</option>
-                        <option value="mistral">Mistral Large (Технарь)</option>
-                        <option value="llama">Llama 3.3 (Мощный мозг)</option>
-                    </select>
-                    <select id="voice-choice" class="voice-select" onchange="initOfflineTTS()">
-                        <option value="ru_RU-irina-medium.onnx">Голос: Ирина (Офлайн)</option>
-                        <option value="ru_RU-denis-medium.onnx">Голос: Денис (Офлайн)</option>
-                        <option value="system">Системный (По умолчанию)</option>
-                    </select>
-                </div>
+                <select id="chat-model" class="ai-select">
+                    <option value="openai">GPT-4o (Универсал)</option>
+                    <option value="p1">DeepSeek R1 (Аналитик)</option>
+                    <option value="mistral">Mistral Large (Технарь)</option>
+                    <option value="llama">Llama 3.3 (Мощный мозг)</option>
+                </select>
                 <div id="status-chat" class="status-bar"></div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -159,7 +143,7 @@
         <div class="page" id="p1" style="z-index: 3;">
             <div class="paper-sheet" style="background:var(--leather); border:12px double var(--gold); align-items:center; justify-content:center;">
                 <div style="width: 85%; background: #fff; padding: 10px 10px 40px 10px; box-shadow: 0 25px 50px rgba(0,0,0,0.8); transform: rotate(-1deg);">
-                    <video autoplay loop muted playsinline style="width:100%; display:block; object-fit:cover; filter: sepia(0.3);">
+                    <video autoplay loop muted playsinline style="width:100%; display:block; object-fit:cover;">
                         <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
                     </video>
                 </div>
@@ -177,131 +161,25 @@
 
 <script>
     let step = 1, pz = null, audioReady = false, isVoiceInput = false;
-    const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
     
-    // Глобальные переменные для Sherpa-ONNX
-    let ttsEngine = null;
-    let ttsModelLoaded = false;
+    // Ссылка на ваш звук с GitHub
+    const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
+
     let speechData = { isPaused: false, lastIndex: 0, currentText: "", activeElement: null };
 
-    // 1. Инициализация Sherpa-ONNX (Офлайн голос)
-    async function initOfflineTTS() {
-        const voiceFile = document.getElementById('voice-choice').value;
-        if(voiceFile === 'system') {
-            ttsModelLoaded = false;
-            document.getElementById('status-chat').innerText = "Используется системный голос";
-            return;
-        }
-
-        document.getElementById('status-chat').innerHTML = "<span class='loading-pulse'>Загрузка нейро-голоса...</span>";
-        
-        try {
-            // Конфигурация согласно вашим файлам
-            const config = {
-                model: `./models/${voiceFile}`,
-                tokens: "./models/tokens.txt",
-                vits: { noiseScale: 0.667, noiseScaleW: 0.8, lengthScale: 1.0 }
-            };
-
-            // Если библиотека загружена корректно через скрипт в head
-            if (typeof createOfflineTts !== 'undefined') {
-                ttsEngine = await createOfflineTts(config);
-                ttsModelLoaded = true;
-                document.getElementById('status-chat').innerText = "Голос готов (Офлайн)";
-            } else {
-                throw new Error("Библиотека Sherpa не найдена");
-            }
-        } catch (e) {
-            console.error(e);
-            document.getElementById('status-chat').innerText = "Ошибка загрузки офлайн голоса";
-            ttsModelLoaded = false;
-        }
-    }
-
-    function wakeAudio() { 
-        if(!audioReady) { 
-            window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); 
-            audioReady = true; 
-            initOfflineTTS(); // Пробуем загрузить офлайн голос при первом клике
-        } 
-    }
-
-    // 2. Логика озвучки (Умное переключение)
-    function handleSpeech(txt, el) {
-        if (speechData.activeElement === el) {
-            if ((ttsModelLoaded || window.speechSynthesis.speaking) && !speechData.isPaused) {
-                stopAllSpeech();
-                speechData.isPaused = true;
-                el.style.borderLeft = "5px solid var(--pause-color)";
-                return;
-            }
-        }
-        
-        stopAllSpeech();
-        // Убираем технические теги из озвучки
-        const cleanText = txt.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/[#*`]/g,'');
-        speechData.activeElement = el;
-        
-        if (ttsModelLoaded && ttsEngine) {
-            playOfflineTTS(cleanText, el);
-        } else {
-            playSystemTTS(cleanText, el);
-        }
-    }
-
-    // Офлайн проигрывание через Sherpa
-    async function playOfflineTTS(text, el) {
-        el.style.background = "rgba(0,0,0,0.05)";
-        el.style.borderLeft = "5px solid var(--accent)";
-        
-        const audioData = await ttsEngine.generate(text);
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const buffer = audioContext.createBuffer(1, audioData.samples.length, audioData.sampleRate);
-        buffer.getChannelData(0).set(audioData.samples);
-        
-        const source = audioContext.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioContext.destination);
-        source.onended = () => {
-            el.style.background = "transparent";
-            el.style.borderLeft = "none";
-        };
-        source.start();
-        speechData.activeSource = source; // Для возможности остановки
-    }
-
-    // Стандартное проигрывание (фолбек)
-    function playSystemTTS(text, el) {
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'ru-RU';
-        el.style.background = "rgba(0,0,0,0.05)";
-        el.style.borderLeft = "5px solid var(--accent)";
-        u.onend = () => {
-            el.style.background = "transparent";
-            el.style.borderLeft = "none";
-        };
-        window.speechSynthesis.speak(u);
-    }
-
-    function stopAllSpeech() {
-        window.speechSynthesis.cancel();
-        if (speechData.activeSource) { try { speechData.activeSource.stop(); } catch(e){} }
-        if (speechData.activeElement) { 
-            speechData.activeElement.style.background = "transparent"; 
-            speechData.activeElement.style.borderLeft = "none"; 
-        }
-        speechData.isPaused = false;
-    }
-
-    // --- ОСТАЛЬНАЯ ЛОГИКА (БЕЗ ИЗМЕНЕНИЙ, НО СОБРАННАЯ) ---
+    // Пробуждение аудио по клику
+    function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
 
     async function translateAndEnhance(text, mode = 'none') {
         try {
             const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
             const d = await r.json();
             let en = d.responseData.translatedText;
-            if (mode === 'simon') en = `Simon's cat style, simple 2D line art, black ink on white background, ${en}`;
+            
+            if (mode === 'simon') en = `Simon's cat style, simple 2D line art, minimalist hand-drawn animation character, black ink on white background, thick outlines, expressive, funny, ${en}`;
             if (mode === 'pro') en += ", masterpiece, 8k, highly detailed";
+            if (mode === 'cartoon') en += ", cartoon style, vibrant";
+            if (mode === 'cinematic') en += ", cinematic lighting, movie shot";
             return en;
         } catch (e) { return text; }
     }
@@ -310,8 +188,11 @@
         if(s === step) return;
         stopAllSpeech(); 
         vibrate(30); 
+        
+        // Воспроизведение звука при смене страницы
         flipSound.currentTime = 0; 
-        flipSound.play().catch(e => {});
+        flipSound.play().catch(e => console.log("Audio play blocked"));
+
         const dots = document.querySelectorAll('.dot');
         dots.forEach((d, i) => d.classList.toggle('active', i === s-1));
         document.getElementById('p1').classList.toggle('flipped', s > 1);
@@ -319,6 +200,7 @@
         step = s;
     }
 
+    // Свайпы
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
     document.addEventListener('touchend', e => {
@@ -351,7 +233,53 @@
             b.appendChild(div);
             b.scrollTop = b.scrollHeight;
             if(isVoiceInput) { handleSpeech(d, div); isVoiceInput = false; }
-        } catch(e) { document.getElementById(tid).innerText = "Ошибка связи"; }
+        } catch(e) { document.getElementById(tid).innerText = "Ошибка API"; }
+    }
+
+    function handleSpeech(txt, el) {
+        if (speechData.activeElement === el) {
+            if (window.speechSynthesis.speaking && !speechData.isPaused) {
+                window.speechSynthesis.cancel();
+                speechData.isPaused = true;
+                el.style.borderLeft = "5px solid var(--pause-color)";
+                return;
+            } else if (speechData.isPaused) {
+                const remaining = speechData.currentText.slice(speechData.lastIndex);
+                playText(remaining, el);
+                speechData.isPaused = false;
+                return;
+            }
+        }
+        stopAllSpeech();
+        speechData.currentText = txt.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/[#*`]/g,'');
+        speechData.activeElement = el;
+        playText(speechData.currentText, el);
+    }
+
+    function playText(text, el) {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ru-RU';
+        el.style.background = "rgba(0,0,0,0.05)";
+        el.style.borderLeft = "5px solid var(--accent)";
+        u.onboundary = (e) => { if (e.name === 'word') speechData.lastIndex = (speechData.currentText.length - text.length) + e.charIndex; };
+        u.onend = () => { if (!speechData.isPaused) { el.style.background = "transparent"; el.style.borderLeft = "none"; speechData.activeElement = null; } };
+        window.speechSynthesis.speak(u);
+    }
+
+    function stopAllSpeech() {
+        window.speechSynthesis.cancel();
+        if (speechData.activeElement) { speechData.activeElement.style.background = "transparent"; speechData.activeElement.style.borderLeft = "none"; }
+        speechData.isPaused = false; speechData.lastIndex = 0; speechData.activeElement = null;
+    }
+
+    function runMic(id, cb, bid) {
+        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if(!R) return;
+        const r = new R(); r.lang = 'ru-RU';
+        r.onstart = () => { document.getElementById(bid).style.color = 'red'; if(id==='i-chat') isVoiceInput=true; };
+        r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
+        r.onend = () => document.getElementById(bid).style.color = 'inherit';
+        r.start();
     }
 
     async function genArt() {
@@ -369,10 +297,32 @@
         div.innerHTML = `
             <img src="${url}" style="width:100%;" onclick="openZ('${url}')">
             <div style="position:absolute; top:8px; right:8px; display:flex; gap:5px;">
-                <button onclick="downloadImage('${url}', '${txt}')" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px;"><i class="fas fa-download"></i></button>
+                <button onclick="downloadImage('${url}', '${txt.replace(/'/g, "")}')" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px;"><i class="fas fa-download"></i></button>
                 <button onclick="this.closest('div').parentElement.remove();" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px; color:var(--accent);">×</button>
             </div>
             <p style="text-align:center;font-size:12px;margin:8px 0;font-weight:bold;">${txt}</p>
         `;
         b.prepend(div);
-        div.querySelector('img').onload = () => { document.getElementById('status-art').i
+        div.querySelector('img').onload = () => { document.getElementById('status-art').innerText = ""; vibrate(100); };
+    }
+
+    async function downloadImage(url, promptText) {
+        try {
+            vibrate(50);
+            const r = await fetch(url);
+            const b = await r.blob();
+            const u = window.URL.createObjectURL(b);
+            const l = document.createElement('a');
+            l.href = u; l.download = promptText.slice(0,20) + ".jpg";
+            l.click(); window.URL.revokeObjectURL(u);
+        } catch (e) { alert("Ошибка загрузки"); }
+    }
+
+    function clearChat() { if(confirm("Очистить?")) document.getElementById('hub-box').innerHTML=''; }
+    function clearArt() { if(confirm("Удалить арты?")) document.getElementById('imgs-box').innerHTML=''; }
+    function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; pz = new PinchZoom.default(document.getElementById('z-wrap'), {maxZoom:4}); }
+    function closeZ() { document.getElementById('z-overlay').style.display = 'none'; if(pz) pz.destroy(); }
+    function vibrate(ms) { if(navigator.vibrate) navigator.vibrate(ms); }
+</script>
+</body>
+</html>
