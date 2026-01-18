@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА | ULTIMATE BOSS EDITION</title>
+    <title>НАША КНИГА | PRO EDITION 2026</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
@@ -144,6 +144,23 @@
     let step = 1, pz = null, audioReady = false, currentUtterance = null, isVoiceInput = false;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
 
+    // --- СЕРВИС ПЕРЕВОДА И УЛУЧШЕНИЯ ---
+    async function translateAndEnhance(text, isArt = false) {
+        try {
+            const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
+            const d = await r.json();
+            let enText = d.responseData.translatedText;
+            
+            if (isArt) {
+                // Добавляем технические параметры для красоты картинок
+                enText += ", highly detailed, masterpiece, 8k resolution, cinematic lighting, sharp focus";
+            }
+            return enText;
+        } catch (e) {
+            return text; // Если переводчик упал, возвращаем оригинал
+        }
+    }
+
     window.onload = () => {
         const saved = localStorage.getItem('boss_chat_history');
         if(saved) document.getElementById('hub-box').innerHTML = saved;
@@ -176,33 +193,39 @@
         }
     }, {passive: true});
 
+    // --- УЛУЧШЕННЫЙ ЧАТ ---
     async function sendMsg() {
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
         b.insertAdjacentHTML('beforeend', `<div class="user-msg">Босс: ${val}</div>`);
         const tid = 'l-'+Date.now();
-        b.insertAdjacentHTML('beforeend', `<div id="${tid}" style="font-size:12px;opacity:0.5">⚡ Соединение...</div>`);
+        b.insertAdjacentHTML('beforeend', `<div id="${tid}" style="font-size:12px;opacity:0.5">⚡ Обработка и перевод...</div>`);
         b.scrollTop = b.scrollHeight;
 
         try {
-            // Внедряем дату 18 января 2026 года в системный промпт
-            const systemPrompt = encodeURIComponent("Answer in Russian. Address as Boss. Today is Sunday, January 18, 2026. Request: ");
-            const r = await fetch(`https://text.pollinations.ai/prompt/${systemPrompt}${encodeURIComponent(val)}?model=${m}&seed=${Math.floor(Math.random()*99999)}`);
+            // 1. Переводим запрос на английский для лучшего понимания нейросетью
+            const englishQuery = await translateAndEnhance(val);
+            
+            // 2. Формируем сложный промпт (Инструкция на англ, чтобы думала лучше, но ответ на рус)
+            const promptContext = `Today is January 18, 2026. Respond in Russian language only. Address the user as Boss. User query: ${englishQuery}`;
+            
+            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(promptContext)}?model=${m}&seed=${Math.floor(Math.random()*99999)}`);
             const d = await r.text();
             
             document.getElementById(tid).remove();
             const div = document.createElement('div');
             div.className = "ai-box";
-            div.innerHTML = `<b>AI:</b><br>${marked.parse(d)}`;
+            div.innerHTML = `<b>AI (${m.toUpperCase()}):</b><br>${marked.parse(d)}`;
             div.onclick = () => handleSpeech(d, div);
             b.appendChild(div);
             localStorage.setItem('boss_chat_history', b.innerHTML);
             b.scrollTop = b.scrollHeight;
             if(isVoiceInput) { handleSpeech(d, div); isVoiceInput = false; }
-        } catch(e) { document.getElementById(tid).innerText = "Ошибка нейросети. Попробуйте другую модель."; }
+        } catch(e) { document.getElementById(tid).innerText = "Ошибка нейросети."; }
     }
 
+    // --- ОЗВУЧКА ---
     function handleSpeech(txt, el) {
         if (window.speechSynthesis.speaking && currentUtterance) {
             if (window.speechSynthesis.paused) window.speechSynthesis.resume();
@@ -213,6 +236,13 @@
         let clean = txt.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/[#*`]/g,'');
         currentUtterance = new SpeechSynthesisUtterance(clean);
         currentUtterance.lang = 'ru-RU';
+        currentUtterance.rate = 1.0;
+        
+        // Поиск лучшего голоса
+        const voices = window.speechSynthesis.getVoices();
+        const bestVoice = voices.find(v => v.name.includes("Google") && v.lang.includes("ru")) || voices.find(v => v.lang.includes("ru"));
+        if(bestVoice) currentUtterance.voice = bestVoice;
+
         currentUtterance.onend = () => el.style.background = "transparent";
         el.style.background = "rgba(0,0,0,0.05)";
         window.speechSynthesis.speak(currentUtterance);
@@ -230,16 +260,20 @@
         r.start();
     }
 
+    // --- УЛУЧШЕННЫЙ АРТ ---
     async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if(!i.value) return;
         const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Нейросеть рисует...";
+        document.getElementById('status-art').innerText = "Улучшение промпта и перевод...";
         vibrate(30);
 
-        // Добавляем случайный seed, чтобы картинки всегда были разными
+        // 1. Переводим и добавляем художественные параметры
+        const enhancedPrompt = await translateAndEnhance(txt, true);
+        
+        document.getElementById('status-art').innerText = "Нейросеть рисует (HD)...";
         const seed = Math.floor(Math.random() * 1000000);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(txt)}?model=${m}&seed=${seed}&nologo=true`;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?model=${m}&seed=${seed}&nologo=true&width=1024&height=1024`;
         
         const div = document.createElement('div');
         div.style.cssText = "background:#fff;padding:5px;margin-bottom:15px;box-shadow:0 5px 15px rgba(0,0,0,0.2);border-radius:5px;";
@@ -259,7 +293,7 @@
     function closeZ() { document.getElementById('z-overlay').style.display = 'none'; if(pz) pz.destroy(); }
     function vibrate(ms) { if(navigator.vibrate) navigator.vibrate(ms); }
     function saveSettings() { localStorage.setItem('chat_model', document.getElementById('chat-model').value); }
-    function clearChat() { if(confirm("Босс, стереть все записи в этой книге?")) { document.getElementById('hub-box').innerHTML=''; localStorage.removeItem('boss_chat_history'); } }
+    function clearChat() { if(confirm("Босс, стереть историю?")) { document.getElementById('hub-box').innerHTML=''; localStorage.removeItem('boss_chat_history'); } }
 </script>
 </body>
 </html>
