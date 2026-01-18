@@ -53,10 +53,34 @@
         .header { padding: 12px; background: rgba(0,0,0,0.07); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 16px; letter-spacing: 1px; }
         .ai-select { width: 92%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 14px; outline: none; appearance: none; }
 
-        .scroll-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .scroll-area { 
+            flex: 1; 
+            overflow-y: auto; 
+            overflow-x: hidden; /* Фикс: запрещаем горизонтальный сдвиг */
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            scroll-behavior: smooth; 
+        }
         
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 15px; line-height: 1.5; font-size: 15px; cursor: pointer; }
-        .ai-box:active { background: rgba(0,0,0,0.03); }
+        /* Фикс: Чтобы текст ИИ не убегал за поля */
+        .ai-box { 
+            border-bottom: 1px dashed rgba(0,0,0,0.2); 
+            padding-bottom: 15px; 
+            line-height: 1.5; 
+            font-size: 15px; 
+            cursor: pointer; 
+            word-wrap: break-word; 
+            overflow-wrap: break-word; 
+            max-width: 100%; 
+        }
+        .ai-box pre, .ai-box code { 
+            white-space: pre-wrap; 
+            word-break: break-all; 
+            background: rgba(0,0,0,0.05); 
+            padding: 5px; 
+        }
 
         .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; text-transform: uppercase; }
 
@@ -142,6 +166,7 @@
 
 <script>
     let step = 1, pz = null, audioReady = false;
+    let currentReadingBlock = null; // Трекер для умной озвучки
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
 
     function vibrate(ms = 50) { if (navigator.vibrate) navigator.vibrate(ms); }
@@ -154,9 +179,9 @@
         } 
     }
 
-    // Остановка всего звука при перелистывании
     function stopAllSpeech() {
         window.speechSynthesis.cancel();
+        currentReadingBlock = null;
     }
 
     async function translateText(txt) {
@@ -186,21 +211,20 @@
             // НОВАЯ ЛОГИКА: Пауза и продолжение с того же места
             div.onclick = (e) => {
                 e.stopPropagation();
-                if (window.speechSynthesis.speaking) {
-                    if (window.speechSynthesis.paused) {
-                        window.speechSynthesis.resume(); // Продолжить
-                        vibrate(40);
+                if (currentReadingBlock === div) {
+                    if (window.speechSynthesis.speaking) {
+                        if (window.speechSynthesis.paused) {
+                            window.speechSynthesis.resume(); 
+                            vibrate(40);
+                        } else {
+                            window.speechSynthesis.pause(); 
+                            vibrate(20);
+                        }
                     } else {
-                        window.speechSynthesis.pause(); // На паузу
-                        vibrate(20);
+                        startNewSpeech(d, div);
                     }
                 } else {
-                    // Если еще не начинал говорить этот блок
-                    stopAllSpeech();
-                    const u = new SpeechSynthesisUtterance(d.replace(/[#*`]/g,''));
-                    u.lang = 'ru-RU';
-                    window.speechSynthesis.speak(u);
-                    vibrate(50);
+                    startNewSpeech(d, div);
                 }
             };
             
@@ -208,6 +232,17 @@
             vibrate(100);
         } catch(e) { document.getElementById('status-chat').innerText = "Ошибка соединения"; }
         document.getElementById('status-chat').innerText = "";
+    }
+
+    function startNewSpeech(text, element) {
+        stopAllSpeech();
+        currentReadingBlock = element;
+        const cleanText = text.replace(/[#*`]/g,'');
+        const u = new SpeechSynthesisUtterance(cleanText);
+        u.lang = 'ru-RU';
+        u.onend = () => { if(currentReadingBlock === element) currentReadingBlock = null; };
+        window.speechSynthesis.speak(u);
+        vibrate(50);
     }
 
     async function genArt() {
@@ -252,11 +287,11 @@
         let d = sX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 70) {
             if (d > 0 && step < 3) { 
-                stopAllSpeech(); // СТОП ПРИ ПЕРЕЛИСТЫВАНИИ
+                stopAllSpeech(); 
                 document.getElementById('p'+step).classList.add('flipped'); 
                 step++; flipSound.play(); vibrate(40);
             } else if (d < 0 && step > 1) { 
-                stopAllSpeech(); // СТОП ПРИ ПЕРЕЛИСТЫВАНИИ
+                stopAllSpeech(); 
                 step--; 
                 document.getElementById('p'+step).classList.remove('flipped'); 
                 flipSound.play(); vibrate(40);
