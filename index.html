@@ -18,11 +18,16 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         
-        /* Эффект тумана/зернистости поверх всего */
+        /* Улучшение №3: Динамический туман */
+        @keyframes fogMove {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
         body::after {
             content: ""; position: fixed; inset: 0; 
             background: url('https://www.transparenttextures.com/patterns/stardust.png');
-            opacity: 0.05; pointer-events: none; z-index: 10000;
+            opacity: 0.08; pointer-events: none; z-index: 10000;
+            animation: fogMove 120s linear infinite; /* Медленное движение тумана */
         }
 
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2000px; }
@@ -46,29 +51,22 @@
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
 
-        /* Шапка и выбор моделей */
         .header { padding: 12px; background: rgba(0,0,0,0.07); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 16px; letter-spacing: 1px; }
         .ai-select { width: 92%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 14px; outline: none; appearance: none; }
 
-        /* Область контента */
         .scroll-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
         
-        /* Стилизация ответов AI */
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 15px; line-height: 1.5; font-size: 15px; }
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 15px; line-height: 1.5; font-size: 15px; cursor: pointer; position: relative; }
+        .ai-box:active { background: rgba(0,0,0,0.02); }
         .ai-box h1, .ai-box h2 { font-size: 18px; margin: 10px 0; color: var(--accent); }
-        .ai-box ul, .ai-box ol { padding-left: 20px; }
-        .ai-box code { background: rgba(0,0,0,0.05); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
 
         .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; text-transform: uppercase; }
 
-        /* Ввод */
         .input-bar { padding: 15px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
-        .field { flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px 15px; border-radius: 25px; font-size: 16px; outline: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); transition: transform 0.2s; }
-        .btn:active { transform: scale(0.9); }
+        .field { flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px 15px; border-radius: 25px; font-size: 16px; outline: none; }
+        .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
 
-        /* Оверлей для зума изображений */
         #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
     </style>
 </head>
@@ -137,7 +135,6 @@
                 <div style="margin-top:50px; text-align:center; color:var(--gold);">
                     <h1 style="margin:0; letter-spacing:6px; font-size:32px; text-shadow: 3px 3px 5px #000;">НАША КНИГА</h1>
                     <div style="font-size:13px; opacity:0.7; margin-top:12px; font-weight:bold; letter-spacing:2px;">BOSS EDITION FULL</div>
-                    <div style="font-size:10px; margin-top:30px; color:#fff; opacity:0.4; font-family:monospace;">SYSTEM ONLINE | NO LIMITS</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -148,6 +145,11 @@
 <script>
     let step = 1, pz = null, audioReady = false;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
+
+    // Улучшение №2: Функция вибрации
+    function vibrate(ms = 50) {
+        if (navigator.vibrate) navigator.vibrate(ms);
+    }
 
     function wakeAudio() { 
         if(!audioReady) { 
@@ -181,13 +183,20 @@
             div.className = "ai-box";
             div.innerHTML = `<b>AI (${m.toUpperCase()}):</b><br>${marked.parse(d)}`;
             
-            // Чтение ответа по клику
+            // Улучшение: Функция Пауза/Стоп при тапе
             div.onclick = () => {
-                window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance(d.replace(/[#*`]/g,''));
-                u.lang = 'ru-RU'; window.speechSynthesis.speak(u);
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel(); // Если говорит — останавливаем
+                    vibrate(20);
+                } else {
+                    const u = new SpeechSynthesisUtterance(d.replace(/[#*`]/g,''));
+                    u.lang = 'ru-RU';
+                    window.speechSynthesis.speak(u);
+                    vibrate(40);
+                }
             };
             b.insertAdjacentElement('afterbegin', div);
+            vibrate(100); // Вибрация при получении ответа
         } catch(e) { document.getElementById('status-chat').innerText = "Ошибка соединения"; }
         document.getElementById('status-chat').innerText = "";
     }
@@ -196,6 +205,7 @@
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
         let txt = i.value; i.value = '';
+        vibrate(30);
         document.getElementById('status-art').innerText = "Перевод промпта...";
         
         let en = await translateText(txt);
@@ -205,7 +215,7 @@
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&seed=${Date.now()}&nologo=true`;
         
         const card = `<div style="background:#fff; padding:8px; margin-bottom:20px; border:1px solid #ccc; box-shadow:0 10px 20px rgba(0,0,0,0.15); transform:rotate(${Math.random()*2-1}deg);">
-            <img src="${url}" style="width:100%; display:block;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
+            <img src="${url}" style="width:100%; display:block;" onclick="openZ('${url}')" onload="vibrate(150); document.getElementById('status-art').innerText=''">
             <p style="text-align:center; font-size:12px; margin:8px 0; color:#333; font-weight:bold;">${txt.toUpperCase()}</p>
         </div>`;
         b.insertAdjacentHTML('afterbegin', card);
@@ -213,22 +223,23 @@
 
     function runMic(id, cb, bId) {
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!R) { alert("Микрофон не поддерживается в этом браузере"); return; }
+        if (!R) { alert("Микрофон не поддерживается"); return; }
         const r = new R(); r.lang = 'ru-RU';
-        r.onstart = () => document.getElementById(bId).style.color = 'red';
+        r.onstart = () => { document.getElementById(bId).style.color = 'red'; vibrate(20); };
         r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
         r.onend = () => document.getElementById(bId).style.color = 'inherit';
         r.start();
     }
 
     function openZ(u) {
+        vibrate(30);
         document.getElementById('z-img').src = u;
         document.getElementById('z-overlay').style.display = 'flex';
         if(pz) pz.destroy();
         pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 });
     }
 
-    // Логика перелистывания (свайп)
+    // Свайп и перелистывание
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
@@ -237,11 +248,11 @@
         if (Math.abs(d) > 70) {
             if (d > 0 && step < 3) { 
                 document.getElementById('p'+step).classList.add('flipped'); 
-                step++; flipSound.play(); 
+                step++; flipSound.play(); vibrate(40);
             } else if (d < 0 && step > 1) { 
                 step--; 
                 document.getElementById('p'+step).classList.remove('flipped'); 
-                flipSound.play(); 
+                flipSound.play(); vibrate(40);
             }
         }
     });
