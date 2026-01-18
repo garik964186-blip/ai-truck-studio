@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BOSS BOOK | SUPREME EDITION</title>
+    <title>BOSS BOOK | PRO CONTROL</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/medium-zoom/1.1.0/medium-zoom.min.js"></script>
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; --leather: #3d0a0a; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         body, html { margin: 0; padding: 0; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2000px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
@@ -24,11 +25,12 @@
         
         .input-bar { padding: 15px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
-        .field { flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px; border-radius: 25px; font-size: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .field { flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px; border-radius: 25px; font-size: 16px; }
         .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; }
         
-        .ai-card { border-left: 5px solid var(--accent); padding: 10px; background: rgba(255,255,255,0.5); border-radius: 0 10px 10px 0; cursor: pointer; }
-        .art-card { background: #fff; padding: 10px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .ai-card { border-left: 5px solid var(--accent); padding: 10px; background: rgba(255,255,255,0.5); border-radius: 0 10px 10px 0; cursor: pointer; position: relative; transition: background 0.3s; }
+        .ai-card.playing { background: rgba(139, 0, 0, 0.1); border-left-color: #2ecc71; }
+        .art-card img { width: 100%; border-radius: 5px; cursor: zoom-in; }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -38,24 +40,22 @@
         
         <div class="page" id="p3">
             <div class="paper-sheet">
-                <div class="header">🎙️ НЕЙРО-КОНТАКТ</div>
+                <div class="header">🎙️ УПРАВЛЕНИЕ ГОЛОСОМ</div>
                 <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Boss Choice)</option>
-                    <option value="deepseek">DeepSeek R1 (Deep Think)</option>
-                    <option value="llama">Llama 3.3 (Meta)</option>
-                    <option value="mistral">Mistral Large (Fast)</option>
-                    <option value="qwen">Qwen 2.5 (Logic)</option>
+                    <option value="openai">GPT-4o</option>
+                    <option value="deepseek">DeepSeek R1</option>
+                    <option value="llama">Llama 3.3</option>
                 </select>
                 <select id="voice-choice" class="ai-select" style="border-color: var(--accent);">
-                    <option value="ru-RU-DmitryNeural">🎤 Премиум Дмитрий</option>
-                    <option value="ru-RU-SvetlanaNeural">🎤 Премиум Светлана</option>
+                    <option value="ru-RU-DmitryNeural">🎤 Дмитрий (Пауза тапом)</option>
+                    <option value="ru-RU-SvetlanaNeural">🎤 Светлана (Пауза тапом)</option>
                 </select>
                 <div id="status-chat" class="status-bar"></div>
                 <div id="chat-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="startMic('i-chat')" class="btn"><i class="fas fa-microphone" style="color:var(--accent)"></i></button>
-                        <input type="text" id="i-chat" class="field" placeholder="Ваш приказ, Босс...">
+                        <input type="text" id="i-chat" class="field" placeholder="Приказ босса...">
                         <button onclick="sendChat()" class="btn"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
@@ -64,19 +64,17 @@
 
         <div class="page" id="p2" style="z-index: 2;">
             <div class="paper-sheet">
-                <div class="header">🎨 ХУДОЖЕСТВЕННАЯ БАЗА</div>
+                <div class="header">🎨 ЖИВОЙ ЗУМ КАРТИН</div>
                 <select id="art-model" class="ai-select">
-                    <option value="flux">FLUX.1 (Ультра-реализм)</option>
-                    <option value="flux-realism">FLUX Realism (Фото)</option>
-                    <option value="any-dark">Any Dark (Кинематограф)</option>
-                    <option value="turbo">Turbo (Мгновенно)</option>
+                    <option value="flux">FLUX.1 High</option>
+                    <option value="turbo">Turbo Speed</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
                 <div id="art-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="startMic('i-art')" class="btn"><i class="fas fa-microphone" style="color:var(--accent)"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Что нарисовать?">
+                        <input type="text" id="i-art" class="field" placeholder="Что рисуем?">
                         <button onclick="genArt()" class="btn"><i class="fas fa-magic"></i></button>
                     </div>
                 </div>
@@ -86,13 +84,12 @@
 
         <div class="page" id="p1" style="z-index: 3;">
             <div class="paper-sheet" style="background:var(--leather); border:12px double var(--gold); align-items:center; justify-content:center;">
-                <div style="width: 85%; background: #fff; padding: 10px 10px 35px 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.9); transform: rotate(-1.5deg);">
-                    <video autoplay loop muted playsinline style="width:100%; background:#000;">
+                <div style="width: 80%; background: #fff; padding: 10px 10px 30px 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.9); transform: rotate(-1.5deg);">
+                    <video autoplay loop muted playsinline style="width:100%;">
                         <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
                     </video>
                 </div>
-                <h1 style="color:var(--gold); margin-top:30px; font-size:30px; letter-spacing:4px;">BOSS BOOK</h1>
-                <p style="color:#fff; opacity:0.4; font-size:12px; margin-top:20px;">v6.0 SUPREME ONLINE</p>
+                <h1 style="color:var(--gold); margin-top:20px;">BOSS PRO</h1>
             </div>
             <div class="back"></div>
         </div>
@@ -101,48 +98,67 @@
 </div>
 
 <script>
-    let step = 1, audioActive = false, currentAudio = null;
+    let step = 1, audioActive = false;
+    let currentAudio = null;
+    let isPaused = false;
 
     function initAudio() { audioActive = true; }
 
-    // ПРЕМИУМ ГОЛОС (Microsoft Edge)
-    async function speakBoss(text) {
+    // УПРАВЛЕНИЕ ОЗВУЧКОЙ С ПАУЗОЙ
+    function toggleVoice(text, element) {
         if (!audioActive) return;
+
+        // Если это то же самое сообщение и оно играет - ставим на паузу
+        if (currentAudio && currentAudio.dataset.text === text) {
+            if (isPaused) {
+                currentAudio.play();
+                isPaused = false;
+                element.classList.add('playing');
+                document.getElementById('status-chat').innerText = "ПРОДОЛЖАЮ...";
+            } else {
+                currentAudio.pause();
+                isPaused = true;
+                element.classList.remove('playing');
+                document.getElementById('status-chat').innerText = "ПАУЗА (ТАПНИТЕ СНОВА)";
+            }
+            return;
+        }
+
+        // Если новое сообщение - сбрасываем старое и начинаем
         if (currentAudio) currentAudio.pause();
         
         const voice = document.getElementById('voice-choice').value;
-        document.getElementById('status-chat').innerText = "СИНТЕЗИРУЮ ЖИВОЙ ГОЛОС...";
+        document.getElementById('status-chat').innerText = "ЗАГРУЗКА ГОЛОСА...";
         
-        const url = `https://dictat.online/api/tts?text=${encodeURIComponent(text)}&voice=${voice}`;
-        currentAudio = new Audio(url);
+        currentAudio = new Audio(`https://dictat.online/api/tts?text=${encodeURIComponent(text)}&voice=${voice}`);
+        currentAudio.dataset.text = text;
         
-        currentAudio.oncanplaythrough = () => {
-            document.getElementById('status-chat').innerText = "";
-            currentAudio.play();
+        currentAudio.onplay = () => {
+            isPaused = false;
+            document.querySelectorAll('.ai-card').forEach(el => el.classList.remove('playing'));
+            element.classList.add('playing');
+            document.getElementById('status-chat').innerText = "ГОВОРЮ...";
         };
 
-        currentAudio.onerror = () => {
-            document.getElementById('status-chat').innerText = "РЕЗЕРВНЫЙ ГОЛОС";
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = 'ru-RU';
-            window.speechSynthesis.speak(u);
+        currentAudio.onended = () => {
+            element.classList.remove('playing');
+            document.getElementById('status-chat').innerText = "";
         };
+
+        currentAudio.play();
     }
 
-    // МИКРОФОН (ОБЩИЙ ДЛЯ ВСЕХ СТРАНИЦ)
-    function startMic(targetInputId) {
+    // МИКРОФОН
+    function startMic(id) {
         const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Speech) return alert("Микрофон не поддерживается");
-        
-        const rec = new Speech();
-        rec.lang = 'ru-RU';
-        rec.onstart = () => { document.querySelector(`#${targetInputId}`).style.borderColor = "lime"; };
+        if (!Speech) return;
+        const rec = new Speech(); rec.lang = 'ru-RU';
+        rec.onstart = () => document.getElementById(id).style.background = "#e1ffed";
         rec.onresult = (e) => {
-            const txt = e.results[0][0].transcript;
-            document.getElementById(targetInputId).value = txt;
-            if(targetInputId === 'i-chat') sendChat(); else genArt();
+            document.getElementById(id).value = e.results[0][0].transcript;
+            if(id === 'i-chat') sendChat(); else genArt();
         };
-        rec.onend = () => { document.querySelector(`#${targetInputId}`).style.borderColor = "var(--ink)"; };
+        rec.onend = () => document.getElementById(id).style.background = "#fff";
         rec.start();
     }
 
@@ -151,39 +167,39 @@
         const i = document.getElementById('i-chat'), b = document.getElementById('chat-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; font-size:12px; color:#666; margin-bottom:5px;">Вы: ${val}</div>`);
-        document.getElementById('status-chat').innerText = "ДУМАЮ...";
-
-        try {
-            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent("Answer in Russian, address me as Boss: " + val)}?model=${m}`);
-            const d = await r.text();
-            const div = document.createElement('div');
-            div.className = "ai-card";
-            div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
-            div.onclick = () => speakBoss(d);
-            b.insertAdjacentElement('afterbegin', div);
-            speakBoss(d);
-        } catch(e) { document.getElementById('status-chat').innerText = "ОШИБКА СЕТИ"; }
+        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; font-size:12px; margin-bottom:5px; opacity:0.5;">Босс: ${val}</div>`);
+        
+        const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent("Коротко на русском, Босс: " + val)}?model=${m}`);
+        const d = await r.text();
+        
+        const div = document.createElement('div');
+        div.className = "ai-card";
+        div.innerHTML = marked.parse(d);
+        div.onclick = () => toggleVoice(d, div);
+        b.insertAdjacentElement('afterbegin', div);
+        toggleVoice(d, div);
     }
 
-    // ГРАФИКА
+    // ГРАФИКА С ЗУМОМ
     async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('art-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
         const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "НЕЙРОСЕТЬ РИСУЕТ...";
-
+        document.getElementById('status-art').innerText = "РИСУЮ...";
+        
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(txt)}?model=${m}&nologo=true&seed=${Date.now()}`;
-        const card = `
-            <div class="art-card">
-                <img src="${url}" style="width:100%; border-radius:5px;" onclick="window.open('${url}')">
-                <p style="text-align:center; font-size:12px; margin-top:8px; font-weight:bold;">${txt}</p>
-            </div>`;
-        b.insertAdjacentHTML('afterbegin', card);
+        const div = document.createElement('div');
+        div.className = "art-card";
+        div.style.marginBottom = "15px";
+        div.innerHTML = `<img src="${url}" class="zoomable"><p style="text-align:center; font-size:12px; font-weight:bold;">${txt}</p>`;
+        b.insertAdjacentElement('afterbegin', div);
+        
+        // Инициализируем зум для новой картинки
+        mediumZoom('.zoomable', { background: '#000', margin: 10 });
         document.getElementById('status-art').innerText = "";
     }
 
-    // ЛИСТАНИЕ
+    // СВАЙПЫ
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
