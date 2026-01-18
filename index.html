@@ -125,6 +125,17 @@
         setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
     }
 
+    // Вспомогательная функция для перевода
+    async function translateText(text) {
+        try {
+            const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
+            const d = await r.json();
+            return d.responseData.translatedText;
+        } catch (e) {
+            return text; // Если ошибка, возвращаем как есть
+        }
+    }
+
     async function speak(t) {
         wakeAudio();
         const eng = document.getElementById('voice-engine').value;
@@ -150,11 +161,19 @@
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
+        
         b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Вы: ${val}</div>`);
-        document.getElementById('status-chat').innerText = "Книга думает...";
+        document.getElementById('status-chat').innerText = "Перевожу для нейросети...";
+
         try {
-            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
+            // Переводим на английский для качества + добавляем инструкцию отвечать по-русски
+            const translated = await translateText(val);
+            const promptForAI = `Answer in Russian language! Question: ${translated}`;
+
+            document.getElementById('status-chat').innerText = "Книга думает...";
+            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(promptForAI)}?model=${m}`);
             let d = await r.text();
+            
             const div = document.createElement('div');
             div.className = "ai-box";
             div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
@@ -169,18 +188,26 @@
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
         let txt = i.value; i.value = '';
-        if (txt.toLowerCase().match(/камаз|грузовик|dongfeng/)) {
-            txt += ", realistic truck photography, 4k, cinematic lighting, shot on Osmo Action 5 Pro style";
-        }
-        document.getElementById('status-art').innerText = "Рисую шедевр...";
+        
+        document.getElementById('status-art').innerText = "Улучшаю промпт...";
+        
         try {
-            const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
-            const td = await tr.json();
-            const finalPrompt = td.responseData.translatedText;
+            // Переводим на английский для лучшей генерации
+            let finalPrompt = await translateText(txt);
+            
+            // Добавляем технические "улучшалки" для грузовиков и качества
+            if (txt.toLowerCase().match(/камаз|грузовик|dongfeng/)) {
+                finalPrompt += ", high-detailed truck photography, 8k, cinematic lighting, professional color grading, shot on dji osmo action 5 pro style";
+            } else {
+                finalPrompt += ", high resolution, masterpiece, 4k";
+            }
+
+            document.getElementById('status-art').innerText = "Рисую шедевр...";
             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?model=${m}&nologo=true&seed=${Date.now()}`;
+            
             const card = `<div style="background:#fff; padding:10px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
                 <img src="${url}" style="width:100%; border-radius:4px;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
-                <p style="text-align:center; font-size:12px; margin-top:5px; color:#555;">${txt.split(',')[0]}</p>
+                <p style="text-align:center; font-size:12px; margin-top:5px; color:#555;">${txt}</p>
             </div>`;
             b.insertAdjacentHTML('afterbegin', card);
         } catch(e) { document.getElementById('status-art').innerText = "Ошибка генерации"; }
