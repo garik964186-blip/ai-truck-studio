@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
     <title>НАША КНИГА | BOSS CUSTOM EDITION</title>
+    <meta property="og:title" content="НАША КНИГА | BOSS CUSTOM EDITION">
+    <meta property="og:description" content="Интеллект-хаб и генератор артов. Ваш персональный ИИ помощник в формате интерактивной книги.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/cover_preview.jpg">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -162,12 +168,10 @@
 <script>
     let step = 1, pz = null, audioReady = false, isVoiceInput = false;
     
-    // Ссылка на ваш звук с GitHub
     const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
 
     let speechData = { isPaused: false, lastIndex: 0, currentText: "", activeElement: null };
 
-    // Пробуждение аудио по клику
     function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
 
     async function translateAndEnhance(text, mode = 'none') {
@@ -189,7 +193,6 @@
         stopAllSpeech(); 
         vibrate(30); 
         
-        // Воспроизведение звука при смене страницы
         flipSound.currentTime = 0; 
         flipSound.play().catch(e => console.log("Audio play blocked"));
 
@@ -200,7 +203,6 @@
         step = s;
     }
 
-    // Свайпы
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
     document.addEventListener('touchend', e => {
