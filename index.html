@@ -103,14 +103,12 @@
     function jumpTo(s) {
         if(s === step) return;
         flipSound.currentTime = 0; flipSound.play().catch(()=>{});
-        if(navigator.vibrate) navigator.vibrate(40);
         document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === s-1));
         document.getElementById('p1').classList.toggle('flipped', s > 1);
         document.getElementById('p2').classList.toggle('flipped', s > 2);
         step = s;
     }
 
-    // Простой свайп
     let sX = 0;
     document.addEventListener('touchstart', e => { sX = e.touches[0].clientX; });
     document.addEventListener('touchend', e => {
@@ -124,7 +122,7 @@
     async function sendMsg() {
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box');
         if(!i.value) return;
-        b.insertAdjacentHTML('beforeend', `<div style="text-align:right; opacity:0.6; margin-bottom:10px;">Босс: ${i.value}</div>`);
+        b.insertAdjacentHTML('beforeend', `<div style="text-align:right; opacity:0.6; margin-bottom:10px;">${i.value}</div>`);
         const r = await fetch(`https://text.pollinations.ai/prompt/Respond%20in%20Russian:%20${encodeURIComponent(i.value)}`);
         const d = await r.text();
         b.insertAdjacentHTML('beforeend', `<div style="padding:10px; border-bottom:1px solid rgba(0,0,0,0.1);"><b>AI:</b><br>${marked.parse(d)}</div>`);
