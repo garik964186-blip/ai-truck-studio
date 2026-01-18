@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА | BOSS PREMIUM EDITION</title>
+    <title>BOSS BOOK | RECOVERY EDITION</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
@@ -17,50 +17,42 @@
         .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
-        .header { padding: 10px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 16px; }
-        .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 3px auto; padding: 8px; border-radius: 10px; font-weight: bold; font-size: 13px; outline: none; }
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding: 10px 0; cursor: pointer; transition: 0.3s; }
-        .ai-box:active { background: rgba(0,0,0,0.05); }
-        .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 18px; font-weight: bold; }
-        .input-bar { padding: 10px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-        .row { display: flex; gap: 8px; align-items: center; max-width: 600px; margin: 0 auto; }
-        .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 10px; border-radius: 20px; font-size: 16px; outline: none; }
-        .btn { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; width: 35px; }
-        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
+        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
+        .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; font-size: 14px; display: block !important; visibility: visible !important; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
+        .input-bar { padding: 15px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+        .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
+        .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px; border-radius: 25px; font-size: 16px; outline: none; }
+        .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; width: 45px; height: 45px; }
+        #mic-icon { color: var(--accent); }
     </style>
 </head>
-<body onclick="initAudio()">
-
-<div id="z-overlay">
-    <div style="text-align:right; padding:15px; color:#fff; font-size:35px;" onclick="document.getElementById('z-overlay').style.display='none'">×</div>
-    <div id="z-wrap" style="width:100%; height:90%; display:flex; align-items:center; justify-content:center;"><img id="z-img" src="" style="max-width:100%; max-height:100%;"></div>
-</div>
+<body onclick="startAudioContext()">
 
 <div class="viewport">
     <div class="book">
         
         <div class="page" id="p3">
             <div class="paper-sheet">
-                <div class="header">🎙️ PREMIUM CHAT</div>
+                <div class="header">🎙️ ГОЛОСОВОЙ ИНТЕЛЛЕКТ</div>
                 <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Универсал)</option>
-                    <option value="mistral">Mistral (Технарь)</option>
+                    <option value="openai">GPT-4o (Умный)</option>
+                    <option value="mistral">Mistral AI (Технический)</option>
                     <option value="llama">Llama 3.1 (Мощный)</option>
-                    <option value="qwen">Qwen 2.5 (Код)</option>
-                    <option value="deepseek">DeepSeek R1 (Логика)</option>
+                    <option value="qwen">Qwen 2.5 (Быстрый)</option>
                 </select>
-                <select id="premium-voice" class="ai-select" style="border-color: var(--accent);">
-                    <option value="ru-RU-DmitryNeural">🎤 Дмитрий (Premium Male)</option>
-                    <option value="ru-RU-SvetlanaNeural">🎤 Светлана (Premium Female)</option>
+                <select id="voice-type" class="ai-select" style="border-color: var(--accent);">
+                    <option value="google">Премиум (Google Cloud)</option>
+                    <option value="dmitry">Премиум (Дмитрий)</option>
                 </select>
                 <div id="status-chat" class="status-bar"></div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="runMic()" id="m-btn" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-chat" class="field" placeholder="Задайте вопрос...">
-                        <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
+                        <button onclick="toggleMic()" id="mic-btn" class="btn"><i class="fas fa-microphone" id="mic-icon"></i></button>
+                        <input type="text" id="i-chat" class="field" placeholder="Слушаю вас, Босс...">
+                        <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
             </div>
@@ -78,7 +70,7 @@
                 <div class="input-bar">
                     <div class="row">
                         <input type="text" id="i-art" class="field" placeholder="Опишите картинку...">
-                        <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
+                        <button onclick="genArt()" class="btn"><i class="fas fa-magic"></i></button>
                     </div>
                 </div>
             </div>
@@ -88,125 +80,99 @@
         <div class="page" id="p1" style="z-index: 3;">
             <div class="paper-sheet" style="background:var(--leather); border:10px double var(--gold); align-items:center; justify-content:center;">
                 <div style="width: 85%; background: #fff; padding: 12px 12px 50px 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); transform: rotate(-1.5deg);">
-                    <div style="width:100%; aspect-ratio:16/9; background:#000; overflow:hidden;">
-                        <video autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover;">
-                            <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
-                        </video>
-                    </div>
+                    <video autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover; background:#000;">
+                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
+                    </video>
                 </div>
-                <div style="margin-top:40px; text-align:center; color:var(--gold);">
-                    <h1 style="margin:0; letter-spacing:5px; font-size:30px;">НАША КНИГА</h1>
-                    <div style="font-size:12px; opacity:0.6; margin-top:10px;">PREMIUM VOICE EDITION</div>
-                </div>
+                <h1 style="color:var(--gold); margin-top:40px; letter-spacing:3px;">НАША КНИГА</h1>
+                <p style="color:#fff; opacity:0.4; font-size:12px;">RECOVERY v4.0</p>
             </div>
             <div class="back"></div>
         </div>
+
     </div>
 </div>
 
 <script>
-    let step = 1, pz = null, audioReady = false;
-    let currentAudio = null;
-    const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
+    let step = 1, audioActive = false;
+    let rec = null;
 
-    function initAudio() { audioReady = true; }
+    function startAudioContext() { audioActive = true; }
 
-    // ПРЕМИУМ ОЗВУЧКА (Microsoft Edge API)
-    async function speakPremium(text) {
-        if (!text) return;
-        if (currentAudio) currentAudio.pause();
+    // ПРЕМИУМ ГОЛОС
+    function speak(text) {
+        if(!audioActive) return;
+        window.speechSynthesis.cancel();
+        const mode = document.getElementById('voice-type').value;
         
-        const voice = document.getElementById('premium-voice').value;
-        document.getElementById('status-chat').innerText = "Генерирую голос...";
-
-        // Используем открытый сервис-прокси для Edge TTS
-        // Этот URL обращается к нейросетевым голосам Microsoft
-        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(text.substring(0, 200))}`;
-        
-        // Для реально премиального звука (Дмитрий/Светлана) в 2026 году 
-        // мы используем прокси-запрос к Edge Online
-        const edgeUrl = `https://api.tts.quest/v3/voicevox/synthesis?text=${encodeURIComponent(text)}&speaker=1`; 
-        
-        // По умолчанию используем стабильный качественный движок
-        const audio = new Audio(`https://dictat.online/api/tts?text=${encodeURIComponent(text)}&voice=${voice}`);
-        
-        audio.oncanplaythrough = () => {
-            document.getElementById('status-chat').innerText = "";
-            audio.play();
-        };
-        audio.onerror = () => {
-            // Если премиум не сработал, включаем системный голос
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = 'ru-RU';
+        if(mode === 'google') {
+            const u = new SpeechSynthesisUtterance(text.replace(/[#*`]/g,''));
+            const voices = window.speechSynthesis.getVoices();
+            u.voice = voices.find(v => v.lang.includes('ru') && v.name.includes('Google')) || voices.find(v => v.lang.includes('ru'));
+            u.lang = 'ru-RU'; u.rate = 1.0;
             window.speechSynthesis.speak(u);
-            document.getElementById('status-chat').innerText = "Системный голос";
-        };
-        currentAudio = audio;
+        } else {
+            const audio = new Audio(`https://dictat.online/api/tts?text=${encodeURIComponent(text)}&voice=ru-RU-DmitryNeural`);
+            audio.play().catch(() => speak(text)); // Если сервер упал, используем Google
+        }
     }
 
-    async function translateText(txt) {
-        try {
-            const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
-            const d = await r.json();
-            return d.responseData.translatedText;
-        } catch(e) { return txt; }
+    // МИКРОФОН
+    function toggleMic() {
+        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!R) { alert("Микрофон не поддерживается браузером"); return; }
+        
+        if (!rec) {
+            rec = new R();
+            rec.lang = 'ru-RU';
+            rec.onstart = () => { document.getElementById('mic-icon').style.color = 'lime'; };
+            rec.onresult = (e) => { 
+                document.getElementById('i-chat').value = e.results[0][0].transcript; 
+                sendMsg();
+            };
+            rec.onend = () => { document.getElementById('mic-icon').style.color = 'var(--accent)'; rec = null; };
+            rec.start();
+        }
     }
 
     async function sendMsg() {
-        initAudio();
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; margin-bottom:10px; opacity:0.6;">Босс: ${val}</div>`);
-        
-        document.getElementById('status-chat').innerText = "Думаю...";
+        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; margin-bottom:10px; font-size:14px;">Вы: ${val}</div>`);
+        document.getElementById('status-chat').innerText = "Книга думает...";
+
         try {
-            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent("Answer in Russian, address as Boss: " + val)}?model=${m}`);
+            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent("Отвечай на русском, обращайся Босс: " + val)}?model=${m}`);
             const d = await r.text();
-            
             const div = document.createElement('div');
-            div.className = "ai-box";
-            div.innerHTML = `<b>AI (${m}):</b> ${marked.parse(d)}`;
-            div.onclick = () => speakPremium(d);
+            div.style.cssText = "border-bottom: 1px dashed #ccc; padding: 10px 0; cursor: pointer;";
+            div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
+            div.onclick = () => speak(d);
             b.insertAdjacentElement('afterbegin', div);
-            
-            // Авто-озвучка
-            speakPremium(d);
+            speak(d);
         } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
+        document.getElementById('status-chat').innerText = "";
     }
 
     async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
         let txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Перевод...";
-        let en = await translateText(txt);
         document.getElementById('status-art').innerText = "Рисую...";
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&nologo=true&seed=${Date.now()}`;
-        const card = `<div style="background:#fff; padding:10px; margin-bottom:15px; border:1px solid #ddd;"><img src="${url}" style="width:100%;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''"><p style="text-align:center; font-size:11px;">${txt}</p></div>`;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(txt)}?model=${m}&nologo=true&seed=${Date.now()}`;
+        const card = `<div style="background:#fff; padding:10px; margin-bottom:15px;"><img src="${url}" style="width:100%;" onclick="window.open('${url}')"><p style="text-align:center; font-size:12px;">${txt}</p></div>`;
         b.insertAdjacentHTML('afterbegin', card);
+        document.getElementById('status-art').innerText = "";
     }
-
-    function runMic() {
-        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!R) return;
-        const r = new R(); r.lang = 'ru-RU';
-        r.onstart = () => document.getElementById('m-btn').style.color = 'red';
-        r.onresult = (e) => { document.getElementById('i-chat').value = e.results[0][0].transcript; sendMsg(); };
-        r.onend = () => document.getElementById('m-btn').style.color = 'inherit';
-        r.start();
-    }
-
-    function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; }
 
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
-        if(document.getElementById('z-overlay').style.display === 'flex') return;
         let d = sX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 60) {
-            if (d > 0 && step < 3) { document.getElementById('p'+step).classList.add('flipped'); step++; flipSound.play(); }
-            else if (d < 0 && step > 1) { step--; document.getElementById('p'+step).classList.remove('flipped'); flipSound.play(); }
+            if (d > 0 && step < 3) { document.getElementById('p'+step).classList.add('flipped'); step++; }
+            else if (d < 0 && step > 1) { step--; document.getElementById('p'+step).classList.remove('flipped'); }
         }
     });
 </script>
