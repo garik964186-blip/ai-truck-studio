@@ -65,7 +65,6 @@
         .dot.active { opacity: 1; transform: scale(1.3); }
 
         #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
-        @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 0.8; } 100% { opacity: 0.3; } }
     </style>
 </head>
 <body onclick="wakeAudio()">
@@ -162,13 +161,13 @@
 
 <script>
     let step = 1, pz = null, audioReady = false, isVoiceInput = false;
-    const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
+    
+    // Ссылка на ваш звук с GitHub
+    const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
 
     let speechData = { isPaused: false, lastIndex: 0, currentText: "", activeElement: null };
 
-    // УДАЛЕНО: Загрузка из localStorage
-    window.onload = () => {};
-
+    // Пробуждение аудио по клику
     function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
 
     async function translateAndEnhance(text, mode = 'none') {
@@ -177,7 +176,6 @@
             const d = await r.json();
             let en = d.responseData.translatedText;
             
-            // Специфические промпты для стилей
             if (mode === 'simon') en = `Simon's cat style, simple 2D line art, minimalist hand-drawn animation character, black ink on white background, thick outlines, expressive, funny, ${en}`;
             if (mode === 'pro') en += ", masterpiece, 8k, highly detailed";
             if (mode === 'cartoon') en += ", cartoon style, vibrant";
@@ -188,7 +186,13 @@
 
     function jumpTo(s) {
         if(s === step) return;
-        stopAllSpeech(); vibrate(30); flipSound.play();
+        stopAllSpeech(); 
+        vibrate(30); 
+        
+        // Воспроизведение звука при смене страницы
+        flipSound.currentTime = 0; 
+        flipSound.play().catch(e => console.log("Audio play blocked"));
+
         const dots = document.querySelectorAll('.dot');
         dots.forEach((d, i) => d.classList.toggle('active', i === s-1));
         document.getElementById('p1').classList.toggle('flipped', s > 1);
@@ -196,6 +200,7 @@
         step = s;
     }
 
+    // Свайпы
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
     document.addEventListener('touchend', e => {
@@ -226,7 +231,6 @@
             div.innerHTML = `<b>AI:</b><br>${marked.parse(d)}`;
             div.onclick = () => handleSpeech(d, div);
             b.appendChild(div);
-            // УДАЛЕНО: Сохранение чата
             b.scrollTop = b.scrollHeight;
             if(isVoiceInput) { handleSpeech(d, div); isVoiceInput = false; }
         } catch(e) { document.getElementById(tid).innerText = "Ошибка API"; }
@@ -257,31 +261,15 @@
         u.lang = 'ru-RU';
         el.style.background = "rgba(0,0,0,0.05)";
         el.style.borderLeft = "5px solid var(--accent)";
-        
-        u.onboundary = (e) => {
-            if (e.name === 'word') {
-                speechData.lastIndex = (speechData.currentText.length - text.length) + e.charIndex;
-            }
-        };
-        u.onend = () => {
-            if (!speechData.isPaused) {
-                el.style.background = "transparent";
-                el.style.borderLeft = "none";
-                speechData.activeElement = null;
-            }
-        };
+        u.onboundary = (e) => { if (e.name === 'word') speechData.lastIndex = (speechData.currentText.length - text.length) + e.charIndex; };
+        u.onend = () => { if (!speechData.isPaused) { el.style.background = "transparent"; el.style.borderLeft = "none"; speechData.activeElement = null; } };
         window.speechSynthesis.speak(u);
     }
 
     function stopAllSpeech() {
         window.speechSynthesis.cancel();
-        if (speechData.activeElement) {
-            speechData.activeElement.style.background = "transparent";
-            speechData.activeElement.style.borderLeft = "none";
-        }
-        speechData.isPaused = false;
-        speechData.lastIndex = 0;
-        speechData.activeElement = null;
+        if (speechData.activeElement) { speechData.activeElement.style.background = "transparent"; speechData.activeElement.style.borderLeft = "none"; }
+        speechData.isPaused = false; speechData.lastIndex = 0; speechData.activeElement = null;
     }
 
     function runMic(id, cb, bid) {
@@ -306,13 +294,11 @@
         
         const div = document.createElement('div');
         div.style.cssText = "background:#fff;padding:5px;margin-bottom:15px;box-shadow:0 5px 15px rgba(0,0,0,0.2);position:relative;border-radius:4px;";
-        const safeTxt = txt.replace(/'/g, "\\'");
-
         div.innerHTML = `
             <img src="${url}" style="width:100%;" onclick="openZ('${url}')">
             <div style="position:absolute; top:8px; right:8px; display:flex; gap:5px;">
-                <button onclick="downloadImage('${url}', '${safeTxt}')" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px; cursor:pointer;"><i class="fas fa-download"></i></button>
-                <button onclick="this.closest('div').parentElement.remove();" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px; cursor:pointer; color:var(--accent);">×</button>
+                <button onclick="downloadImage('${url}', '${txt.replace(/'/g, "")}')" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px;"><i class="fas fa-download"></i></button>
+                <button onclick="this.closest('div').parentElement.remove();" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px; color:var(--accent);">×</button>
             </div>
             <p style="text-align:center;font-size:12px;margin:8px 0;font-weight:bold;">${txt}</p>
         `;
@@ -332,8 +318,8 @@
         } catch (e) { alert("Ошибка загрузки"); }
     }
 
-    function clearChat() { if(confirm("Очистить текущий сеанс?")) { document.getElementById('hub-box').innerHTML=''; } }
-    function clearArt() { if(confirm("Удалить все арты текущего сеанса?")) { document.getElementById('imgs-box').innerHTML=''; } }
+    function clearChat() { if(confirm("Очистить?")) document.getElementById('hub-box').innerHTML=''; }
+    function clearArt() { if(confirm("Удалить арты?")) document.getElementById('imgs-box').innerHTML=''; }
     function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; pz = new PinchZoom.default(document.getElementById('z-wrap'), {maxZoom:4}); }
     function closeZ() { document.getElementById('z-overlay').style.display = 'none'; if(pz) pz.destroy(); }
     function vibrate(ms) { if(navigator.vibrate) navigator.vibrate(ms); }
