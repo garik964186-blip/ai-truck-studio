@@ -68,7 +68,7 @@
 
         #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
         
-        /* Loading overlay для моделей */
+        /* Лоадер для загрузки нейро-голоса */
         #loader { 
             position: fixed; inset: 0; background: var(--leather); z-index: 10001; 
             display: none; flex-direction: column; align-items: center; justify-content: center; color: var(--gold);
@@ -78,9 +78,9 @@
 <body onclick="initSherpa()">
 
 <div id="loader">
-    <i class="fas fa-scroll fa-spin" style="font-size: 40px; margin-bottom: 20px;"></i>
-    <div>Загрузка голоса Boss Edition...</div>
-    <div id="load-percent" style="font-size: 12px; margin-top: 10px;">0%</div>
+    <i class="fas fa-crown fa-spin" style="font-size: 40px; margin-bottom: 20px;"></i>
+    <div id="load-msg">Настройка Boss Voice...</div>
+    <div id="load-percent" style="font-size: 12px; margin-top: 10px; opacity: 0.7;">Загрузка ONNX моделей</div>
 </div>
 
 <div id="z-overlay" onclick="closeZ()">
@@ -103,15 +103,18 @@
             <div class="paper-sheet">
                 <div class="header">
                     <button class="header-btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
-                    <span>⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</span>
+                    <span>⬥ BOSS HUB ⬥</span>
                     <span style="width:30px"></span>
                 </div>
                 <select id="chat-model" class="ai-select">
                     <option value="openai">GPT-4o (Универсал)</option>
                     <option value="p1">DeepSeek R1 (Аналитик)</option>
-                    <option value="mistral">Mistral Large (Технарь)</option>
-                    <option value="llama">Llama 3.3 (Мощный мозг)</option>
                 </select>
+                <select id="voice-select" class="ai-select" onchange="changeVoice()">
+                    <option value="denis">Голос: Денис (Boss)</option>
+                    <option value="irina">Голос: Ирина (Lady Boss)</option>
+                </select>
+
                 <div id="status-chat" class="status-bar"></div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
@@ -132,13 +135,10 @@
                     <span style="width:30px"></span>
                 </div>
                 <div class="style-row">
-                    <select id="art-model" class="style-select"><option value="flux">💎 FLUX.1</option><option value="midjourney">🌌 MJ Style</option><option value="dall-e-3">🖌️ DALL-E 3</option></select>
+                    <select id="art-model" class="style-select"><option value="flux">💎 FLUX.1</option></select>
                     <select id="art-style" class="style-select">
-                        <option value="none">🎯 Как есть</option>
-                        <option value="simon">🐱 Линейная 2D (Саймон)</option>
-                        <option value="pro">🔥 PRO Art</option>
-                        <option value="cartoon">🎨 Cartoon</option>
-                        <option value="cinematic">🎬 Кино</option>
+                        <option value="none">🎯 Оригинал</option>
+                        <option value="pro">🔥 Ultra HD</option>
                     </select>
                 </div>
                 <div id="status-art" class="status-bar"></div>
@@ -146,7 +146,7 @@
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="runMic('i-art', genArt, 'm-art')" id="m-art" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Опишите образ...">
+                        <input type="text" id="i-art" class="field" placeholder="Образ...">
                         <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
@@ -175,73 +175,80 @@
 
 <script>
     let step = 1, pz = null, isVoiceInput = false;
-    const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
+    const flipSound = new Audio('./page-flip-sound.mp3');
 
-    // --- SHERPA-ONNX ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
+    // --- ЛОГИКА SHERPA-ONNX ---
     let tts = null;
     let ttsLoaded = false;
-    let currentAudio = null;
+    let currentAudioSource = null;
+    let currentVoice = 'denis';
 
-    // Настройка путей к моделям (проверьте точность имен файлов!)
-    const modelConfig = {
-        model: "./models/ru_RU-denis-medium.onnx",
-        tokens: "./models/tokens.txt", // Нужен файл tokens.txt (обычно идет с моделью Piper)
-        data: "./models/ru_RU-denis-medium.onnx.json" // Если есть конфиг
+    // Конфигурация путей к твоим файлам на GitHub
+    const voiceConfigs = {
+        denis: {
+            model: "./models/ru_RU-denis-medium.onnx",
+            tokens: "./models/tokens.txt",
+            data: "./models/ru_RU-denis-medium.onnx.json"
+        },
+        irina: {
+            model: "./models/ru_RU-irina-medium.onnx",
+            tokens: "./models/tokens.txt",
+            data: "./models/ru_RU-irina-medium.onnx.json"
+        }
     };
 
-    // 1. Инициализация Sherpa-ONNX
+    async function changeVoice() {
+        currentVoice = document.getElementById('voice-select').value;
+        ttsLoaded = false;
+        if(tts) { tts.free(); tts = null; }
+        await initSherpa();
+    }
+
     async function initSherpa() {
         if (ttsLoaded) return;
-        
         const loader = document.getElementById('loader');
         loader.style.display = 'flex';
         
         try {
-            // Создаем конфигурацию TTS
+            const cfg = voiceConfigs[currentVoice];
             const config = {
                 offlineTts: {
                     offlineTtsModel: {
                         vits: {
-                            model: modelConfig.model,
+                            model: cfg.model,
+                            tokens: cfg.tokens,
                             lexicon: "",
-                            tokens: modelConfig.tokens,
                             dataDir: ""
                         },
                         numThreads: 1,
                         debug: 1
-                    },
-                    ruleFsts: ""
+                    }
                 }
             };
 
-            // Создаем движок (библиотека должна быть загружена)
+            // createOfflineTts — функция из твоего sherpa-onnx-wasm-main.js
             tts = createOfflineTts(config);
             ttsLoaded = true;
             loader.style.display = 'none';
-            console.log("Sherpa-ONNX Boss Voice Ready!");
+            console.log("Boss Voice Ready: " + currentVoice);
         } catch (e) {
-            console.error("Ошибка загрузки голоса:", e);
-            document.getElementById('load-percent').innerText = "Ошибка загрузки файлов!";
-            // Если Sherpa не загрузилась, через 3 сек убираем лоадер, чтобы не блокировать всё
-            setTimeout(() => loader.style.display = 'none', 3000);
+            console.error(e);
+            document.getElementById('load-msg').innerText = "Ошибка загрузки!";
+            document.getElementById('load-percent').innerText = "Проверь файл tokens.txt в /models";
         }
     }
 
-    // 2. Функция воспроизведения (заменяет speechSynthesis)
     async function playText(text, el) {
-        if (!ttsLoaded) return;
-        
+        if (!ttsLoaded || !tts) return;
         stopAllSpeech();
+
         el.style.background = "rgba(0,0,0,0.05)";
         el.style.borderLeft = "5px solid var(--accent)";
 
-        // Очищаем текст от лишних символов
         const cleanText = text.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/[#*`]/g,'');
 
         try {
-            const audio = tts.generate(cleanText, 0, 1.0); // текст, индекс голоса, скорость
-            
-            // Воспроизведение через AudioContext
+            const audio = tts.generate(cleanText, 0, 1.0);
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const buffer = audioCtx.createBuffer(1, audio.samples.length, audio.sampleRate);
             buffer.getChannelData(0).set(audio.samples);
@@ -250,33 +257,25 @@
             source.buffer = buffer;
             source.connect(audioCtx.destination);
             
-            currentAudio = { source, ctx: audioCtx, element: el };
-            
+            currentAudioSource = { source, ctx: audioCtx, element: el };
             source.onended = () => {
                 el.style.background = "transparent";
                 el.style.borderLeft = "none";
             };
-            
             source.start();
-        } catch (err) {
-            console.error("Ошибка синтеза:", err);
-        }
+        } catch (err) { console.error("Synthesis error:", err); }
     }
 
     function stopAllSpeech() {
-        if (currentAudio) {
-            try { currentAudio.source.stop(); currentAudio.ctx.close(); } catch(e){}
-            currentAudio.element.style.background = "transparent";
-            currentAudio.element.style.borderLeft = "none";
-            currentAudio = null;
+        if (currentAudioSource) {
+            try { currentAudioSource.source.stop(); currentAudioSource.ctx.close(); } catch(e){}
+            currentAudioSource.element.style.background = "transparent";
+            currentAudioSource.element.style.borderLeft = "none";
+            currentAudioSource = null;
         }
     }
 
-    // --- ОСТАЛЬНАЯ ЛОГИКА ---
-
-    function handleSpeech(txt, el) {
-        playText(txt, el);
-    }
+    // --- ЧАТ И АРТ ---
 
     async function sendMsg() {
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
@@ -288,37 +287,48 @@
         b.scrollTop = b.scrollHeight;
 
         try {
-            const en = await translateAndEnhance(val);
+            const en = await translate(val);
             const r = await fetch(`https://text.pollinations.ai/prompt/Respond%20in%20Russian:%20${encodeURIComponent(en)}?model=${m}`);
             const d = await r.text();
             document.getElementById(tid).remove();
             const div = document.createElement('div');
             div.className = "ai-box";
             div.innerHTML = `<b>AI:</b><br>${marked.parse(d)}`;
-            div.onclick = () => handleSpeech(d, div);
+            div.onclick = () => playText(d, div);
             b.appendChild(div);
             b.scrollTop = b.scrollHeight;
-            if(isVoiceInput) { handleSpeech(d, div); isVoiceInput = false; }
-        } catch(e) { document.getElementById(tid).innerText = "Ошибка API"; }
+            if(isVoiceInput) { playText(d, div); isVoiceInput = false; }
+        } catch(e) { document.getElementById(tid).innerText = "Ошибка сети"; }
     }
 
-    async function translateAndEnhance(text, mode = 'none') {
+    async function genArt() {
+        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), s = document.getElementById('art-style').value;
+        if(!i.value) return;
+        const txt = i.value; i.value = '';
+        document.getElementById('status-art').innerText = "Рисую...";
+        const en = await translate(txt);
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=flux&seed=${Math.floor(Math.random()*1e6)}&nologo=true`;
+        const div = document.createElement('div');
+        div.style.cssText = "background:#fff;padding:5px;margin-bottom:15px;box-shadow:0 5px 15px rgba(0,0,0,0.2);position:relative;border-radius:4px;";
+        div.innerHTML = `<img src="${url}" style="width:100%;" onclick="openZ('${url}')"><p style="text-align:center;font-size:12px;margin:8px 0;font-weight:bold;">${txt}</p>`;
+        b.prepend(div);
+        div.querySelector('img').onload = () => document.getElementById('status-art').innerText = "";
+    }
+
+    async function translate(text) {
         try {
             const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
             const d = await r.json();
-            let en = d.responseData.translatedText;
-            if (mode === 'simon') en = `Simon's cat style, simple 2D line art, black ink on white background, ${en}`;
-            if (mode === 'pro') en += ", masterpiece, 8k, highly detailed";
-            return en;
+            return d.responseData.translatedText;
         } catch (e) { return text; }
     }
+
+    // --- ИНТЕРФЕЙС ---
 
     function jumpTo(s) {
         if(s === step) return;
         stopAllSpeech(); 
-        vibrate(30); 
-        flipSound.currentTime = 0; 
-        flipSound.play().catch(e => console.log("Audio play blocked"));
+        flipSound.play().catch(() => {});
         const dots = document.querySelectorAll('.dot');
         dots.forEach((d, i) => d.classList.toggle('active', i === s-1));
         document.getElementById('p1').classList.toggle('flipped', s > 1);
@@ -327,15 +337,14 @@
     }
 
     let sX = 0;
-    document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
+    document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
-        if(document.getElementById('z-overlay').style.display === 'flex') return;
         let d = sX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 60) {
             if (d > 0 && step < 3) jumpTo(step + 1);
             else if (d < 0 && step > 1) jumpTo(step - 1);
         }
-    }, {passive: true});
+    });
 
     function runMic(id, cb, bid) {
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -347,25 +356,10 @@
         r.start();
     }
 
-    async function genArt() {
-        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value, s = document.getElementById('art-style').value;
-        if(!i.value) return;
-        const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Рисую шедевр...";
-        const en = await translateAndEnhance(txt, s);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&seed=${Math.floor(Math.random()*1e6)}&nologo=true`;
-        const div = document.createElement('div');
-        div.style.cssText = "background:#fff;padding:5px;margin-bottom:15px;box-shadow:0 5px 15px rgba(0,0,0,0.2);position:relative;border-radius:4px;";
-        div.innerHTML = `<img src="${url}" style="width:100%;" onclick="openZ('${url}')"><p style="text-align:center;font-size:12px;margin:8px 0;font-weight:bold;">${txt}</p>`;
-        b.prepend(div);
-        div.querySelector('img').onload = () => document.getElementById('status-art').innerText = "";
-    }
-
     function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; pz = new PinchZoom.default(document.getElementById('z-wrap'), {maxZoom:4}); }
     function closeZ() { document.getElementById('z-overlay').style.display = 'none'; if(pz) pz.destroy(); }
-    function vibrate(ms) { if(navigator.vibrate) navigator.vibrate(ms); }
     function clearChat() { if(confirm("Очистить?")) document.getElementById('hub-box').innerHTML=''; }
-    function clearArt() { if(confirm("Удалить арты?")) document.getElementById('imgs-box').innerHTML=''; }
+    function clearArt() { if(confirm("Удалить?")) document.getElementById('imgs-box').innerHTML=''; }
 </script>
 </body>
 </html>
