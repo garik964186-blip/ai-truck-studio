@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
     
+    <script src="./sherpa-onnx-wasm-main.js"></script>
+
     <style>
         :root { 
             --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; 
@@ -65,9 +67,21 @@
         .dot.active { opacity: 1; transform: scale(1.3); }
 
         #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
+        
+        /* Loading overlay для моделей */
+        #loader { 
+            position: fixed; inset: 0; background: var(--leather); z-index: 10001; 
+            display: none; flex-direction: column; align-items: center; justify-content: center; color: var(--gold);
+        }
     </style>
 </head>
-<body onclick="wakeAudio()">
+<body onclick="initSherpa()">
+
+<div id="loader">
+    <i class="fas fa-scroll fa-spin" style="font-size: 40px; margin-bottom: 20px;"></i>
+    <div>Загрузка голоса Boss Edition...</div>
+    <div id="load-percent" style="font-size: 12px; margin-top: 10px;">0%</div>
+</div>
 
 <div id="z-overlay" onclick="closeZ()">
     <div style="text-align:right; padding:20px; color:#fff; font-size:40px;">×</div>
@@ -160,57 +174,109 @@
 </div>
 
 <script>
-    let step = 1, pz = null, audioReady = false, isVoiceInput = false;
-    
-    // Ссылка на ваш звук с GitHub
+    let step = 1, pz = null, isVoiceInput = false;
     const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
 
-    let speechData = { isPaused: false, lastIndex: 0, currentText: "", activeElement: null };
+    // --- SHERPA-ONNX ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
+    let tts = null;
+    let ttsLoaded = false;
+    let currentAudio = null;
 
-    // Пробуждение аудио по клику
-    function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
+    // Настройка путей к моделям (проверьте точность имен файлов!)
+    const modelConfig = {
+        model: "./models/ru_RU-denis-medium.onnx",
+        tokens: "./models/tokens.txt", // Нужен файл tokens.txt (обычно идет с моделью Piper)
+        data: "./models/ru_RU-denis-medium.onnx.json" // Если есть конфиг
+    };
 
-    async function translateAndEnhance(text, mode = 'none') {
-        try {
-            const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
-            const d = await r.json();
-            let en = d.responseData.translatedText;
-            
-            if (mode === 'simon') en = `Simon's cat style, simple 2D line art, minimalist hand-drawn animation character, black ink on white background, thick outlines, expressive, funny, ${en}`;
-            if (mode === 'pro') en += ", masterpiece, 8k, highly detailed";
-            if (mode === 'cartoon') en += ", cartoon style, vibrant";
-            if (mode === 'cinematic') en += ", cinematic lighting, movie shot";
-            return en;
-        } catch (e) { return text; }
-    }
-
-    function jumpTo(s) {
-        if(s === step) return;
-        stopAllSpeech(); 
-        vibrate(30); 
+    // 1. Инициализация Sherpa-ONNX
+    async function initSherpa() {
+        if (ttsLoaded) return;
         
-        // Воспроизведение звука при смене страницы
-        flipSound.currentTime = 0; 
-        flipSound.play().catch(e => console.log("Audio play blocked"));
+        const loader = document.getElementById('loader');
+        loader.style.display = 'flex';
+        
+        try {
+            // Создаем конфигурацию TTS
+            const config = {
+                offlineTts: {
+                    offlineTtsModel: {
+                        vits: {
+                            model: modelConfig.model,
+                            lexicon: "",
+                            tokens: modelConfig.tokens,
+                            dataDir: ""
+                        },
+                        numThreads: 1,
+                        debug: 1
+                    },
+                    ruleFsts: ""
+                }
+            };
 
-        const dots = document.querySelectorAll('.dot');
-        dots.forEach((d, i) => d.classList.toggle('active', i === s-1));
-        document.getElementById('p1').classList.toggle('flipped', s > 1);
-        document.getElementById('p2').classList.toggle('flipped', s > 2);
-        step = s;
+            // Создаем движок (библиотека должна быть загружена)
+            tts = createOfflineTts(config);
+            ttsLoaded = true;
+            loader.style.display = 'none';
+            console.log("Sherpa-ONNX Boss Voice Ready!");
+        } catch (e) {
+            console.error("Ошибка загрузки голоса:", e);
+            document.getElementById('load-percent').innerText = "Ошибка загрузки файлов!";
+            // Если Sherpa не загрузилась, через 3 сек убираем лоадер, чтобы не блокировать всё
+            setTimeout(() => loader.style.display = 'none', 3000);
+        }
     }
 
-    // Свайпы
-    let sX = 0;
-    document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
-    document.addEventListener('touchend', e => {
-        if(document.getElementById('z-overlay').style.display === 'flex') return;
-        let d = sX - e.changedTouches[0].clientX;
-        if (Math.abs(d) > 60) {
-            if (d > 0 && step < 3) jumpTo(step + 1);
-            else if (d < 0 && step > 1) jumpTo(step - 1);
+    // 2. Функция воспроизведения (заменяет speechSynthesis)
+    async function playText(text, el) {
+        if (!ttsLoaded) return;
+        
+        stopAllSpeech();
+        el.style.background = "rgba(0,0,0,0.05)";
+        el.style.borderLeft = "5px solid var(--accent)";
+
+        // Очищаем текст от лишних символов
+        const cleanText = text.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/[#*`]/g,'');
+
+        try {
+            const audio = tts.generate(cleanText, 0, 1.0); // текст, индекс голоса, скорость
+            
+            // Воспроизведение через AudioContext
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const buffer = audioCtx.createBuffer(1, audio.samples.length, audio.sampleRate);
+            buffer.getChannelData(0).set(audio.samples);
+            
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioCtx.destination);
+            
+            currentAudio = { source, ctx: audioCtx, element: el };
+            
+            source.onended = () => {
+                el.style.background = "transparent";
+                el.style.borderLeft = "none";
+            };
+            
+            source.start();
+        } catch (err) {
+            console.error("Ошибка синтеза:", err);
         }
-    }, {passive: true});
+    }
+
+    function stopAllSpeech() {
+        if (currentAudio) {
+            try { currentAudio.source.stop(); currentAudio.ctx.close(); } catch(e){}
+            currentAudio.element.style.background = "transparent";
+            currentAudio.element.style.borderLeft = "none";
+            currentAudio = null;
+        }
+    }
+
+    // --- ОСТАЛЬНАЯ ЛОГИКА ---
+
+    function handleSpeech(txt, el) {
+        playText(txt, el);
+    }
 
     async function sendMsg() {
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
@@ -236,41 +302,40 @@
         } catch(e) { document.getElementById(tid).innerText = "Ошибка API"; }
     }
 
-    function handleSpeech(txt, el) {
-        if (speechData.activeElement === el) {
-            if (window.speechSynthesis.speaking && !speechData.isPaused) {
-                window.speechSynthesis.cancel();
-                speechData.isPaused = true;
-                el.style.borderLeft = "5px solid var(--pause-color)";
-                return;
-            } else if (speechData.isPaused) {
-                const remaining = speechData.currentText.slice(speechData.lastIndex);
-                playText(remaining, el);
-                speechData.isPaused = false;
-                return;
-            }
+    async function translateAndEnhance(text, mode = 'none') {
+        try {
+            const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
+            const d = await r.json();
+            let en = d.responseData.translatedText;
+            if (mode === 'simon') en = `Simon's cat style, simple 2D line art, black ink on white background, ${en}`;
+            if (mode === 'pro') en += ", masterpiece, 8k, highly detailed";
+            return en;
+        } catch (e) { return text; }
+    }
+
+    function jumpTo(s) {
+        if(s === step) return;
+        stopAllSpeech(); 
+        vibrate(30); 
+        flipSound.currentTime = 0; 
+        flipSound.play().catch(e => console.log("Audio play blocked"));
+        const dots = document.querySelectorAll('.dot');
+        dots.forEach((d, i) => d.classList.toggle('active', i === s-1));
+        document.getElementById('p1').classList.toggle('flipped', s > 1);
+        document.getElementById('p2').classList.toggle('flipped', s > 2);
+        step = s;
+    }
+
+    let sX = 0;
+    document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
+    document.addEventListener('touchend', e => {
+        if(document.getElementById('z-overlay').style.display === 'flex') return;
+        let d = sX - e.changedTouches[0].clientX;
+        if (Math.abs(d) > 60) {
+            if (d > 0 && step < 3) jumpTo(step + 1);
+            else if (d < 0 && step > 1) jumpTo(step - 1);
         }
-        stopAllSpeech();
-        speechData.currentText = txt.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/[#*`]/g,'');
-        speechData.activeElement = el;
-        playText(speechData.currentText, el);
-    }
-
-    function playText(text, el) {
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'ru-RU';
-        el.style.background = "rgba(0,0,0,0.05)";
-        el.style.borderLeft = "5px solid var(--accent)";
-        u.onboundary = (e) => { if (e.name === 'word') speechData.lastIndex = (speechData.currentText.length - text.length) + e.charIndex; };
-        u.onend = () => { if (!speechData.isPaused) { el.style.background = "transparent"; el.style.borderLeft = "none"; speechData.activeElement = null; } };
-        window.speechSynthesis.speak(u);
-    }
-
-    function stopAllSpeech() {
-        window.speechSynthesis.cancel();
-        if (speechData.activeElement) { speechData.activeElement.style.background = "transparent"; speechData.activeElement.style.borderLeft = "none"; }
-        speechData.isPaused = false; speechData.lastIndex = 0; speechData.activeElement = null;
-    }
+    }, {passive: true});
 
     function runMic(id, cb, bid) {
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -287,42 +352,20 @@
         if(!i.value) return;
         const txt = i.value; i.value = '';
         document.getElementById('status-art').innerText = "Рисую шедевр...";
-        vibrate(30);
-
         const en = await translateAndEnhance(txt, s);
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&seed=${Math.floor(Math.random()*1e6)}&nologo=true`;
-        
         const div = document.createElement('div');
         div.style.cssText = "background:#fff;padding:5px;margin-bottom:15px;box-shadow:0 5px 15px rgba(0,0,0,0.2);position:relative;border-radius:4px;";
-        div.innerHTML = `
-            <img src="${url}" style="width:100%;" onclick="openZ('${url}')">
-            <div style="position:absolute; top:8px; right:8px; display:flex; gap:5px;">
-                <button onclick="downloadImage('${url}', '${txt.replace(/'/g, "")}')" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px;"><i class="fas fa-download"></i></button>
-                <button onclick="this.closest('div').parentElement.remove();" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px; color:var(--accent);">×</button>
-            </div>
-            <p style="text-align:center;font-size:12px;margin:8px 0;font-weight:bold;">${txt}</p>
-        `;
+        div.innerHTML = `<img src="${url}" style="width:100%;" onclick="openZ('${url}')"><p style="text-align:center;font-size:12px;margin:8px 0;font-weight:bold;">${txt}</p>`;
         b.prepend(div);
-        div.querySelector('img').onload = () => { document.getElementById('status-art').innerText = ""; vibrate(100); };
+        div.querySelector('img').onload = () => document.getElementById('status-art').innerText = "";
     }
 
-    async function downloadImage(url, promptText) {
-        try {
-            vibrate(50);
-            const r = await fetch(url);
-            const b = await r.blob();
-            const u = window.URL.createObjectURL(b);
-            const l = document.createElement('a');
-            l.href = u; l.download = promptText.slice(0,20) + ".jpg";
-            l.click(); window.URL.revokeObjectURL(u);
-        } catch (e) { alert("Ошибка загрузки"); }
-    }
-
-    function clearChat() { if(confirm("Очистить?")) document.getElementById('hub-box').innerHTML=''; }
-    function clearArt() { if(confirm("Удалить арты?")) document.getElementById('imgs-box').innerHTML=''; }
     function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; pz = new PinchZoom.default(document.getElementById('z-wrap'), {maxZoom:4}); }
     function closeZ() { document.getElementById('z-overlay').style.display = 'none'; if(pz) pz.destroy(); }
     function vibrate(ms) { if(navigator.vibrate) navigator.vibrate(ms); }
+    function clearChat() { if(confirm("Очистить?")) document.getElementById('hub-box').innerHTML=''; }
+    function clearArt() { if(confirm("Удалить арты?")) document.getElementById('imgs-box').innerHTML=''; }
 </script>
 </body>
 </html>
