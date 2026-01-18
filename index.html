@@ -17,7 +17,6 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         
-        /* Фон с туманом */
         @keyframes fogMove { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
         body::after {
             content: ""; position: fixed; inset: 0; background: url('https://www.transparenttextures.com/patterns/stardust.png');
@@ -52,14 +51,7 @@
 
         .scroll-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
         
-        /* Блоки сообщений */
-        .ai-box { 
-            border-bottom: 1px dashed rgba(0,0,0,0.1); 
-            padding: 10px 10px; line-height: 1.5; font-size: 15px; 
-            cursor: pointer; position: relative; 
-            transition: all 0.3s ease;
-            border-left: 0px solid transparent;
-        }
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.1); padding: 10px 10px; line-height: 1.5; font-size: 15px; cursor: pointer; position: relative; transition: all 0.3s ease; border-left: 0px solid transparent; }
         .user-msg { text-align: right; opacity: 0.6; font-style: italic; font-size: 14px; margin-bottom: 5px; color: var(--accent); }
         .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
 
@@ -101,7 +93,7 @@
                     <span>⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</span>
                     <span style="width:30px"></span>
                 </div>
-                <select id="chat-model" class="ai-select" onchange="saveSettings()">
+                <select id="chat-model" class="ai-select">
                     <option value="openai">GPT-4o (Универсал)</option>
                     <option value="p1">DeepSeek R1 (Аналитик)</option>
                     <option value="mistral">Mistral Large (Технарь)</option>
@@ -128,7 +120,13 @@
                 </div>
                 <div class="style-row">
                     <select id="art-model" class="style-select"><option value="flux">💎 FLUX.1</option><option value="midjourney">🌌 MJ Style</option><option value="dall-e-3">🖌️ DALL-E 3</option></select>
-                    <select id="art-style" class="style-select"><option value="none">🎯 Как есть</option><option value="pro">🔥 PRO Art</option><option value="cartoon">🎨 Cartoon</option><option value="cinematic">🎬 Кино</option></select>
+                    <select id="art-style" class="style-select">
+                        <option value="none">🎯 Как есть</option>
+                        <option value="simon">🐱 Линейная 2D (Саймон)</option>
+                        <option value="pro">🔥 PRO Art</option>
+                        <option value="cartoon">🎨 Cartoon</option>
+                        <option value="cinematic">🎬 Кино</option>
+                    </select>
                 </div>
                 <div id="status-art" class="status-bar"></div>
                 <div id="imgs-box" class="scroll-area"></div>
@@ -166,17 +164,10 @@
     let step = 1, pz = null, audioReady = false, isVoiceInput = false;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
 
-    // ПАРАМЕТРЫ ПЛЕЕРА
     let speechData = { isPaused: false, lastIndex: 0, currentText: "", activeElement: null };
 
-    window.onload = () => {
-        const savedChat = localStorage.getItem('boss_chat_history');
-        if(savedChat) document.getElementById('hub-box').innerHTML = savedChat;
-        const savedArt = localStorage.getItem('boss_art_history');
-        if(savedArt) document.getElementById('imgs-box').innerHTML = savedArt;
-        if(localStorage.getItem('chat_model')) document.getElementById('chat-model').value = localStorage.getItem('chat_model');
-        const b = document.getElementById('hub-box'); b.scrollTop = b.scrollHeight;
-    };
+    // УДАЛЕНО: Загрузка из localStorage
+    window.onload = () => {};
 
     function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
 
@@ -185,6 +176,9 @@
             const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
             const d = await r.json();
             let en = d.responseData.translatedText;
+            
+            // Специфические промпты для стилей
+            if (mode === 'simon') en = `Simon's cat style, simple 2D line art, minimalist hand-drawn animation character, black ink on white background, thick outlines, expressive, funny, ${en}`;
             if (mode === 'pro') en += ", masterpiece, 8k, highly detailed";
             if (mode === 'cartoon') en += ", cartoon style, vibrant";
             if (mode === 'cinematic') en += ", cinematic lighting, movie shot";
@@ -202,7 +196,6 @@
         step = s;
     }
 
-    // Свайпы
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
     document.addEventListener('touchend', e => {
@@ -214,7 +207,6 @@
         }
     }, {passive: true});
 
-    // ЧАТ
     async function sendMsg() {
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
@@ -234,13 +226,12 @@
             div.innerHTML = `<b>AI:</b><br>${marked.parse(d)}`;
             div.onclick = () => handleSpeech(d, div);
             b.appendChild(div);
-            localStorage.setItem('boss_chat_history', b.innerHTML);
+            // УДАЛЕНО: Сохранение чата
             b.scrollTop = b.scrollHeight;
             if(isVoiceInput) { handleSpeech(d, div); isVoiceInput = false; }
         } catch(e) { document.getElementById(tid).innerText = "Ошибка API"; }
     }
 
-    // УМНЫЙ ПЛЕЕР (ПАУЗА / ПРОДОЛЖЕНИЕ)
     function handleSpeech(txt, el) {
         if (speechData.activeElement === el) {
             if (window.speechSynthesis.speaking && !speechData.isPaused) {
@@ -293,7 +284,6 @@
         speechData.activeElement = null;
     }
 
-    // МИКРОФОН
     function runMic(id, cb, bid) {
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
         if(!R) return;
@@ -304,7 +294,6 @@
         r.start();
     }
 
-    // АРТЫ
     async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value, s = document.getElementById('art-style').value;
         if(!i.value) return;
@@ -323,12 +312,12 @@
             <img src="${url}" style="width:100%;" onclick="openZ('${url}')">
             <div style="position:absolute; top:8px; right:8px; display:flex; gap:5px;">
                 <button onclick="downloadImage('${url}', '${safeTxt}')" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px; cursor:pointer;"><i class="fas fa-download"></i></button>
-                <button onclick="this.closest('div').parentElement.remove(); saveArtHistory();" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px; cursor:pointer; color:var(--accent);">×</button>
+                <button onclick="this.closest('div').parentElement.remove();" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px; cursor:pointer; color:var(--accent);">×</button>
             </div>
             <p style="text-align:center;font-size:12px;margin:8px 0;font-weight:bold;">${txt}</p>
         `;
         b.prepend(div);
-        div.querySelector('img').onload = () => { document.getElementById('status-art').innerText = ""; vibrate(100); saveArtHistory(); };
+        div.querySelector('img').onload = () => { document.getElementById('status-art').innerText = ""; vibrate(100); };
     }
 
     async function downloadImage(url, promptText) {
@@ -343,10 +332,8 @@
         } catch (e) { alert("Ошибка загрузки"); }
     }
 
-    function saveArtHistory() { localStorage.setItem('boss_art_history', document.getElementById('imgs-box').innerHTML); }
-    function saveSettings() { localStorage.setItem('chat_model', document.getElementById('chat-model').value); }
-    function clearChat() { if(confirm("Очистить историю?")) { document.getElementById('hub-box').innerHTML=''; localStorage.removeItem('boss_chat_history'); } }
-    function clearArt() { if(confirm("Удалить все арты?")) { document.getElementById('imgs-box').innerHTML=''; localStorage.removeItem('boss_art_history'); } }
+    function clearChat() { if(confirm("Очистить текущий сеанс?")) { document.getElementById('hub-box').innerHTML=''; } }
+    function clearArt() { if(confirm("Удалить все арты текущего сеанса?")) { document.getElementById('imgs-box').innerHTML=''; } }
     function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; pz = new PinchZoom.default(document.getElementById('z-wrap'), {maxZoom:4}); }
     function closeZ() { document.getElementById('z-overlay').style.display = 'none'; if(pz) pz.destroy(); }
     function vibrate(ms) { if(navigator.vibrate) navigator.vibrate(ms); }
