@@ -2,28 +2,41 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Магическая Книга</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --accent: #ffcc00; --bg: #1a1a1a; --text: #e0e0e0; }
+        :root { --accent: #ffcc00; --bg: #1a1a1a; --text: #e0e0e0; --card: #2a2a2a; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; }
-        .page { display: none; }
+        
+        .page { display: none; max-width: 800px; margin: 0 auto; }
         .active { display: block; }
-        .input-bar { margin-top: 20px; background: #2a2a2a; padding: 15px; border-radius: 10px; }
+        
+        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        
+        .input-bar { margin: 20px 0; background: var(--card); padding: 15px; border-radius: 10px; }
         .row { display: flex; gap: 10px; align-items: center; }
         .field { flex: 1; padding: 10px; border-radius: 5px; border: none; background: #333; color: white; }
-        .btn { background: #444; border: none; color: white; padding: 10px; border-radius: 5px; cursor: pointer; transition: 0.3s; }
         
-        /* Эффект пульсации */
-        .mic-active {
-            color: #ff0000 !important;
-            animation: pulse-red 1.2s infinite;
-        }
+        .btn { background: #444; border: none; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 5px; }
+        .btn:hover { background: #555; }
+        .btn-nav { margin-top: 10px; background: var(--accent); color: black; font-weight: bold; }
+
+        #chat-box { height: 300px; overflow-y: auto; border: 1px solid #444; padding: 10px; background: #111; border-radius: 5px; margin-bottom: 10px; }
+        #art-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        
+        .canvas-container { background: white; border-radius: 10px; overflow: hidden; line-height: 0; margin-top: 10px; border: 3px solid var(--accent); }
+        canvas { cursor: crosshair; touch-action: none; width: 100%; }
+
+        /* Эффект пульсации микрофона */
+        .mic-active { color: #ff0000 !important; animation: pulse-red 1.2s infinite; }
         @keyframes pulse-red {
             0% { transform: scale(1); filter: drop-shadow(0 0 2px red); }
-            50% { transform: scale(1.2); filter: drop-shadow(0 0 10px red); }
+            50% { transform: scale(1.2); filter: drop-shadow(0 0 8px red); }
             100% { transform: scale(1); filter: drop-shadow(0 0 2px red); }
         }
+        
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -33,93 +46,176 @@
         <div id="art-container"></div>
         <div class="input-bar">
             <div class="row">
-                <button onclick="runMic('art')" class="btn" id="m-btn-art">
-                    <i class="fas fa-microphone"></i>
-                </button>
+                <button onclick="runMic('art')" class="btn" id="m-btn-art"><i class="fas fa-microphone"></i></button>
                 <input type="text" id="i-art" class="field" placeholder="Что нарисовать?">
                 <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
             </div>
         </div>
-        <button onclick="showPage('p3')" class="btn">В чат 💬</button>
+        <div class="controls">
+            <button onclick="showPage('p3')" class="btn btn-nav">В чат 💬</button>
+            <button onclick="showPage('p4')" class="btn btn-nav">На доску 🖌️</button>
+        </div>
     </div>
 
     <div id="p3" class="page">
         <h2>Чат с книгой 💬</h2>
-        <div id="chat-box" style="height: 200px; overflow-y: auto; border: 1px solid #444; padding: 10px;"></div>
+        <div id="chat-box"></div>
         <div class="input-bar">
             <div class="row">
-                <button onclick="runMic('chat')" class="btn" id="m-btn">
-                    <i class="fas fa-microphone"></i>
-                </button>
+                <button onclick="runMic('chat')" class="btn" id="m-btn"><i class="fas fa-microphone"></i></button>
                 <input type="text" id="i-chat" class="field" placeholder="Напишите что-нибудь...">
                 <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
-        <button onclick="showPage('p2')" class="btn">В альбом 🎨</button>
+        <div class="controls">
+            <button onclick="showPage('p2')" class="btn btn-nav">В альбом 🎨</button>
+            <button onclick="showPage('p4')" class="btn btn-nav">На доску 🖌️</button>
+        </div>
+    </div>
+
+    <div id="p4" class="page">
+        <h2>Графическая доска 🖌️</h2>
+        <div class="canvas-container">
+            <canvas id="canvas"></canvas>
+        </div>
+        <div class="input-bar">
+            <div class="row">
+                <button onclick="clearCanvas()" class="btn"><i class="fas fa-trash"></i> Очистить</button>
+                <input type="color" id="colorPicker" value="#ffcc00">
+                <input type="range" id="sizePicker" min="1" max="20" value="5">
+                <span>Толщина</span>
+            </div>
+        </div>
+        <div class="controls">
+            <button onclick="showPage('p2')" class="btn btn-nav">В альбом 🎨</button>
+            <button onclick="showPage('p3')" class="btn btn-nav">В чат 💬</button>
+        </div>
     </div>
 
     <script>
+        // Переключение страниц
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            if (id === 'p4') initCanvas();
         }
 
         // Звуковой сигнал
         function playBeep() {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const g = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(220, ctx.currentTime);
-            g.gain.setValueAtTime(0.1, ctx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.2);
-            osc.connect(g); g.connect(ctx.destination);
-            osc.start(); osc.stop(ctx.currentTime + 0.2);
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(220, ctx.currentTime);
+                g.gain.setValueAtTime(0.1, ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.2);
+                osc.connect(g); g.connect(ctx.destination);
+                osc.start(); osc.stop(ctx.currentTime + 0.2);
+            } catch(e) { console.log("Audio not supported"); }
         }
 
-        // Универсальный микрофон
+        // Голосовой ввод
         function runMic(target) {
             const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!R) { alert("Микрофон не поддерживается в этом браузере"); return; }
+            if (!R) { alert("Микрофон не поддерживается"); return; }
             
             const r = new R();
             r.lang = 'ru-RU';
-            
             const inputId = (target === 'art') ? 'i-art' : 'i-chat';
             const btnId = (target === 'art') ? 'm-btn-art' : 'm-btn';
             const btn = document.getElementById(btnId);
 
-            r.onstart = () => {
-                playBeep();
-                btn.classList.add('mic-active');
-            };
-
+            r.onstart = () => { playBeep(); btn.classList.add('mic-active'); };
             r.onresult = (e) => {
                 const text = e.results[0][0].transcript;
                 document.getElementById(inputId).value = text;
                 if (target === 'art') genArt(); else sendMsg();
             };
-
-            r.onend = () => {
-                btn.classList.remove('mic-active');
-            };
-
+            r.onend = () => { btn.classList.remove('mic-active'); };
             r.start();
         }
 
+        // Функции чата и альбома
         function genArt() {
             const val = document.getElementById('i-art').value;
             if(!val) return;
-            document.getElementById('art-container').innerHTML += `<p>🎨 Рисую: ${val}...</p>`;
+            document.getElementById('art-container').innerHTML += `<div style="background:#333; padding:10px; border-radius:5px;">🎨 ${val}</div>`;
             document.getElementById('i-art').value = '';
         }
 
         function sendMsg() {
             const val = document.getElementById('i-chat').value;
             if(!val) return;
-            document.getElementById('chat-box').innerHTML += `<p>👤: ${val}</p>`;
+            const box = document.getElementById('chat-box');
+            box.innerHTML += `<p><strong>👤:</strong> ${val}</p>`;
             document.getElementById('i-chat').value = '';
+            box.scrollTop = box.scrollHeight;
         }
+
+        // Логика рисования (Холст)
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+
+        function initCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = 450;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+        function startDraw(e) {
+            drawing = true;
+            draw(e);
+        }
+
+        function endDraw() {
+            drawing = false;
+            ctx.beginPath();
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
+            ctx.lineWidth = document.getElementById('sizePicker').value;
+            ctx.strokeStyle = document.getElementById('colorPicker').value;
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', endDraw);
+        
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e.touches[0]); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
+        canvas.addEventListener('touchend', endDraw);
+
+        // Отправка по Enter
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (document.getElementById('p2').classList.contains('active')) genArt();
+                if (document.getElementById('p3').classList.contains('active')) sendMsg();
+            }
+        });
+
+        window.onload = initCanvas;
+        window.onresize = initCanvas;
     </script>
 </body>
 </html>
