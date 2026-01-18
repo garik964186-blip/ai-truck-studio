@@ -3,63 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BOSS BOOK | NO-MENU EDITION</title>
+    <title>НАША КНИГА | BOSS EDITION</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/medium-zoom/1.1.0/medium-zoom.min.js"></script>
+    <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
     <style>
-        :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; --leather: #3d0a0a; }
+        :root { 
+            --paper: #f4e4bc; 
+            --ink: #2c241a; 
+            --gold: #d4af37; 
+            --accent: #8b0000; 
+            --leather: #2a0505; 
+        }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         
+        /* Эффект тумана/зернистости поверх всего */
+        body::after {
+            content: ""; position: fixed; inset: 0; 
+            background: url('https://www.transparenttextures.com/patterns/stardust.png');
+            opacity: 0.05; pointer-events: none; z-index: 10000;
+        }
+
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2000px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transition: transform 0.6s cubic-bezier(0.64, 0.04, 0.35, 1); pointer-events: none; z-index: 1; transform-style: preserve-3d; }
-        .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.3); pointer-events: auto; }
+        
+        .page { 
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
+            transform-origin: left; transform-style: preserve-3d; 
+            transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1); 
+            pointer-events: none; z-index: 1; 
+        }
+        
+        .paper-sheet { 
+            background: var(--paper); 
+            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); 
+            color: var(--ink); display: flex; flex-direction: column; height: 100%; 
+            box-shadow: inset 20px 0 50px rgba(0,0,0,0.2); pointer-events: auto; 
+            position: relative; overflow: hidden;
+        }
+
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
 
-        /* НОВОЕ МЕНЮ БЕЗ ВЫПАДАЮЩИХ СПИСКОВ */
-        .header { padding: 12px; border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; }
-        .tab-menu { display: flex; overflow-x: auto; gap: 8px; padding: 10px; background: rgba(0,0,0,0.05); scrollbar-width: none; }
-        .tab-menu::-webkit-scrollbar { display: none; }
-        .tab-btn { white-space: nowrap; padding: 8px 16px; background: #fff; border: 2px solid var(--ink); border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        /* Шапка и выбор моделей */
+        .header { padding: 12px; background: rgba(0,0,0,0.07); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 16px; letter-spacing: 1px; }
+        .ai-select { width: 92%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 14px; outline: none; appearance: none; }
 
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; touch-action: pan-y; }
-        .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 18px; font-weight: bold; }
+        /* Область контента */
+        .scroll-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
         
-        .ai-card { border-left: 5px solid var(--accent); padding: 12px; background: rgba(255,255,255,0.6); border-radius: 0 10px 10px 0; cursor: pointer; }
-        .ai-card.playing { border-left-color: #2ecc71; background: #e1ffed; }
-        
-        .art-card img { width: 100%; border-radius: 8px; cursor: zoom-in; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        /* Стилизация ответов AI */
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 15px; line-height: 1.5; font-size: 15px; }
+        .ai-box h1, .ai-box h2 { font-size: 18px; margin: 10px 0; color: var(--accent); }
+        .ai-box ul, .ai-box ol { padding-left: 20px; }
+        .ai-box code { background: rgba(0,0,0,0.05); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
 
-        .input-bar { padding: 15px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+        .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; text-transform: uppercase; }
+
+        /* Ввод */
+        .input-bar { padding: 15px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
-        .field { flex: 1; background: #fff; border: 2.5px solid var(--ink); padding: 12px; border-radius: 25px; font-size: 16px; }
-        .btn { background: none; border: none; font-size: 28px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; }
+        .field { flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px 15px; border-radius: 25px; font-size: 16px; outline: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); transition: transform 0.2s; }
+        .btn:active { transform: scale(0.9); }
+
+        /* Оверлей для зума изображений */
+        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
     </style>
 </head>
-<body onclick="initAudio()">
+<body onclick="wakeAudio()">
+
+<div id="z-overlay">
+    <div style="text-align:right; padding:20px; color:#fff; font-size:40px;" onclick="document.getElementById('z-overlay').style.display='none'">×</div>
+    <div id="z-wrap" style="width:100%; height:85%; display:flex; align-items:center; justify-content:center;"><img id="z-img" src="" style="max-width:100%; max-height:100%;"></div>
+</div>
 
 <div class="viewport">
     <div class="book">
         
         <div class="page" id="p3">
             <div class="paper-sheet">
-                <div class="header">🎙️ НЕЙРОСЕТИ ЧАТА</div>
-                <div class="tab-menu" id="chat-tabs">
-                    <div class="tab-btn active" onclick="setChatModel(this, 'openai')">GPT-4o</div>
-                    <div class="tab-btn" onclick="setChatModel(this, 'deepseek')">DeepSeek</div>
-                    <div class="tab-btn" onclick="setChatModel(this, 'llama')">Llama 3.3</div>
-                </div>
+                <div class="header">⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</div>
+                <select id="chat-model" class="ai-select">
+                    <option value="openai">GPT-4o (Универсал)</option>
+                    <option value="deepseek">DeepSeek R1 (Аналитик)</option>
+                    <option value="mistral">Mistral Large (Технарь)</option>
+                    <option value="llama">Llama 3.1 (Мощный мозг)</option>
+                </select>
                 <div id="status-chat" class="status-bar"></div>
-                <div id="chat-box" class="scroll-area"></div>
+                <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="runMic('i-chat')" class="btn"><i class="fas fa-microphone" id="mic-c" style="color:var(--accent)"></i></button>
-                        <input type="text" id="i-chat" class="field" placeholder="Ваш приказ...">
-                        <button onclick="doChat()" class="btn"><i class="fas fa-paper-plane"></i></button>
+                        <button onclick="runMic('i-chat', sendMsg, 'm-chat')" id="m-chat" class="btn"><i class="fas fa-microphone"></i></button>
+                        <input type="text" id="i-chat" class="field" placeholder="Ваш запрос, Босс...">
+                        <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
             </div>
@@ -67,18 +105,19 @@
 
         <div class="page" id="p2" style="z-index: 2;">
             <div class="paper-sheet">
-                <div class="header">🎨 ЖИВОЙ ЗУМ (FLUX)</div>
-                <div class="tab-menu" id="art-tabs">
-                    <div class="tab-btn active" onclick="setArtModel(this, 'flux')">FLUX PRO</div>
-                    <div class="tab-btn" onclick="setArtModel(this, 'turbo')">TURBO FAST</div>
-                </div>
+                <div class="header">⬥ ВИЗУАЛИЗАТОР ⬥</div>
+                <select id="art-model" class="ai-select">
+                    <option value="flux">💎 FLUX.1 (Фотореализм)</option>
+                    <option value="midjourney">🌌 Midjourney Style</option>
+                    <option value="dall-e-3">🖌️ DALL-E 3 (Арт)</option>
+                </select>
                 <div id="status-art" class="status-bar"></div>
-                <div id="art-box" class="scroll-area"></div>
+                <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="runMic('i-art')" class="btn"><i class="fas fa-microphone" id="mic-a" style="color:var(--accent)"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Что нарисовать?">
-                        <button onclick="doArt()" class="btn"><i class="fas fa-magic"></i></button>
+                        <button onclick="runMic('i-art', genArt, 'm-art')" id="m-art" class="btn"><i class="fas fa-microphone"></i></button>
+                        <input type="text" id="i-art" class="field" placeholder="Опишите образ...">
+                        <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
             </div>
@@ -87,111 +126,123 @@
 
         <div class="page" id="p1" style="z-index: 3;">
             <div class="paper-sheet" style="background:var(--leather); border:12px double var(--gold); align-items:center; justify-content:center;">
-                <div style="width: 80%; background: #fff; padding: 10px 10px 30px 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.9); transform: rotate(-1.5deg);">
-                    <video autoplay loop muted playsinline style="width:100%; border:1px solid #000;">
-                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
-                    </video>
+                <div style="width: 88%; background: #fff; padding: 10px 10px 45px 10px; box-shadow: 0 25px 60px rgba(0,0,0,0.9); transform: rotate(-1deg); position: relative;">
+                    <div style="width:100%; aspect-ratio:16/9; background:#000; overflow:hidden;">
+                        <video autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover; filter: contrast(1.1);">
+                            <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div style="position:absolute; bottom:10px; right:15px; font-family:serif; font-style:italic; font-size:12px; color:#555;">K5 Edition</div>
                 </div>
-                <h1 style="color:var(--gold); margin-top:30px; letter-spacing:4px;">BOSS PRO</h1>
-                <p style="color:#fff; opacity:0.3; font-size:11px; margin-top:20px;">v9.0 FIXED SYSTEM</p>
+                <div style="margin-top:50px; text-align:center; color:var(--gold);">
+                    <h1 style="margin:0; letter-spacing:6px; font-size:32px; text-shadow: 3px 3px 5px #000;">НАША КНИГА</h1>
+                    <div style="font-size:13px; opacity:0.7; margin-top:12px; font-weight:bold; letter-spacing:2px;">BOSS EDITION FULL</div>
+                    <div style="font-size:10px; margin-top:30px; color:#fff; opacity:0.4; font-family:monospace;">SYSTEM ONLINE | NO LIMITS</div>
+                </div>
             </div>
             <div class="back"></div>
         </div>
-
     </div>
 </div>
 
 <script>
-    let step = 1, audioActive = false, currentAudio = null, isPaused = false;
-    let chatM = 'openai', artM = 'flux';
+    let step = 1, pz = null, audioReady = false;
+    const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
 
-    function initAudio() { audioActive = true; }
-
-    function setChatModel(btn, m) {
-        document.querySelectorAll('#chat-tabs .tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active'); chatM = m;
+    function wakeAudio() { 
+        if(!audioReady) { 
+            const u = new SpeechSynthesisUtterance(''); 
+            window.speechSynthesis.speak(u); 
+            audioReady = true; 
+        } 
     }
 
-    function setArtModel(btn, m) {
-        document.querySelectorAll('#art-tabs .tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active'); artM = m;
+    async function translateText(txt) {
+        try {
+            const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
+            const d = await r.json();
+            return d.responseData.translatedText;
+        } catch(e) { return txt; }
     }
 
-    // ГОЛОС С ПАУЗОЙ (УЛУЧШЕНО)
-    function toggleVoice(text, element) {
-        if (!audioActive) return;
-        if (currentAudio && currentAudio.dataset.text === text) {
-            if (isPaused) { currentAudio.play(); isPaused = false; element.classList.add('playing'); }
-            else { currentAudio.pause(); isPaused = true; element.classList.remove('playing'); }
-            return;
-        }
-        if (currentAudio) { currentAudio.pause(); document.querySelectorAll('.ai-card').forEach(c => c.classList.remove('playing')); }
-        
-        document.getElementById('status-chat').innerText = "ГЕНЕРАЦИЯ ГОЛОСА...";
-        currentAudio = new Audio(`https://dictat.online/api/tts?text=${encodeURIComponent(text)}&voice=ru-RU-DmitryNeural`);
-        currentAudio.dataset.text = text;
-        currentAudio.onplay = () => { isPaused = false; element.classList.add('playing'); document.getElementById('status-chat').innerText = ""; };
-        currentAudio.onended = () => { element.classList.remove('playing'); };
-        currentAudio.play();
-    }
-
-    // МИКРОФОН
-    function runMic(id) {
-        const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Speech) return;
-        const rec = new Speech(); rec.lang = 'ru-RU';
-        const icon = id === 'i-chat' ? 'mic-c' : 'mic-a';
-        rec.onstart = () => document.getElementById(icon).style.color = 'lime';
-        rec.onresult = (e) => {
-            document.getElementById(id).value = e.results[0][0].transcript;
-            if(id === 'i-chat') doChat(); else doArt();
-        };
-        rec.onend = () => document.getElementById(icon).style.color = 'var(--accent)';
-        rec.start();
-    }
-
-    async function doChat() {
-        const i = document.getElementById('i-chat'), b = document.getElementById('chat-box');
+    async function sendMsg() {
+        wakeAudio();
+        const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; font-size:12px; opacity:0.5; margin-bottom:5px;">Вы: ${val}</div>`);
         
+        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; margin-bottom:15px; opacity:0.5; font-style:italic;">Босс: ${val}</div>`);
+        document.getElementById('status-chat').innerText = "Связь с ИИ...";
+
         try {
-            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent("Коротко на русском, Босс: " + val)}?model=${chatM}`);
+            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent("Answer in Russian, address as Boss, use Markdown: " + val)}?model=${m}`);
             const d = await r.text();
             const div = document.createElement('div');
-            div.className = "ai-card";
-            div.innerHTML = marked.parse(d);
-            div.onclick = () => toggleVoice(d, div);
+            div.className = "ai-box";
+            div.innerHTML = `<b>AI (${m.toUpperCase()}):</b><br>${marked.parse(d)}`;
+            
+            // Чтение ответа по клику
+            div.onclick = () => {
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(d.replace(/[#*`]/g,''));
+                u.lang = 'ru-RU'; window.speechSynthesis.speak(u);
+            };
             b.insertAdjacentElement('afterbegin', div);
-            toggleVoice(d, div);
-        } catch(e) { document.getElementById('status-chat').innerText = "ОШИБКА"; }
+        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка соединения"; }
+        document.getElementById('status-chat').innerText = "";
     }
 
-    async function doArt() {
-        const i = document.getElementById('i-art'), b = document.getElementById('art-box');
+    async function genArt() {
+        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
-        const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "РИСУЮ...";
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(txt)}?model=${artM}&nologo=true&seed=${Date.now()}`;
-        const div = document.createElement('div');
-        div.className = "art-card";
-        div.style.marginBottom = "15px";
-        div.innerHTML = `<img src="${url}" class="zoomable"><p style="text-align:center; font-size:12px; font-weight:bold; margin-top:8px;">${txt}</p>`;
-        b.insertAdjacentElement('afterbegin', div);
-        mediumZoom('.zoomable', { background: 'rgba(0,0,0,0.9)', margin: 0 });
-        document.getElementById('status-art').innerText = "";
+        let txt = i.value; i.value = '';
+        document.getElementById('status-art').innerText = "Перевод промпта...";
+        
+        let en = await translateText(txt);
+        if(m === 'midjourney') en += " --ar 16:9 --v 6.0 --stylize 750";
+        
+        document.getElementById('status-art').innerText = "Создание шедевра...";
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&seed=${Date.now()}&nologo=true`;
+        
+        const card = `<div style="background:#fff; padding:8px; margin-bottom:20px; border:1px solid #ccc; box-shadow:0 10px 20px rgba(0,0,0,0.15); transform:rotate(${Math.random()*2-1}deg);">
+            <img src="${url}" style="width:100%; display:block;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
+            <p style="text-align:center; font-size:12px; margin:8px 0; color:#333; font-weight:bold;">${txt.toUpperCase()}</p>
+        </div>`;
+        b.insertAdjacentHTML('afterbegin', card);
     }
 
-    // ИСПРАВЛЕННЫЙ СВАЙП
-    let sX = 0, sY = 0;
-    document.addEventListener('touchstart', e => { sX = e.touches[0].clientX; sY = e.touches[0].clientY; }, {passive: true});
+    function runMic(id, cb, bId) {
+        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!R) { alert("Микрофон не поддерживается в этом браузере"); return; }
+        const r = new R(); r.lang = 'ru-RU';
+        r.onstart = () => document.getElementById(bId).style.color = 'red';
+        r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
+        r.onend = () => document.getElementById(bId).style.color = 'inherit';
+        r.start();
+    }
+
+    function openZ(u) {
+        document.getElementById('z-img').src = u;
+        document.getElementById('z-overlay').style.display = 'flex';
+        if(pz) pz.destroy();
+        pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 });
+    }
+
+    // Логика перелистывания (свайп)
+    let sX = 0;
+    document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
-        let dX = sX - e.changedTouches[0].clientX;
-        let dY = sY - e.changedTouches[0].clientY;
-        if (Math.abs(dX) > Math.abs(dY) && Math.abs(dX) > 70) {
-            if (dX > 0 && step < 3) { document.getElementById('p'+step).classList.add('flipped'); step++; }
-            else if (dX < 0 && step > 1) { step--; document.getElementById('p'+step).classList.remove('flipped'); }
+        if(document.getElementById('z-overlay').style.display === 'flex') return;
+        let d = sX - e.changedTouches[0].clientX;
+        if (Math.abs(d) > 70) {
+            if (d > 0 && step < 3) { 
+                document.getElementById('p'+step).classList.add('flipped'); 
+                step++; flipSound.play(); 
+            } else if (d < 0 && step > 1) { 
+                step--; 
+                document.getElementById('p'+step).classList.remove('flipped'); 
+                flipSound.play(); 
+            }
         }
     });
 </script>
