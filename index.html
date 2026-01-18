@@ -3,708 +3,517 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА | BOSS AI EDITION</title>
+    <title>НАША КНИГА | BOSS CUSTOM EDITION</title>
     
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
     
     <style>
-        /* Сброс стилей */
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
+        :root { 
+            --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; 
+            --leather: #2a0505; --pause-color: #d4af37;
         }
-        
-        /* Основные стили */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { 
-            width: 100%; 
-            height: 100dvh; 
-            background: #000; 
-            overflow: hidden; 
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            color: #fff;
-            user-select: none;
-            -webkit-user-select: none;
+            margin: 0; padding: 0; width: 100%; height: 100dvh; 
+            background: #000; overflow: hidden; font-family: "Georgia", serif; 
         }
         
-        /* Фоновый узор */
-        .bg-pattern {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.05) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(139, 0, 0, 0.05) 0%, transparent 20%),
-                radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 0%, #000 100%);
-            z-index: -1;
+        /* Фоновая анимация */
+        @keyframes fogMove { 
+            0% { background-position: 0% 0%; } 
+            100% { background-position: 100% 100%; } 
         }
         
-        /* Главный контейнер */
-        .app {
-            width: 100%;
-            height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
+        body::after {
+            content: ""; position: fixed; inset: 0; 
+            background: linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, 
+                                       transparent 50%, rgba(0,0,0,0.1) 50%, 
+                                       rgba(0,0,0,0.1) 75%, transparent 75%);
+            background-size: 100px 100px;
+            opacity: 0.1; pointer-events: none; z-index: 10000; 
+            animation: fogMove 120s linear infinite;
+        }
+
+        /* Основной контейнер */
+        .viewport { 
+            width: 100vw; height: 100dvh; 
+            position: relative; perspective: 2000px; 
         }
         
-        /* Шапка */
-        .header {
-            height: 60px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.7));
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 15px;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-            z-index: 100;
-            flex-shrink: 0;
+        .book { 
+            width: 100%; height: 100%; 
+            position: relative; transform-style: preserve-3d; 
         }
         
-        .title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #d4af37;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            letter-spacing: 0.5px;
+        /* Страницы */
+        .page { 
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
+            transform-origin: left; transform-style: preserve-3d; 
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
+            pointer-events: none; z-index: 1; 
         }
         
-        .page-subtitle {
-            font-size: 12px;
-            opacity: 0.7;
-            margin-left: 8px;
+        .paper-sheet { 
+            background: var(--paper); 
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23000000' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+            color: var(--ink); display: flex; flex-direction: column; height: 100%; 
+            box-shadow: inset 20px 0 50px rgba(0,0,0,0.2); 
+            pointer-events: auto; position: relative; overflow: hidden;
+        }
+
+        .back { 
+            position: absolute; inset: 0; transform: rotateY(180deg); 
+            backface-visibility: hidden; background: #e8d5a7; 
+            border-left: 2px solid rgba(0,0,0,0.1); 
         }
         
-        .menu-btn {
-            background: none;
-            border: none;
-            color: #d4af37;
-            font-size: 22px;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+        .flipped { 
+            transform: rotateY(-180deg) !important; z-index: 10 !important; 
+        }
+
+        /* Заголовок */
+        .header { 
+            padding: 12px; background: rgba(0,0,0,0.07); 
+            border-bottom: 2px solid var(--ink); text-align: center; 
+            font-weight: bold; display: flex; justify-content: space-between; 
+            align-items: center; 
         }
         
-        .menu-btn:active {
+        .header-btn { 
+            background: none; border: none; font-size: 18px; 
+            color: var(--accent); cursor: pointer; padding: 5px; 
+        }
+        
+        /* Выбор модели */
+        .ai-select { 
+            width: 92%; background: #fff; border: 2px solid var(--ink); 
+            margin: 5px auto; padding: 10px; border-radius: 8px; 
+            font-weight: bold; outline: none; 
+        }
+        
+        .style-row { 
+            display: flex; gap: 5px; width: 92%; 
+            margin: 0 auto; padding-top: 5px; 
+        }
+        
+        .style-select { 
+            flex: 1; padding: 8px; border-radius: 8px; 
+            border: 2px solid var(--ink); font-weight: bold; 
+            background: #fff; 
+        }
+
+        /* Область прокрутки */
+        .scroll-area { 
+            flex: 1; overflow-y: auto; padding: 20px; 
+            display: flex; flex-direction: column; gap: 15px; 
+            scroll-behavior: smooth; 
+        }
+        
+        /* Сообщения AI */
+        .ai-box { 
+            border-bottom: 1px dashed rgba(0,0,0,0.1); 
+            padding: 12px; line-height: 1.5; font-size: 15px; 
+            cursor: pointer; position: relative; 
+            transition: all 0.3s ease; border-left: 0px solid transparent;
+            background: rgba(255,255,255,0.8);
+            border-radius: 8px;
+        }
+        
+        .ai-box:hover {
+            background: rgba(255,255,255,0.9);
+            border-left: 4px solid var(--accent);
+        }
+        
+        /* Сообщения пользователя */
+        .user-msg { 
+            text-align: right; opacity: 0.8; font-style: italic; 
+            font-size: 14px; margin-bottom: 5px; color: var(--accent);
+            padding: 8px 12px;
             background: rgba(212, 175, 55, 0.1);
-        }
-        
-        /* Контейнер страниц */
-        .pages {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        /* Страница */
-        .page {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: column;
-        }
-        
-        .page.active {
-            display: flex;
-        }
-        
-        /* СТРАНИЦА 1: ОБЛОЖКА */
-        .cover {
-            background: linear-gradient(135deg, #1a0505, #2a0a0a);
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            text-align: center;
-            border: 12px double #d4af37;
-            margin: 10px;
             border-radius: 8px;
-            position: relative;
+            border: 1px solid rgba(212, 175, 55, 0.2);
         }
         
-        .cover::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M0,0 L20,20 M20,0 L0,20" stroke="rgba(212,175,55,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23pattern)"/></svg>');
-            opacity: 0.3;
-            pointer-events: none;
+        /* Статус бар */
+        .status-bar { 
+            font-size: 11px; text-align: center; color: var(--accent); 
+            min-height: 20px; font-weight: bold; 
+            padding: 5px;
         }
-        
-        .cover-video {
-            width: 90%;
-            max-width: 300px;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 30px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.7);
-        }
-        
-        .cover-video video {
-            width: 100%;
-            display: block;
-        }
-        
-        .cover-title {
-            font-size: 28px;
-            font-weight: 800;
-            color: #d4af37;
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-        
-        .cover-subtitle {
-            font-size: 14px;
-            color: rgba(212, 175, 55, 0.8);
-            margin-bottom: 30px;
-            font-weight: 500;
-        }
-        
-        .swipe-hint {
-            position: absolute;
-            bottom: 30px;
-            font-size: 14px;
-            color: rgba(212, 175, 55, 0.6);
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
-        
-        /* СТРАНИЦА 2: ВИЗУАЛИЗАТОР */
-        .visualizer-page {
-            background: #f5edd6;
-            background-image: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="paper" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="100%" height="100%" fill="%23f5edd6"/><path d="M0,40 L40,0" stroke="rgba(0,0,0,0.05)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23paper)"/></svg>');
-        }
-        
-        .page-header {
-            padding: 15px;
-            background: rgba(0,0,0,0.05);
-            border-bottom: 2px solid #8b0000;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-shrink: 0;
-        }
-        
-        .page-title {
-            font-weight: bold;
-            color: #2c241a;
-            font-size: 16px;
-        }
-        
-        .page-controls {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .control-btn {
-            background: none;
-            border: none;
-            color: #8b0000;
-            font-size: 18px;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .control-btn:active {
-            background: rgba(139, 0, 0, 0.1);
-        }
-        
-        /* Настройки генерации */
-        .gen-settings {
-            padding: 15px;
-            background: rgba(255,255,255,0.9);
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-        
-        .select-row {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .model-select, .style-select {
-            flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #2c241a;
-            border-radius: 10px;
-            background: white;
-            font-weight: bold;
-            color: #2c241a;
-            font-size: 14px;
-            outline: none;
-        }
-        
-        /* Галерея изображений */
-        .gallery {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            align-content: start;
-        }
-        
-        .image-card {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-            position: relative;
-        }
-        
-        .image-card:active {
-            transform: scale(0.98);
-        }
-        
-        .image-card img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            display: block;
-        }
-        
-        .image-info {
-            padding: 10px;
-        }
-        
-        .image-prompt {
-            font-size: 12px;
-            color: #2c241a;
-            font-weight: 500;
-            line-height: 1.3;
-        }
-        
-        .image-actions {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            display: flex;
-            gap: 5px;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        
-        .image-card:hover .image-actions {
-            opacity: 1;
-        }
-        
-        .image-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.9);
-            border: none;
-            color: #8b0000;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        
+
         /* Панель ввода */
-        .input-panel {
-            padding: 15px;
-            background: rgba(255,255,255,0.3);
-            border-top: 1px solid rgba(0,0,0,0.1);
-            flex-shrink: 0;
+        .input-bar { 
+            padding: 15px; background: rgba(255,255,255,0.3); 
+            border-top: 1px solid rgba(0,0,0,0.1); 
+            padding-bottom: calc(15px + env(safe-area-inset-bottom)); 
         }
         
-        .input-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
+        .row { 
+            display: flex; gap: 10px; align-items: center; 
+            max-width: 600px; margin: 0 auto; 
         }
         
-        .text-input {
-            flex: 1;
-            padding: 14px 18px;
-            border: 2px solid #2c241a;
-            border-radius: 25px;
-            background: white;
-            font-size: 16px;
-            outline: none;
-            color: #2c241a;
+        .field { 
+            flex: 1; background: #fff; border: 2px solid var(--ink); 
+            padding: 12px 15px; border-radius: 25px; font-size: 16px; 
+            outline: none; 
         }
         
-        .action-btn {
+        .btn { 
+            background: none; border: none; font-size: 24px; 
+            cursor: pointer; color: var(--ink); 
             width: 50px;
             height: 50px;
-            border-radius: 50%;
-            border: none;
-            background: white;
-            color: #8b0000;
-            font-size: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 10px rgba(139, 0, 0, 0.2);
+            border-radius: 50%;
             transition: all 0.2s;
         }
         
-        .action-btn:active {
-            transform: scale(0.95);
-            box-shadow: 0 2px 5px rgba(139, 0, 0, 0.2);
+        .btn:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        /* Навигационные точки */
+        .nav-dots { 
+            position: fixed; bottom: 85px; left: 0; right: 0; 
+            display: flex; justify-content: center; gap: 15px; 
+            z-index: 5000; 
         }
         
-        .mic-btn {
-            color: #2c241a;
+        .dot { 
+            width: 10px; height: 10px; border-radius: 50%; 
+            background: var(--gold); opacity: 0.3; border: 1px solid #000; 
+            transition: 0.3s; cursor: pointer;
         }
         
-        .mic-btn.listening {
-            background: #ff0000;
-            color: white;
-            animation: pulseRed 1s infinite;
+        .dot.active { 
+            opacity: 1; transform: scale(1.3); 
+        }
+
+        /* Zoom overlay */
+        #z-overlay { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
+            z-index: 9999; display: none; flex-direction: column; 
         }
         
-        @keyframes pulseRed {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
+        /* Лоадер */
+        .loader {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+            text-align: center;
+            color: var(--gold);
         }
         
-        /* СТРАНИЦА 3: ИИ ЧАТ */
-        .chat-page {
-            background: #f5edd6;
-            background-image: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="chatPaper" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse"><rect width="100%" height="100%" fill="%23f5edd6"/><circle cx="25" cy="25" r="1" fill="rgba(0,0,0,0.05)"/></pattern></defs><rect width="100%" height="100%" fill="url(%23chatPaper)"/></svg>');
-        }
-        
-        /* Чат */
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .message {
-            max-width: 85%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            line-height: 1.4;
-            word-wrap: break-word;
-            position: relative;
-            animation: messageAppear 0.3s ease;
-        }
-        
-        @keyframes messageAppear {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .user-message {
-            align-self: flex-end;
-            background: linear-gradient(135deg, #d4af37, #b8941f);
-            color: white;
-            border-bottom-right-radius: 5px;
-        }
-        
-        .ai-message {
-            align-self: flex-start;
-            background: white;
-            color: #2c241a;
-            border: 1px solid rgba(0,0,0,0.1);
-            border-bottom-left-radius: 5px;
-            cursor: pointer;
-        }
-        
-        .ai-message:active {
-            background: #f8f4e9;
-        }
-        
-        .message-time {
-            font-size: 10px;
-            opacity: 0.6;
-            margin-top: 4px;
-            text-align: right;
-        }
-        
-        .thinking {
-            align-self: flex-start;
-            background: rgba(255,255,255,0.8);
-            padding: 15px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #666;
-            font-style: italic;
-        }
-        
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(139, 0, 0, 0.1);
-            border-top-color: #8b0000;
+        .loader .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(212, 175, 55, 0.3);
+            border-top: 4px solid var(--gold);
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
         }
         
         @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Навигация */
-        .nav-dots {
-            position: fixed;
-            bottom: 90px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            z-index: 50;
-        }
-        
-        .nav-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: rgba(212, 175, 55, 0.3);
-            border: 1px solid rgba(0,0,0,0.3);
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        
-        .nav-dot.active {
-            background: #d4af37;
-            transform: scale(1.3);
-        }
-        
-        /* Модальное окно */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-        }
-        
-        .modal-header {
-            padding: 20px;
-            text-align: right;
-        }
-        
-        .modal-close {
-            color: white;
-            font-size: 40px;
-            cursor: pointer;
-            display: inline-block;
-            width: 50px;
-            height: 50px;
-            text-align: center;
-            line-height: 50px;
-        }
-        
-        .modal-content {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .modal-image {
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 10px;
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         /* Уведомления */
-        .toast {
+        .notification {
             position: fixed;
-            bottom: 130px;
+            bottom: 120px;
             left: 50%;
             transform: translateX(-50%);
-            background: #8b0000;
+            background: var(--accent);
             color: white;
             padding: 12px 24px;
             border-radius: 25px;
-            font-weight: 500;
-            z-index: 1000;
-            animation: toastIn 0.3s;
+            font-weight: bold;
+            z-index: 10000;
             display: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
         }
         
-        @keyframes toastIn {
-            from { opacity: 0; transform: translate(-50%, 20px); }
-            to { opacity: 1; transform: translate(-50%, 0); }
-        }
-        
-        /* Меню */
-        .menu {
-            position: fixed;
-            top: 60px;
-            right: 15px;
-            background: rgba(0,0,0,0.95);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            border-radius: 12px;
-            padding: 10px 0;
-            min-width: 200px;
-            z-index: 1000;
-            display: none;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        
-        .menu-item {
-            padding: 14px 20px;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: background 0.2s;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .menu-item:last-child {
-            border-bottom: none;
-        }
-        
-        .menu-item:active {
-            background: rgba(212, 175, 55, 0.1);
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
         }
         
         /* Адаптивность */
-        @media (max-width: 480px) {
-            .gallery {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
+        @media (max-width: 768px) {
+            .paper-sheet {
+                padding: 5px;
+            }
+            
+            .scroll-area {
                 padding: 10px;
             }
             
-            .image-card img {
-                height: 120px;
+            .ai-box, .user-msg {
+                font-size: 14px;
+                padding: 8px;
             }
-            
-            .cover-title {
-                font-size: 24px;
-            }
-            
-            .message {
-                max-width: 90%;
-            }
-        }
-        
-        /* Полоса прокрутки */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.1);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: rgba(212, 175, 55, 0.5);
-            border-radius: 3px;
         }
     </style>
 </head>
 <body>
 
-<!-- Фоновый узор -->
-<div class="bg-pattern"></div>
+<!-- Лоадер -->
+<div class="loader" id="loader">
+    <div class="spinner"></div>
+    <div>Загрузка...</div>
+</div>
 
-<!-- Уведомления -->
-<div class="toast" id="toast"></div>
+<!-- Уведомление -->
+<div class="notification" id="notification"></div>
 
-<!-- Модальное окно -->
-<div class="modal" id="modal">
-    <div class="modal-header">
-        <div class="modal-close" onclick="closeModal()">×</div>
-    </div>
-    <div class="modal-content">
-        <img class="modal-image" id="modal-image" src="">
+<!-- Zoom overlay -->
+<div id="z-overlay" onclick="closeZ()">
+    <div style="text-align:right; padding:20px; color:#fff; font-size:40px; cursor:pointer;">×</div>
+    <div id="z-wrap" style="width:100%; height:85%; display:flex; align-items:center; justify-content:center;">
+        <img id="z-img" src="" style="max-width:100%; max-height:100%;">
     </div>
 </div>
 
-<!-- Меню -->
-<div class="menu" id="menu">
-    <div class="menu-item" onclick="saveData()">
-        <i class="fas fa-save"></i>
-        <span>Сохранить данные</span>
-    </div>
-    <div class="menu-item" onclick="clearAll()">
-        <i class="fas fa-trash"></i>
-        <span>Очистить всё</span>
-    </div>
-    <div class="menu-item" onclick="showHelp()">
-        <i class="fas fa-question-circle"></i>
-        <span>Помощь</span>
-    </div>
-    <div class="menu-item" onclick="showAbout()">
-        <i class="fas fa-info-circle"></i>
-        <span>О программе</span>
-    </div>
+<!-- Навигационные точки -->
+<div class="nav-dots">
+    <div class="dot active" onclick="jumpTo(1)"></div>
+    <div class="dot" onclick="jumpTo(2)"></div>
+    <div class="dot" onclick="jumpTo(3)"></div>
 </div>
 
-<!-- Основное приложение -->
-<div class="app">
-    
-    <!-- Шапка -->
-    <div class="header">
-        <div class="title">
-            НАША КНИГА <span class="page-subtitle" id="pageSubtitle">BOSS EDITION</span>
-        </div>
-        <button class="menu-btn" onclick="toggleMenu()">
-            <i class="fas fa-ellipsis-v"></i>
-        </button>
-    </div>
-    
-    <!-- Контейнер страниц -->
-    <div class="pages">
+<!-- Основной контейнер -->
+<div class="viewport">
+    <div class="book">
         
-        <!-- Страница 1: Обложка -->
-        <div class="page active" id="page1">
-            <div class="cover">
-                <div class="cover-video">
-                    <video autoplay loop muted playsinline>
-                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
-                    </video>
+        <!-- Страница 3: AI Чат -->
+        <div class="page" id="p3">
+            <div class="paper-sheet">
+                <div class="header">
+                    <button class="header-btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
+                    <span>⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</span>
+                    <span style="width:30px"></span>
                 </div>
-                <h1 class="cover-title">НАША КНИГА</h1>
-                <div class="cover-subtitle">BOSS AI EDITION</div>
-                <div class="swipe-hint">← СВАЙП ВПРАВО ДЛЯ НАЧАЛА →</div>
+                <select id="chat-model" class="ai-select">
+                    <option value="gpt">GPT-4 (Универсал)</option>
+                    <option value="assistant">Ассистент</option>
+                    <option value="creative">Креативный</option>
+                    <option value="analyst">Аналитик</option>
+                </select>
+                <div id="status-chat" class="status-bar"></div>
+                <div id="hub-box" class="scroll-area"></div>
+                <div class="input-bar">
+                    <div class="row">
+                        <button onclick="runMic('i-chat', sendMsg, 'm-chat')" id="m-chat" class="btn"><i class="fas fa-microphone"></i></button>
+                        <input type="text" id="i-chat" class="field" placeholder="Запрос..." onkeypress="if(event.key === 'Enter') sendMsg()">
+                        <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
+                    </div>
+                </div>
             </div>
         </div>
-        
+
         <!-- Страница 2: Визуализатор -->
-        <div class="page" id="page2">
-            <div class="visualizer-page">
-                <div class="page-header">
-               
+        <div class="page" id="p2" style="z-index: 2;">
+            <div class="paper-sheet">
+                <div class="header">
+                    <button class="header-btn" onclick="clearArt()"><i class="fas fa-trash"></i></button>
+                    <span>⬥ ВИЗУАЛИЗАТОР ⬥</span>
+                    <span style="width:30px"></span>
+                </div>
+                <div class="style-row">
+                    <select id="art-model" class="style-select">
+                        <option value="unsplash">Unsplash (Фото)</option>
+                        <option value="picsum">Picsum (Рандом)</option>
+                        <option value="placeholder">Placeholder</option>
+                    </select>
+                    <select id="art-style" class="style-select">
+                        <option value="none">🎯 Как есть</option>
+                        <option value="nature">🌳 Природа</option>
+                        <option value="city">🏙️ Город</option>
+                        <option value="abstract">🎨 Абстракция</option>
+                        <option value="animal">🐶 Животные</option>
+                    </select>
+                </div>
+                <div id="status-art" class="status-bar"></div>
+                <div id="imgs-box" class="scroll-area"></div>
+                <div class="input-bar">
+                    <div class="row">
+                        <button onclick="runMic('i-art', genArt, 'm-art')" id="m-art" class="btn"><i class="fas fa-microphone"></i></button>
+                        <input type="text" id="i-art" class="field" placeholder="Опишите образ..." onkeypress="if(event.key === 'Enter') genArt()">
+                        <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="back"></div>
+        </div>
+
+        <!-- Страница 1: Обложка -->
+        <div class="page" id="p1" style="z-index: 3;">
+            <div class="paper-sheet" style="background:var(--leather); border:12px double var(--gold); align-items:center; justify-content:center;">
+                <div style="width: 85%; background: #fff; padding: 10px 10px 40px 10px; box-shadow: 0 25px 50px rgba(0,0,0,0.8); transform: rotate(-1deg);">
+                    <video autoplay loop muted playsinline style="width:100%; display:block; border-radius: 4px;">
+                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
+                        Ваш браузер не поддерживает видео.
+                    </video>
+                </div>
+                <div style="margin-top:40px; text-align:center; color:var(--gold);">
+                    <h1 style="margin:0; letter-spacing:5px; font-size:28px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">НАША КНИГА</h1>
+                    <div style="font-size:11px; opacity:0.8; margin-top:10px; font-weight:bold;">BOSS CUSTOM EDITION</div>
+                </div>
+                <div style="margin-top:30px; font-size:12px; color:var(--gold); opacity:0.5; animation: pulse 2s infinite;">← СВАЙП ДЛЯ ВХОДА →</div>
+            </div>
+            <div class="back"></div>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+    // ========== ИНИЦИАЛИЗАЦИЯ ==========
+    let step = 1;
+    let pz = null;
+    let audioReady = false;
+    let isVoiceInput = false;
+    let speechData = { 
+        isPaused: false, 
+        lastIndex: 0, 
+        currentText: "", 
+        activeElement: null 
+    };
+
+    // Звуки
+    const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
+    flipSound.volume = 0.5;
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Приложение загружено');
+        
+        // Проверяем поддержку Web Speech API
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            showNotification('Голосовой ввод не поддерживается в вашем браузере');
+        }
+        
+        // Загружаем сохраненные данные
+        loadSavedData();
+        
+        // Инициализируем свайпы
+        initSwipes();
+        
+        // Автовоспроизведение видео
+        const video = document.querySelector('video');
+        if (video) {
+            video.play().catch(e => {
+                console.log('Автовоспроизведение видео заблокировано');
+            });
+        }
+    });
+
+    // ========== УВЕДОМЛЕНИЯ ==========
+    function showNotification(message, duration = 3000) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.style.display = 'block';
+        
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, duration);
+    }
+
+    function showLoader(show) {
+        document.getElementById('loader').style.display = show ? 'block' : 'none';
+    }
+
+    // ========== НАВИГАЦИЯ ==========
+    function jumpTo(s) {
+        if (s === step) return;
+        
+        stopAllSpeech();
+        
+        // Звук перелистывания
+        try {
+            flipSound.currentTime = 0;
+            flipSound.play().catch(e => console.log("Звук заблокирован"));
+        } catch (e) {}
+        
+        // Обновляем точки навигации
+        const dots = document.querySelectorAll('.dot');
+        dots.forEach((d, i) => d.classList.toggle('active', i === s - 1));
+        
+        // Анимируем страницы
+        document.getElementById('p1').classList.toggle('flipped', s > 1);
+        document.getElementById('p2').classList.toggle('flipped', s > 2);
+        
+        // Вибрация если доступна
+        if (navigator.vibrate) {
+            navigator.vibrate(30);
+        }
+        
+        step = s;
+    }
+
+    function initSwipes() {
+        let startX = 0;
+        
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+        }, { passive: true });
+        
+        document.addEventListener('touchend', (e) => {
+            if (document.getElementById('z-overlay').style.display === 'flex') return;
+            
+            const endX = e.changedTouches[0].clientX;
+            const diff = startX - endX;
+            
+            if (Math.abs(diff) > 60) {
+                if (diff > 0 && step < 3) {
+                    jumpTo(step + 1);
+                } else if (diff < 0 && step > 1) {
+                    jumpTo(step - 1);
+                }
+            }
+        }, { passive: true });
+        
+        // Клавиатура для десктопа
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' && step < 3) {
+                jumpTo(step + 1);
+            } else if (e.key === 'ArrowLeft' && step > 1) {
+                jumpTo(step - 1);
+            }
+        });
+    }
+
+    // ========== AI ЧАТ ==========
+    async function sendMsg() {
+        const input = document.getElementById('i-chat');
+        const message = input.value.trim();
+        
+        if (!message) {
+            showNotification('Введите сообщение');
+            return;
+        }
+        
+        input.value = '';
+        
+        // Добавляем сообщение пользователя
+        const chatBox = document.getElementById('hub-box');
+        const userMsg = document.createElement('div');
+        userMsg.className = 'user-msg';
+        userMsg.textContent = `Вы: ${message}`;
+    
