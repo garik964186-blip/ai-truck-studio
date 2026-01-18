@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -417,4 +418,295 @@
 
     // Меню
     function toggleMenu() {
-        const menu = document.getEle
+        const menu = document.getElementById('tg-menu');
+        menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#tg-menu') && !e.target.closest('.tg-header button:last-child')) {
+            document.getElementById('tg-menu').style.display = 'none';
+        }
+    });
+
+    // AI Chat Functions
+    async function sendMsg() {
+        const input = document.getElementById('i-chat');
+        const box = document.getElementById('hub-box');
+        const model = document.getElementById('chat-model').value;
+        
+        if (!input.value.trim()) return;
+        
+        const message = input.value;
+        input.value = '';
+        
+        // Добавляем сообщение пользователя
+        box.insertAdjacentHTML('beforeend', `
+            <div class="user-msg">
+                👤 ${userData?.first_name || 'Вы'}: ${message}
+            </div>
+        `);
+        
+        const thinkingId = 'thinking-' + Date.now();
+        box.insertAdjacentHTML('beforeend', `
+            <div id="${thinkingId}" class="ai-box">
+                <i class="fas fa-spinner fa-spin"></i> Думаю...
+            </div>
+        `);
+        
+        box.scrollTop = box.scrollHeight;
+
+        try {
+            // Используем Telegram Bot API для отправки запроса
+            const response = await fetch(`/api/ai/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    model: model,
+                    userId: userData?.id || 'anonymous'
+                })
+            });
+            
+            const data = await response.json();
+            document.getElementById(thinkingId).remove();
+            
+            const div = document.createElement('div');
+            div.className = "ai-box";
+            div.innerHTML = `<b>🤖 ${getModelName(model)}:</b><br>${marked.parse(data.response)}`;
+            div.onclick = () => handleSpeech(data.response, div);
+            
+            // Контекстное меню для сообщений
+            div.oncontextmenu = (e) => {
+                e.preventDefault();
+                showMessageContext(e, div, data.response);
+            };
+            
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+            
+            // Сохраняем в историю
+            saveToHistory('chat', {
+                role: 'assistant',
+                content: data.response,
+                model: model,
+                timestamp: new Date().toISOString()
+            });
+            
+        } catch(error) {
+            document.getElementById(thinkingId).innerHTML = '❌ Ошибка подключения. Используем локальный режим.';
+            setTimeout(() => {
+                document.getElementById(thinkingId).remove();
+                showFallbackResponse(message, thinkingId, model);
+            }, 2000);
+        }
+    }
+
+    // Генерация изображений
+    async function genArt() {
+        const input = document.getElementById('i-art');
+        const box = document.getElementById('imgs-box');
+        const model = document.getElementById('art-model').value;
+        const style = document.getElementById('art-style').value;
+        
+        if (!input.value.trim()) return;
+        
+        const prompt = input.value;
+        input.value = '';
+        
+        document.getElementById('status-art').innerText = "🎨 Создаю изображение...";
+        vibrate(30);
+
+        try {
+            // Используем Telegram Bot API
+            const response = await fetch(`/api/ai/generate-image`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: prompt,
+                    style: style,
+                    model: model,
+                    userId: userData?.id || 'anonymous'
+                })
+            });
+            
+            const data = await response.json();
+            
+            const div = document.createElement('div');
+            div.className = "image-container";
+            div.innerHTML = `
+                <img src="${data.imageUrl}" 
+                     style="width:100%; border-radius:8px;" 
+                     onclick="openZ('${data.imageUrl}')"
+                     oncontextmenu="showImageContext(event, '${data.imageUrl}', '${prompt.replace(/'/g, "\\'")}')">
+                <div style="position:absolute; top:8px; right:8px; display:flex; gap:5px;">
+                    <button onclick="downloadImage('${data.imageUrl}', '${prompt.replace(/'/g, "")}')" 
+                            style="background:rgba(255,255,255,0.9); border:none; border-radius:50%; width:36px; height:36px; font-size:16px;">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button onclick="shareToTelegram('${data.imageUrl}', '${prompt.replace(/'/g, "\\'")}')" 
+                            style="background:rgba(255,255,255,0.9); border:none; border-radius:50%; width:36px; height:36px; font-size:16px;">
+                        <i class="fab fa-telegram"></i>
+                    </button>
+                </div>
+                <p style="text-align:center; font-size:12px; margin:8px 0; font-weight:bold; padding:0 8px;">
+                    ${prompt}
+                </p>
+            `;
+            
+            box.prepend(div);
+            document.getElementById('status-art').innerText = "";
+            vibrate(100);
+            
+            // Сохраняем в историю
+            saveToHistory('image', {
+                prompt: prompt,
+                imageUrl: data.imageUrl,
+                model: model,
+                style: style,
+                timestamp: new Date().toISOString()
+            });
+            
+        } catch(error) {
+            document.getElementById('status-art').innerText = "❌ Ошибка. Используем локальный генератор...";
+            setTimeout(() => {
+                generateFallbackImage(prompt, style, model);
+            }, 1000);
+        }
+    }
+
+    // Контекстные меню
+    function showMessageContext(e, element, text) {
+        const menu = document.getElementById('context-menu');
+        menu.innerHTML = `
+            <div class="context-item" onclick="copyToClipboard('${text.replace(/'/g, "\\'")}')">
+                <i class="far fa-copy"></i> Копировать
+            </div>
+            <div class="context-item" onclick="speakText('${text.replace(/'/g, "\\'")}')">
+                <i class="fas fa-volume-up"></i> Озвучить
+            </div>
+            <div class="context-item" onclick="translateText('${text.replace(/'/g, "\\'")}')">
+                <i class="fas fa-language"></i> Перевести
+            </div>
+            <div class="context-item" onclick="element.remove(); showToast('Сообщение удалено')">
+                <i class="far fa-trash-alt"></i> Удалить
+            </div>
+        `;
+        
+        menu.style.left = e.pageX + 'px';
+        menu.style.top = e.pageY + 'px';
+        menu.style.display = 'flex';
+        currentContext = 'message';
+    }
+
+    function showImageContext(e, imageUrl, prompt) {
+        e.preventDefault();
+        const menu = document.getElementById('context-menu');
+        menu.innerHTML = `
+            <div class="context-item" onclick="downloadImage('${imageUrl}', '${prompt}')">
+                <i class="fas fa-download"></i> Скачать
+            </div>
+            <div class="context-item" onclick="shareToTelegram('${imageUrl}', '${prompt}')">
+                <i class="fab fa-telegram"></i> Поделиться
+            </div>
+            <div class="context-item" onclick="setAsWallpaper('${imageUrl}')">
+                <i class="fas fa-image"></i> Обои
+            </div>
+            <div class="context-item" onclick="regenerateImage('${prompt}')">
+                <i class="fas fa-redo"></i> Регенерировать
+            </div>
+        `;
+        
+        menu.style.left = e.pageX + 'px';
+        menu.style.top = e.pageY + 'px';
+        menu.style.display = 'flex';
+        currentContext = 'image';
+    }
+
+    // Вспомогательные функции
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text);
+        showToast('Скопировано в буфер');
+        hideContextMenu();
+    }
+
+    function speakText(text) {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ru-RU';
+            utterance.rate = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+        hideContextMenu();
+    }
+
+    async function translateText(text) {
+        try {
+            const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
+            const data = await response.json();
+            const translated = data.responseData.translatedText;
+            showToast(`Перевод: ${translated.slice(0, 50)}...`);
+        } catch (error) {
+            showToast('Ошибка перевода');
+        }
+        hideContextMenu();
+    }
+
+    function hideContextMenu() {
+        document.getElementById('context-menu').style.display = 'none';
+        currentContext = null;
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#context-menu')) {
+            hideContextMenu();
+        }
+    });
+
+    // Сохранение и загрузка
+    async function saveSession() {
+        const chatHistory = Array.from(document.querySelectorAll('#hub-box .ai-box, #hub-box .user-msg'))
+            .map(el => el.innerHTML);
+        
+        const images = Array.from(document.querySelectorAll('#imgs-box .image-container'))
+            .map(el => el.innerHTML);
+        
+        const session = {
+            chatHistory,
+            images,
+            timestamp: new Date().toISOString(),
+            userId: userData?.id
+        };
+        
+        // Сохраняем через Telegram Cloud Storage
+        if (tg.CloudStorage) {
+            await tg.CloudStorage.setItem('session', JSON.stringify(session));
+        }
+        
+        // Локальное сохранение
+        localStorage.setItem('boss_session', JSON.stringify(session));
+        showToast('Сессия сохранена ✅');
+        toggleMenu();
+    }
+
+    async function loadSession() {
+        let session = null;
+        
+        // Пробуем загрузить из Telegram Cloud
+        if (tg.CloudStorage) {
+            session = await tg.CloudStorage.getItem('session');
+        }
+        
+        // Если нет в облаке, пробуем локально
+        if (!session) {
+            session = localStorage.getItem('boss_session');
+        }
+        
+        if (session) {
+            session = JSON.parse(session);
+            document.getElementById('hub-box').innerHTML = session.chatHistory.join('');
+            document.getElementById('imgs-box').innerHTML = session.images.join('');
+           
