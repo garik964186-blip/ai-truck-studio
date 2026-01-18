@@ -2,220 +2,223 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Магическая Книга</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>НАША КНИГА | BOSS EDITION</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
     <style>
-        :root { --accent: #ffcc00; --bg: #1a1a1a; --text: #e0e0e0; --card: #2a2a2a; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; }
+        /* --- СТИЛИ КНИГИ --- */
+        :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         
-        .page { display: none; max-width: 800px; margin: 0 auto; }
-        .active { display: block; }
+        .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 1500px; }
+        .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
         
-        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; z-index: 1; }
+        .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
+        .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
+        .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
         
-        .input-bar { margin: 20px 0; background: var(--card); padding: 15px; border-radius: 10px; }
-        .row { display: flex; gap: 10px; align-items: center; }
-        .field { flex: 1; padding: 10px; border-radius: 5px; border: none; background: #333; color: white; }
+        .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 18px; display: flex; justify-content: center; align-items: center; }
+        .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block; font-size: 14px; color: var(--ink); }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding-bottom: 10px; cursor: pointer; }
+        .status-bar { font-size: 13px; text-align: center; color: var(--accent); min-height: 25px; font-weight: bold; padding: 5px; }
+        .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         
-        .btn { background: #444; border: none; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 5px; }
-        .btn:hover { background: #555; }
-        .btn-nav { margin-top: 10px; background: var(--accent); color: black; font-weight: bold; }
-
-        #chat-box { height: 300px; overflow-y: auto; border: 1px solid #444; padding: 10px; background: #111; border-radius: 5px; margin-bottom: 10px; }
-        #art-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
+        .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px; border-radius: 25px; font-size: 16px; outline: none; }
+        .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; width: 45px; }
         
-        .canvas-container { background: white; border-radius: 10px; overflow: hidden; line-height: 0; margin-top: 10px; border: 3px solid var(--accent); }
-        canvas { cursor: crosshair; touch-action: none; width: 100%; }
-
-        /* Эффект пульсации микрофона */
-        .mic-active { color: #ff0000 !important; animation: pulse-red 1.2s infinite; }
-        @keyframes pulse-red {
-            0% { transform: scale(1); filter: drop-shadow(0 0 2px red); }
-            50% { transform: scale(1.2); filter: drop-shadow(0 0 8px red); }
-            100% { transform: scale(1); filter: drop-shadow(0 0 2px red); }
-        }
-        
-        .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
     </style>
 </head>
-<body>
+<body onclick="wakeAudio()">
 
-    <div id="p2" class="page active">
-        <h2>Альбом эскизов 🎨</h2>
-        <div id="art-container"></div>
-        <div class="input-bar">
-            <div class="row">
-                <button onclick="runMic('art')" class="btn" id="m-btn-art"><i class="fas fa-microphone"></i></button>
-                <input type="text" id="i-art" class="field" placeholder="Что нарисовать?">
-                <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
-            </div>
-        </div>
-        <div class="controls">
-            <button onclick="showPage('p3')" class="btn btn-nav">В чат 💬</button>
-            <button onclick="showPage('p4')" class="btn btn-nav">На доску 🖌️</button>
-        </div>
-    </div>
+<div id="z-overlay">
+    <div style="text-align:right; padding:15px; color:#fff; font-size:35px;" onclick="document.getElementById('z-overlay').style.display='none'">×</div>
+    <div id="z-wrap" style="width:100%; height:90%; display:flex; align-items:center; justify-content:center;"><img id="z-img" src="" style="width:100%;"></div>
+</div>
 
-    <div id="p3" class="page">
-        <h2>Чат с книгой 💬</h2>
-        <div id="chat-box"></div>
-        <div class="input-bar">
-            <div class="row">
-                <button onclick="runMic('chat')" class="btn" id="m-btn"><i class="fas fa-microphone"></i></button>
-                <input type="text" id="i-chat" class="field" placeholder="Напишите что-нибудь...">
-                <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </div>
-        <div class="controls">
-            <button onclick="showPage('p2')" class="btn btn-nav">В альбом 🎨</button>
-            <button onclick="showPage('p4')" class="btn btn-nav">На доску 🖌️</button>
-        </div>
-    </div>
-
-    <div id="p4" class="page">
-        <h2>Графическая доска 🖌️</h2>
-        <div class="canvas-container">
-            <canvas id="canvas"></canvas>
-        </div>
-        <div class="input-bar">
-            <div class="row">
-                <button onclick="clearCanvas()" class="btn"><i class="fas fa-trash"></i> Очистить</button>
-                <input type="color" id="colorPicker" value="#ffcc00">
-                <input type="range" id="sizePicker" min="1" max="20" value="5">
-                <span>Толщина</span>
-            </div>
-        </div>
-        <div class="controls">
-            <button onclick="showPage('p2')" class="btn btn-nav">В альбом 🎨</button>
-            <button onclick="showPage('p3')" class="btn btn-nav">В чат 💬</button>
-        </div>
-    </div>
-
-    <script>
-        // Переключение страниц
-        function showPage(id) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if (id === 'p4') initCanvas();
-        }
-
-        // Звуковой сигнал
-        function playBeep() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const g = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(220, ctx.currentTime);
-                g.gain.setValueAtTime(0.1, ctx.currentTime);
-                g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.2);
-                osc.connect(g); g.connect(ctx.destination);
-                osc.start(); osc.stop(ctx.currentTime + 0.2);
-            } catch(e) { console.log("Audio not supported"); }
-        }
-
-        // Голосовой ввод
-        function runMic(target) {
-            const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!R) { alert("Микрофон не поддерживается"); return; }
-            
-            const r = new R();
-            r.lang = 'ru-RU';
-            const inputId = (target === 'art') ? 'i-art' : 'i-chat';
-            const btnId = (target === 'art') ? 'm-btn-art' : 'm-btn';
-            const btn = document.getElementById(btnId);
-
-            r.onstart = () => { playBeep(); btn.classList.add('mic-active'); };
-            r.onresult = (e) => {
-                const text = e.results[0][0].transcript;
-                document.getElementById(inputId).value = text;
-                if (target === 'art') genArt(); else sendMsg();
-            };
-            r.onend = () => { btn.classList.remove('mic-active'); };
-            r.start();
-        }
-
-        // Функции чата и альбома
-        function genArt() {
-            const val = document.getElementById('i-art').value;
-            if(!val) return;
-            document.getElementById('art-container').innerHTML += `<div style="background:#333; padding:10px; border-radius:5px;">🎨 ${val}</div>`;
-            document.getElementById('i-art').value = '';
-        }
-
-        function sendMsg() {
-            const val = document.getElementById('i-chat').value;
-            if(!val) return;
-            const box = document.getElementById('chat-box');
-            box.innerHTML += `<p><strong>👤:</strong> ${val}</p>`;
-            document.getElementById('i-chat').value = '';
-            box.scrollTop = box.scrollHeight;
-        }
-
-        // Логика рисования (Холст)
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        let drawing = false;
-
-        function initCanvas() {
-            const container = canvas.parentElement;
-            canvas.width = container.clientWidth;
-            canvas.height = 450;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-        }
-
-        function startDraw(e) {
-            drawing = true;
-            draw(e);
-        }
-
-        function endDraw() {
-            drawing = false;
-            ctx.beginPath();
-        }
-
-        function draw(e) {
-            if (!drawing) return;
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-            
-            const x = clientX - rect.left;
-            const y = clientY - rect.top;
-
-            ctx.lineWidth = document.getElementById('sizePicker').value;
-            ctx.strokeStyle = document.getElementById('colorPicker').value;
-
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-        }
-
-        function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        canvas.addEventListener('mousedown', startDraw);
-        canvas.addEventListener('mousemove', draw);
-        window.addEventListener('mouseup', endDraw);
+<div class="viewport">
+    <div class="book">
         
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e.touches[0]); });
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
-        canvas.addEventListener('touchend', endDraw);
+        <div class="page" id="p3">
+            <div class="paper-sheet">
+                <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
+                <select id="chat-model" class="ai-select">
+                    <option value="openai">GPT-4o (Умный)</option>
+                    <option value="deepseek">DeepSeek R1 (Логика)</option>
+                    <option value="llama">Llama 3.3 (Мощная)</option>
+                </select>
+                <select id="voice-engine" class="ai-select">
+                    <option value="cloud">♂ Денис (Нейро-голос)</option>
+                    <option value="system">🗣 Системный (Робот)</option>
+                </select>
+                <div id="status-chat" class="status-bar" onclick="wakeAudio()">
+                    <span id="s-label" style="color:red; cursor:pointer;">📢 Нажми для звука</span>
+                </div>
+                <div id="hub-box" class="scroll-area"></div>
+                <div class="input-bar">
+                    <div class="row">
+                        <button onclick="runMic('i-chat', sendMsg, 'm-chat')" class="btn" id="m-chat"><i class="fas fa-microphone"></i></button>
+                        <input type="text" id="i-chat" class="field" placeholder="Слушаю, Босс...">
+                        <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        // Отправка по Enter
-        document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                if (document.getElementById('p2').classList.contains('active')) genArt();
-                if (document.getElementById('p3').classList.contains('active')) sendMsg();
-            }
+        <div class="page" id="p2" style="z-index: 2;">
+            <div class="paper-sheet">
+                <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
+                <select id="art-model" class="ai-select">
+                    <option value="flux">💎 Flux.1 (Шедевр)</option>
+                    <option value="flux-realism">📸 Фото-реализм</option>
+                    <option value="flux-anime">🎎 Аниме-стиль</option>
+                    <option value="flux-3d">🧊 3D Рендер</option>
+                    <option value="turbo">⚡ Быстро</option>
+                </select>
+                <div id="status-art" class="status-bar"></div>
+                <div id="imgs-box" class="scroll-area"></div>
+                <div class="input-bar">
+                    <div class="row">
+                        <button onclick="runMic('i-art', genArt, 'm-art')" class="btn" id="m-art"><i class="fas fa-microphone"></i></button>
+                        <input type="text" id="i-art" class="field" placeholder="Что нарисовать?">
+                        <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="back"></div>
+        </div>
+
+        <div class="page" id="p1" style="z-index: 3;">
+            <div class="paper-sheet" style="background:#2b0000; border:10px double var(--gold);">
+                <video autoplay loop muted playsinline style="width:100%; height:75%; object-fit:cover; border-bottom:4px solid var(--gold);">
+                    <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
+                </video>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold); text-align:center;">
+                    <h1 style="margin:0; letter-spacing:5px; font-size:28px;">НАША КНИГА</h1>
+                    <div style="font-size:12px; opacity:0.6; margin-top:15px;">BOSS EDITION</div>
+                    <div style="font-size:12px; opacity:0.6; margin-top:5px;">⬅ СМАХНИ ВЛЕВО</div>
+                </div>
+            </div>
+            <div class="back"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let step = 1, pz = null, audioReady = false;
+    const synth = window.speechSynthesis;
+    const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
+    marked.setOptions({ breaks: true, gfm: true });
+
+    function wakeAudio() {
+        if (audioReady) return;
+        const u = new SpeechSynthesisUtterance('');
+        synth.speak(u);
+        audioReady = true;
+        document.getElementById('s-label').innerHTML = "<span style='color:green'>✅ Звук активен</span>";
+        setTimeout(() => { document.getElementById('s-label').innerText = ""; }, 2000);
+    }
+
+    async function speak(t) {
+        wakeAudio();
+        const eng = document.getElementById('voice-engine').value;
+        const clean = t.replace(/[#*`_{}\[\]()]/g, '').trim();
+        if (eng === 'system') {
+            synth.cancel();
+            const u = new SpeechSynthesisUtterance(clean);
+            u.lang = 'ru-RU';
+            synth.speak(u);
+            return;
+        }
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru-RU&client=tw-ob&q=${encodeURIComponent(clean.substring(0, 200))}`;
+        const a = new Audio(url);
+        a.play().catch(() => {
+            const u = new SpeechSynthesisUtterance(clean);
+            u.lang = 'ru-RU';
+            synth.speak(u);
         });
+    }
 
-        window.onload = initCanvas;
-        window.onresize = initCanvas;
-    </script>
+    async function sendMsg() {
+        wakeAudio();
+        const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
+        if (!i.value) return;
+        const val = i.value; i.value = '';
+        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:5px;">Вы: ${val}</div>`);
+        document.getElementById('status-chat').innerText = "Книга думает...";
+        try {
+            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(val)}?model=${m}`);
+            let d = await r.text();
+            const div = document.createElement('div');
+            div.className = "ai-box";
+            div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
+            div.onclick = () => speak(d);
+            b.insertAdjacentElement('afterbegin', div);
+            document.getElementById('status-chat').innerText = "";
+            speak(d);
+        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка сети"; }
+    }
+
+    async function genArt() {
+        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
+        if (!i.value) return;
+        let txt = i.value; i.value = '';
+        if (txt.toLowerCase().match(/камаз|грузовик|dongfeng/)) {
+            txt += ", realistic truck photography, 4k, cinematic lighting, shot on Osmo Action 5 Pro style";
+        }
+        document.getElementById('status-art').innerText = "Рисую шедевр...";
+        try {
+            const tr = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
+            const td = await tr.json();
+            const finalPrompt = td.responseData.translatedText;
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?model=${m}&nologo=true&seed=${Date.now()}`;
+            const card = `<div style="background:#fff; padding:10px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+                <img src="${url}" style="width:100%; border-radius:4px;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
+                <p style="text-align:center; font-size:12px; margin-top:5px; color:#555;">${txt.split(',')[0]}</p>
+            </div>`;
+            b.insertAdjacentHTML('afterbegin', card);
+        } catch(e) { document.getElementById('status-art').innerText = "Ошибка генерации"; }
+    }
+
+    function runMic(id, cb, bId) {
+        wakeAudio();
+        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!R) return;
+        const r = new R(); r.lang = 'ru-RU';
+        r.onstart = () => document.getElementById(bId).style.color = 'red';
+        r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
+        r.onend = () => document.getElementById(bId).style.color = 'inherit';
+        r.start();
+    }
+
+    function openZ(u) {
+        document.getElementById('z-img').src = u;
+        document.getElementById('z-overlay').style.display = 'flex';
+        if(pz) pz.destroy();
+        pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 });
+    }
+
+    let sX = 0;
+    document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
+    document.addEventListener('touchend', e => {
+        if(document.getElementById('z-overlay').style.display === 'flex') return;
+        let d = sX - e.changedTouches[0].clientX;
+        if (Math.abs(d) > 60) {
+            if (d > 0 && step < 3) { 
+                document.getElementById('p'+step).classList.add('flipped'); 
+                step++; flipSound.play(); 
+            } else if (d < 0 && step > 1) { 
+                step--; document.getElementById('p'+step).classList.remove('flipped'); 
+                flipSound.play(); 
+            }
+        }
+    });
+</script>
 </body>
 </html>
