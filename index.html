@@ -166,8 +166,90 @@
     let step = 1, pz = null, audioReady = false, isVoiceInput = false;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
 
-    // ПАРАМЕТРЫ ПЛЕЕРА
+    // --- НАЧАЛО ОБНОВЛЕННОГО БЛОКА АУДИО ---
     let speechData = { isPaused: false, lastIndex: 0, currentText: "", activeElement: null };
+    let voices = [];
+
+    // Загружаем голоса асинхронно
+    window.speechSynthesis.onvoiceschanged = () => {
+        voices = window.speechSynthesis.getVoices();
+    };
+
+    function wakeAudio() { 
+        if(!audioReady) { 
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); 
+            voices = window.speechSynthesis.getVoices(); 
+            audioReady = true; 
+        } 
+    }
+
+    function handleSpeech(txt, el) {
+        if (speechData.activeElement === el) {
+            if (window.speechSynthesis.speaking && !speechData.isPaused) {
+                window.speechSynthesis.cancel();
+                speechData.isPaused = true;
+                el.style.borderLeft = "5px solid var(--pause-color)";
+                return;
+            } else if (speechData.isPaused) {
+                const remaining = speechData.currentText.slice(speechData.lastIndex);
+                playText(remaining, el);
+                speechData.isPaused = false;
+                return;
+            }
+        }
+        stopAllSpeech();
+        speechData.currentText = txt.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/[#*`]/g,'');
+        speechData.activeElement = el;
+        playText(speechData.currentText, el);
+    }
+
+    function playText(text, el) {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ru-RU';
+        
+        // Поиск лучшего голоса (Google/Premium)
+        if (voices.length === 0) voices = window.speechSynthesis.getVoices();
+        const bestVoice = voices.find(v => v.lang.includes('ru') && (v.name.includes('Google') || v.name.includes('Premium'))) 
+                       || voices.find(v => v.lang.includes('ru'));
+        
+        if (bestVoice) u.voice = bestVoice;
+
+        // Настройки выразительности
+        u.rate = 0.95;  // Легкое замедление для четкости
+        u.pitch = 0.95; // Чуть ниже тон для серьезности
+        u.volume = 1.0;
+
+        el.style.background = "rgba(0,0,0,0.05)";
+        el.style.borderLeft = "5px solid var(--accent)";
+        
+        u.onboundary = (e) => {
+            if (e.name === 'word') {
+                speechData.lastIndex = (speechData.currentText.length - text.length) + e.charIndex;
+            }
+        };
+
+        u.onend = () => {
+            if (!speechData.isPaused) {
+                el.style.background = "transparent";
+                el.style.borderLeft = "none";
+                speechData.activeElement = null;
+            }
+        };
+        u.onerror = (e) => { console.error("Speech Error:", e); stopAllSpeech(); };
+        window.speechSynthesis.speak(u);
+    }
+
+    function stopAllSpeech() {
+        window.speechSynthesis.cancel();
+        if (speechData.activeElement) {
+            speechData.activeElement.style.background = "transparent";
+            speechData.activeElement.style.borderLeft = "none";
+        }
+        speechData.isPaused = false;
+        speechData.lastIndex = 0;
+        speechData.activeElement = null;
+    }
+    // --- КОНЕЦ БЛОКА АУДИО ---
 
     window.onload = () => {
         const savedChat = localStorage.getItem('boss_chat_history');
@@ -177,8 +259,6 @@
         if(localStorage.getItem('chat_model')) document.getElementById('chat-model').value = localStorage.getItem('chat_model');
         const b = document.getElementById('hub-box'); b.scrollTop = b.scrollHeight;
     };
-
-    function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
 
     async function translateAndEnhance(text, mode = 'none') {
         try {
@@ -240,59 +320,6 @@
         } catch(e) { document.getElementById(tid).innerText = "Ошибка API"; }
     }
 
-    // УМНЫЙ ПЛЕЕР (ПАУЗА / ПРОДОЛЖЕНИЕ)
-    function handleSpeech(txt, el) {
-        if (speechData.activeElement === el) {
-            if (window.speechSynthesis.speaking && !speechData.isPaused) {
-                window.speechSynthesis.cancel();
-                speechData.isPaused = true;
-                el.style.borderLeft = "5px solid var(--pause-color)";
-                return;
-            } else if (speechData.isPaused) {
-                const remaining = speechData.currentText.slice(speechData.lastIndex);
-                playText(remaining, el);
-                speechData.isPaused = false;
-                return;
-            }
-        }
-        stopAllSpeech();
-        speechData.currentText = txt.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/[#*`]/g,'');
-        speechData.activeElement = el;
-        playText(speechData.currentText, el);
-    }
-
-    function playText(text, el) {
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'ru-RU';
-        el.style.background = "rgba(0,0,0,0.05)";
-        el.style.borderLeft = "5px solid var(--accent)";
-        
-        u.onboundary = (e) => {
-            if (e.name === 'word') {
-                speechData.lastIndex = (speechData.currentText.length - text.length) + e.charIndex;
-            }
-        };
-        u.onend = () => {
-            if (!speechData.isPaused) {
-                el.style.background = "transparent";
-                el.style.borderLeft = "none";
-                speechData.activeElement = null;
-            }
-        };
-        window.speechSynthesis.speak(u);
-    }
-
-    function stopAllSpeech() {
-        window.speechSynthesis.cancel();
-        if (speechData.activeElement) {
-            speechData.activeElement.style.background = "transparent";
-            speechData.activeElement.style.borderLeft = "none";
-        }
-        speechData.isPaused = false;
-        speechData.lastIndex = 0;
-        speechData.activeElement = null;
-    }
-
     // МИКРОФОН
     function runMic(id, cb, bid) {
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -347,9 +374,4 @@
     function saveSettings() { localStorage.setItem('chat_model', document.getElementById('chat-model').value); }
     function clearChat() { if(confirm("Очистить историю?")) { document.getElementById('hub-box').innerHTML=''; localStorage.removeItem('boss_chat_history'); } }
     function clearArt() { if(confirm("Удалить все арты?")) { document.getElementById('imgs-box').innerHTML=''; localStorage.removeItem('boss_art_history'); } }
-    function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; pz = new PinchZoom.default(document.getElementById('z-wrap'), {maxZoom:4}); }
-    function closeZ() { document.getElementById('z-overlay').style.display = 'none'; if(pz) pz.destroy(); }
-    function vibrate(ms) { if(navigator.vibrate) navigator.vibrate(ms); }
-</script>
-</body>
-</html>
+    function openZ(u) { document.getElementById('z-img').src = u; document.g
