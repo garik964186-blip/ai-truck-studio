@@ -3,57 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BOSS BOOK | TOTAL EDITION</title>
+    <title>BOSS BOOK | SUPREME EDITION</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; --leather: #3d0a0a; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2000px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
         .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transition: transform 0.6s cubic-bezier(0.64, 0.04, 0.35, 1); pointer-events: none; z-index: 1; transform-style: preserve-3d; }
-        .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.2); pointer-events: auto; }
+        .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 10px 0 30px rgba(0,0,0,0.3); pointer-events: auto; }
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
-        .header { padding: 15px; border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; background: rgba(0,0,0,0.05); }
-        .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 12px; border-radius: 12px; font-weight: bold; font-size: 14px; display: block !important; }
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
-        .input-bar { padding: 15px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+        
+        .header { padding: 15px; border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 16px; background: rgba(0,0,0,0.05); }
+        .ai-select { width: 92%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; display: block !important; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+        .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 18px; font-weight: bold; }
+        
+        .input-bar { padding: 15px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
-        .field { flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px; border-radius: 25px; font-size: 16px; }
-        .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
-        .ai-msg { border-left: 4px solid var(--accent); padding: 8px; background: rgba(0,0,0,0.02); margin-bottom: 5px; cursor: pointer; }
+        .field { flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px; border-radius: 25px; font-size: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .btn { background: none; border: none; font-size: 26px; cursor: pointer; color: var(--ink); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; }
+        
+        .ai-card { border-left: 5px solid var(--accent); padding: 10px; background: rgba(255,255,255,0.5); border-radius: 0 10px 10px 0; cursor: pointer; }
+        .art-card { background: #fff; padding: 10px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     </style>
 </head>
-<body onclick="startAudio()">
+<body onclick="initAudio()">
 
 <div class="viewport">
     <div class="book">
         
         <div class="page" id="p3">
             <div class="paper-sheet">
-                <div class="header">🎙️ ИНТЕЛЛЕКТ-ХАБ</div>
+                <div class="header">🎙️ НЕЙРО-КОНТАКТ</div>
                 <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Самый умный)</option>
-                    <option value="llama">Llama 3.1 (От Meta)</option>
-                    <option value="mistral">Mistral (GitHub Top)</option>
-                    <option value="qwen">Qwen 2.5 (Alibaba)</option>
-                    <option value="deepseek">DeepSeek (Логика)</option>
+                    <option value="openai">GPT-4o (Boss Choice)</option>
+                    <option value="deepseek">DeepSeek R1 (Deep Think)</option>
+                    <option value="llama">Llama 3.3 (Meta)</option>
+                    <option value="mistral">Mistral Large (Fast)</option>
+                    <option value="qwen">Qwen 2.5 (Logic)</option>
                 </select>
-                <select id="voice-id" class="ai-select" style="border-color: var(--accent);">
-                    <option value="ru-RU-DmitryNeural">Голос: Дмитрий (Премиум)</option>
-                    <option value="ru-RU-SvetlanaNeural">Голос: Светлана (Премиум)</option>
+                <select id="voice-choice" class="ai-select" style="border-color: var(--accent);">
+                    <option value="ru-RU-DmitryNeural">🎤 Премиум Дмитрий</option>
+                    <option value="ru-RU-SvetlanaNeural">🎤 Премиум Светлана</option>
                 </select>
                 <div id="status-chat" class="status-bar"></div>
-                <div id="hub-box" class="scroll-area"></div>
+                <div id="chat-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="runMic()" class="btn"><i class="fas fa-microphone" id="mic-icon" style="color:var(--accent)"></i></button>
-                        <input type="text" id="i-chat" class="field" placeholder="Слушаю вас, Босс...">
-                        <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane"></i></button>
+                        <button onclick="startMic('i-chat')" class="btn"><i class="fas fa-microphone" style="color:var(--accent)"></i></button>
+                        <input type="text" id="i-chat" class="field" placeholder="Ваш приказ, Босс...">
+                        <button onclick="sendChat()" class="btn"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
             </div>
@@ -61,17 +64,20 @@
 
         <div class="page" id="p2" style="z-index: 2;">
             <div class="paper-sheet">
-                <div class="header">🎨 ГЕНЕРАЦИЯ ОБРАЗОВ</div>
+                <div class="header">🎨 ХУДОЖЕСТВЕННАЯ БАЗА</div>
                 <select id="art-model" class="ai-select">
-                    <option value="flux">FLUX.1 (Реализм)</option>
-                    <option value="turbo">TURBO (Скорость)</option>
+                    <option value="flux">FLUX.1 (Ультра-реализм)</option>
+                    <option value="flux-realism">FLUX Realism (Фото)</option>
+                    <option value="any-dark">Any Dark (Кинематограф)</option>
+                    <option value="turbo">Turbo (Мгновенно)</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
-                <div id="imgs-box" class="scroll-area"></div>
+                <div id="art-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <input type="text" id="i-art" class="field" placeholder="Опишите картину...">
-                        <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
+                        <button onclick="startMic('i-art')" class="btn"><i class="fas fa-microphone" style="color:var(--accent)"></i></button>
+                        <input type="text" id="i-art" class="field" placeholder="Что нарисовать?">
+                        <button onclick="genArt()" class="btn"><i class="fas fa-magic"></i></button>
                     </div>
                 </div>
             </div>
@@ -79,14 +85,14 @@
         </div>
 
         <div class="page" id="p1" style="z-index: 3;">
-            <div class="paper-sheet" style="background:var(--leather); border:10px double var(--gold); align-items:center; justify-content:center;">
-                <div style="width: 85%; background: #fff; padding: 10px 10px 40px 10px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); transform: rotate(-2deg); margin-bottom: 20px;">
+            <div class="paper-sheet" style="background:var(--leather); border:12px double var(--gold); align-items:center; justify-content:center;">
+                <div style="width: 85%; background: #fff; padding: 10px 10px 35px 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.9); transform: rotate(-1.5deg);">
                     <video autoplay loop muted playsinline style="width:100%; background:#000;">
                         <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
                     </video>
                 </div>
-                <h1 style="color:var(--gold); font-size:30px; letter-spacing:3px;">КНИГА БОССА</h1>
-                <p style="color:#fff; opacity:0.3; font-size:10px;">PREMIUM AI + VOICE + ART</p>
+                <h1 style="color:var(--gold); margin-top:30px; font-size:30px; letter-spacing:4px;">BOSS BOOK</h1>
+                <p style="color:#fff; opacity:0.4; font-size:12px; margin-top:20px;">v6.0 SUPREME ONLINE</p>
             </div>
             <div class="back"></div>
         </div>
@@ -97,73 +103,87 @@
 <script>
     let step = 1, audioActive = false, currentAudio = null;
 
-    function startAudio() { audioActive = true; }
+    function initAudio() { audioActive = true; }
 
-    // ПРЕМИУМ ГОЛОС (EDGE-TTS)
-    function playVoice(text) {
+    // ПРЕМИУМ ГОЛОС (Microsoft Edge)
+    async function speakBoss(text) {
         if (!audioActive) return;
         if (currentAudio) currentAudio.pause();
-        const v = document.getElementById('voice-id').value;
-        document.getElementById('status-chat').innerText = "СИНТЕЗ ГОЛОСА...";
         
-        currentAudio = new Audio(`https://dictat.online/api/tts?text=${encodeURIComponent(text)}&voice=${v}`);
-        currentAudio.play().then(() => {
+        const voice = document.getElementById('voice-choice').value;
+        document.getElementById('status-chat').innerText = "СИНТЕЗИРУЮ ЖИВОЙ ГОЛОС...";
+        
+        const url = `https://dictat.online/api/tts?text=${encodeURIComponent(text)}&voice=${voice}`;
+        currentAudio = new Audio(url);
+        
+        currentAudio.oncanplaythrough = () => {
             document.getElementById('status-chat').innerText = "";
-        }).catch(() => {
-            // Фолбэк на системный голос
+            currentAudio.play();
+        };
+
+        currentAudio.onerror = () => {
+            document.getElementById('status-chat').innerText = "РЕЗЕРВНЫЙ ГОЛОС";
             const u = new SpeechSynthesisUtterance(text);
             u.lang = 'ru-RU';
             window.speechSynthesis.speak(u);
-        });
-    }
-
-    // МИКРОФОН (ГОЛОСОВОЙ ВВОД)
-    function runMic() {
-        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!R) return alert("Браузер не поддерживает микрофон");
-        const r = new R(); r.lang = 'ru-RU';
-        r.onstart = () => document.getElementById('mic-icon').style.color = '#2ecc71';
-        r.onresult = (e) => { 
-            document.getElementById('i-chat').value = e.results[0][0].transcript; 
-            sendMsg();
         };
-        r.onend = () => document.getElementById('mic-icon').style.color = 'var(--accent)';
-        r.start();
     }
 
-    // ОТПРАВКА СООБЩЕНИЯ
-    async function sendMsg() {
-        const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
+    // МИКРОФОН (ОБЩИЙ ДЛЯ ВСЕХ СТРАНИЦ)
+    function startMic(targetInputId) {
+        const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Speech) return alert("Микрофон не поддерживается");
+        
+        const rec = new Speech();
+        rec.lang = 'ru-RU';
+        rec.onstart = () => { document.querySelector(`#${targetInputId}`).style.borderColor = "lime"; };
+        rec.onresult = (e) => {
+            const txt = e.results[0][0].transcript;
+            document.getElementById(targetInputId).value = txt;
+            if(targetInputId === 'i-chat') sendChat(); else genArt();
+        };
+        rec.onend = () => { document.querySelector(`#${targetInputId}`).style.borderColor = "var(--ink)"; };
+        rec.start();
+    }
+
+    // ЧАТ
+    async function sendChat() {
+        const i = document.getElementById('i-chat'), b = document.getElementById('chat-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; font-size:13px; opacity:0.6; margin-bottom:5px;">Вы: ${val}</div>`);
-        document.getElementById('status-chat').innerText = "НЕЙРОСЕТЬ ОТВЕЧАЕТ...";
+        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; font-size:12px; color:#666; margin-bottom:5px;">Вы: ${val}</div>`);
+        document.getElementById('status-chat').innerText = "ДУМАЮ...";
 
         try {
-            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent("Отвечай на русском, обращайся Босс: " + val)}?model=${m}`);
+            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent("Answer in Russian, address me as Boss: " + val)}?model=${m}`);
             const d = await r.text();
             const div = document.createElement('div');
-            div.className = "ai-msg";
-            div.innerHTML = `<b>AI (${m}):</b> ${marked.parse(d)}`;
-            div.onclick = () => playVoice(d);
+            div.className = "ai-card";
+            div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
+            div.onclick = () => speakBoss(d);
             b.insertAdjacentElement('afterbegin', div);
-            playVoice(d);
+            speakBoss(d);
         } catch(e) { document.getElementById('status-chat').innerText = "ОШИБКА СЕТИ"; }
     }
 
-    // ГЕНЕРАЦИЯ КАРТИНКИ
+    // ГРАФИКА
     async function genArt() {
-        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
+        const i = document.getElementById('i-art'), b = document.getElementById('art-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
         const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "РИСУЮ ОБРАЗ...";
+        document.getElementById('status-art').innerText = "НЕЙРОСЕТЬ РИСУЕТ...";
+
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(txt)}?model=${m}&nologo=true&seed=${Date.now()}`;
-        const card = `<div style="background:#fff; padding:10px; margin-bottom:15px; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,0.1);"><img src="${url}" style="width:100%;" onclick="window.open('${url}')"><p style="text-align:center; font-size:12px; margin-top:8px;">${txt}</p></div>`;
+        const card = `
+            <div class="art-card">
+                <img src="${url}" style="width:100%; border-radius:5px;" onclick="window.open('${url}')">
+                <p style="text-align:center; font-size:12px; margin-top:8px; font-weight:bold;">${txt}</p>
+            </div>`;
         b.insertAdjacentHTML('afterbegin', card);
         document.getElementById('status-art').innerText = "";
     }
 
-    // ПЕРЕЛИСТЫВАНИЕ СТРАНИЦ
+    // ЛИСТАНИЕ
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
