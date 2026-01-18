@@ -18,32 +18,38 @@
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg); z-index: 10 !important; }
         .header { padding: 12px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; font-size: 18px; }
-        .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; font-size: 14px; }
+        .ai-select { width: 94%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 12px; font-weight: bold; font-size: 14px; outline: none; }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding: 10px 0; cursor: pointer; }
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.15); padding: 10px 0; cursor: pointer; transition: background 0.3s; }
+        .ai-box:active { background: rgba(0,0,0,0.05); }
         .status-bar { font-size: 12px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
         .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
         .field { flex: 1; background: #fff; border: 1.5px solid #aaa; padding: 12px; border-radius: 25px; font-size: 16px; outline: none; }
         .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; width: 40px; }
-        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; }
+        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
+        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 0.8; } 100% { opacity: 0.4; } }
     </style>
 </head>
 <body onclick="wakeAudio()">
 
 <div id="z-overlay">
     <div style="text-align:right; padding:15px; color:#fff; font-size:35px;" onclick="document.getElementById('z-overlay').style.display='none'">×</div>
-    <div id="z-wrap" style="width:100%; height:90%; display:flex; align-items:center; justify-content:center;"><img id="z-img" src="" style="width:100%;"></div>
+    <div id="z-wrap" style="width:100%; height:90%; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+        <img id="z-img" src="" style="max-width:100%; max-height:100%; object-fit: contain;">
+    </div>
 </div>
 
 <div class="viewport">
     <div class="book">
+        
         <div class="page" id="p3">
             <div class="paper-sheet">
                 <div class="header">🔮 МАГИЧЕСКИЙ ЧАТ</div>
                 <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Умный)</option>
-                    <option value="deepseek">DeepSeek R1 (Логика)</option>
+                    <option value="openai">GPT-4o (Умный Босс)</option>
+                    <option value="mistral">Mistral (Технический спец)</option>
+                    <option value="deepseek">DeepSeek R1 (Глубокая логика)</option>
                 </select>
                 <div id="status-chat" class="status-bar"></div>
                 <div id="hub-box" class="scroll-area"></div>
@@ -61,15 +67,15 @@
             <div class="paper-sheet">
                 <div class="header">🎨 АЛЬБОМ ЭСКИЗОВ</div>
                 <select id="art-model" class="ai-select">
-                    <option value="flux">💎 Flux.1 (Шедевр)</option>
-                    <option value="turbo">⚡ Быстро</option>
+                    <option value="flux">💎 Flux.1 (Лучшая графика)</option>
+                    <option value="turbo">⚡ Turbo (Мгновенно)</option>
                 </select>
                 <div id="status-art" class="status-bar"></div>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="runMic('i-art', genArt, 'm-art')" id="m-art" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Что нарисовать?">
+                        <input type="text" id="i-art" class="field" placeholder="Нарисуй КамАЗ К5...">
                         <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
@@ -85,11 +91,12 @@
                             <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
                         </video>
                     </div>
+                    <div style="text-align: center; margin-top: 10px; font-weight: bold; color: #333;">4K LOG: K5 & DONGFENG</div>
                 </div>
                 <div style="margin-top:40px; text-align:center; color:var(--gold);">
                     <h1 style="margin:0; letter-spacing:5px; font-size:30px; text-shadow: 2px 2px 4px #000;">НАША КНИГА</h1>
-                    <div style="font-size:12px; opacity:0.6; margin-top:10px; font-weight:bold;">BOSS EDITION</div>
-                    <div style="font-size:11px; margin-top:30px; opacity:0.4; animation: pulse 2s infinite;">⬅ СМАХНИ ВЛЕВО</div>
+                    <div style="font-size:12px; opacity:0.6; margin-top:10px; font-weight:bold;">BOSS EDITION V2</div>
+                    <div style="font-size:11px; margin-top:30px; opacity:0.4; animation: pulse 2s infinite;">⬅ СМАХНИ ВЛЕВО, БОСС</div>
                 </div>
             </div>
             <div class="back"></div>
@@ -101,9 +108,15 @@
     let step = 1, pz = null, audioReady = false;
     const flipSound = new Audio('https://www.soundjay.com/office/sounds/paper-flip-1.mp3');
 
-    function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady=true; } }
+    function wakeAudio() { 
+        if(!audioReady) { 
+            const u = new SpeechSynthesisUtterance('Система готова, Босс');
+            u.lang = 'ru-RU'; u.volume = 0.5;
+            window.speechSynthesis.speak(u);
+            audioReady = true; 
+        } 
+    }
 
-    // ФУНКЦИЯ ПЕРЕВОДА (Оживляем нейросети)
     async function translateText(txt) {
         try {
             const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=ru|en`);
@@ -112,64 +125,77 @@
         } catch(e) { return txt; }
     }
 
+    // ГОЛОСОВОЙ ЧАТ И ТЕКСТ
     async function sendMsg() {
         wakeAudio();
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
         if (!i.value) return;
         const val = i.value; i.value = '';
-        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; opacity:0.6; font-size:13px; margin-bottom:10px;">Вы: ${val}</div>`);
         
-        document.getElementById('status-chat').innerText = "Перевод для AI...";
-        const en = await translateText(val);
+        b.insertAdjacentHTML('afterbegin', `<div style="text-align:right; margin-bottom:15px;"><span style="background:rgba(0,0,0,0.05); padding:5px 10px; border-radius:10px;">${val}</span></div>`);
+        document.getElementById('status-chat').innerText = "Босс, я думаю...";
         
-        document.getElementById('status-chat').innerText = "Книга думает...";
+        // Системная инструкция для нейросети
+        const sys = "Answer in Russian. Address the user as 'Босс'. You are an expert in heavy trucks like KamAZ K5 and Dongfeng. Know settings for DJI Osmo Action 5 Pro for 4K YouTube uploads. Keep it cool and technical. ";
+        
         try {
-            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent("Answer in Russian: " + en)}?model=${m}`);
+            const r = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(sys + val)}?model=${m}`);
             const d = await r.text();
+            
             const div = document.createElement('div');
             div.className = "ai-box";
-            div.innerHTML = `<b>AI:</b> ${marked.parse(d)}`;
+            div.innerHTML = `<b>ИИ:</b> ${marked.parse(d)}`;
+            
+            // Клик по сообщению - озвучка
             div.onclick = () => {
                 const u = new SpeechSynthesisUtterance(d.replace(/[#*`]/g,''));
                 u.lang = 'ru-RU'; window.speechSynthesis.speak(u);
             };
+            
             b.insertAdjacentElement('afterbegin', div);
-        } catch(e) { document.getElementById('status-chat').innerText = "Ошибка связи"; }
+        } catch(e) { 
+            document.getElementById('status-chat').innerText = "Сбой связи, Босс"; 
+        }
         document.getElementById('status-chat').innerText = "";
     }
 
+    // ГРАФИЧЕСКАЯ НЕЙРОСЕТЬ
     async function genArt() {
         const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value;
         if (!i.value) return;
         let txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Перевод промпта...";
+        document.getElementById('status-art').innerText = "Готовлю камеру...";
         
         let en = await translateText(txt);
-        // Контекст Boss: грузовики и настройки камеры
-        if (txt.toLowerCase().match(/камаз|грузовик|dongfeng/)) {
-            en += ", realistic truck, cinematic lighting, shot on osmo action 5 pro, 8k resolution";
+        
+        // Добавляем профессиональный контекст для грузовиков и камеры
+        if (txt.toLowerCase().match(/камаз|грузовик|dongfeng|фура/)) {
+            en += ", cinematic lighting, captured on DJI Osmo Action 5 Pro, 4K resolution, realistic automotive photography, bokeh, sharp details, truck showroom style";
         }
 
-        document.getElementById('status-art').innerText = "Рисую шедевр...";
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&nologo=true&seed=${Date.now()}`;
+        document.getElementById('status-art').innerText = "Рисую эскиз...";
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&nologo=true&seed=${Date.now()}&width=1280&height=720`;
         
-        const card = `<div style="background:#fff; padding:10px; margin-bottom:15px; box-shadow:0 10px 20px rgba(0,0,0,0.1);">
-            <img src="${url}" style="width:100%;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
-            <p style="text-align:center; font-size:12px; margin-top:5px; color:#555;">${txt}</p>
-        </div>`;
+        const card = `
+            <div style="background:#fff; padding:10px; margin-bottom:15px; border: 1px solid var(--gold); box-shadow: 5px 5px 15px rgba(0,0,0,0.1);">
+                <img src="${url}" style="width:100%; border-radius:4px;" onclick="openZ('${url}')" onload="document.getElementById('status-art').innerText=''">
+                <p style="text-align:center; font-size:12px; margin: 8px 0 0 0; color:var(--ink); font-style: italic;">${txt}</p>
+            </div>`;
         b.insertAdjacentHTML('afterbegin', card);
     }
 
+    // ГОЛОСОВОЙ ВВОД
     function runMic(id, cb, bId) {
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!R) return;
+        if (!R) { alert("Ваш браузер не поддерживает голос"); return; }
         const r = new R(); r.lang = 'ru-RU';
-        r.onstart = () => document.getElementById(bId).style.color = 'red';
+        r.onstart = () => { document.getElementById(bId).style.color = 'red'; wakeAudio(); };
         r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
         r.onend = () => document.getElementById(bId).style.color = 'inherit';
         r.start();
     }
 
+    // УВЕЛИЧЕНИЕ КАРТИНКИ
     function openZ(u) {
         document.getElementById('z-img').src = u;
         document.getElementById('z-overlay').style.display = 'flex';
@@ -177,14 +203,21 @@
         pz = new PinchZoom.default(document.getElementById('z-wrap'), { minZoom: 1, maxZoom: 4 });
     }
 
+    // ЛОГИКА КНИГИ (СВАЙПЫ)
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
         if(document.getElementById('z-overlay').style.display === 'flex') return;
         let d = sX - e.changedTouches[0].clientX;
         if (Math.abs(d) > 60) {
-            if (d > 0 && step < 3) { document.getElementById('p'+step).classList.add('flipped'); step++; flipSound.play(); }
-            else if (d < 0 && step > 1) { step--; document.getElementById('p'+step).classList.remove('flipped'); flipSound.play(); }
+            if (d > 0 && step < 3) { 
+                document.getElementById('p'+step).classList.add('flipped'); 
+                step++; flipSound.play(); 
+            }
+            else if (d < 0 && step > 1) { 
+                step--; document.getElementById('p'+step).classList.remove('flipped'); 
+                flipSound.play(); 
+            }
         }
     });
 </script>
