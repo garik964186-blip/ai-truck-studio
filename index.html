@@ -3,19 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА | BOSS CUSTOM EDITION</title>
+    <title>НАША КНИГА | TELEGRAM BOSS EDITION</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <style>
         :root { 
             --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; 
             --leather: #2a0505; --pause-color: #d4af37;
+            --tg-bg: var(--tg-theme-bg-color, #000);
+            --tg-text: var(--tg-theme-text-color, #ffffff);
+            --tg-hint: var(--tg-theme-hint-color, #aaaaaa);
+            --tg-link: var(--tg-theme-link-color, #3390ec);
+            --tg-button: var(--tg-theme-button-color, #3390ec);
+            --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: var(--tg-bg); overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; }
         
         @keyframes fogMove { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
         body::after {
@@ -23,7 +31,16 @@
             opacity: 0.08; pointer-events: none; z-index: 10000; animation: fogMove 120s linear infinite;
         }
 
-        .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2000px; }
+        .tg-header { 
+            height: 56px; background: var(--tg-bg); color: var(--tg-text); 
+            display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+        }
+        .tg-back-btn { background: none; border: none; color: var(--tg-text); font-size: 20px; margin-right: 12px; }
+        .tg-title { font-weight: 600; font-size: 18px; flex: 1; }
+        .tg-subtitle { font-size: 12px; opacity: 0.7; margin-left: 8px; }
+
+        .viewport { width: 100vw; height: calc(100dvh - 56px); position: relative; perspective: 2000px; margin-top: 56px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
         
         .page { 
@@ -42,88 +59,199 @@
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg) !important; z-index: 10 !important; }
 
-        .header { padding: 12px; background: rgba(0,0,0,0.07); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .header { 
+            padding: 12px; background: rgba(0,0,0,0.07); border-bottom: 2px solid var(--ink); 
+            text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; 
+        }
         .header-btn { background: none; border: none; font-size: 18px; color: var(--accent); cursor: pointer; padding: 5px; }
         
         .ai-select { width: 92%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 8px; font-weight: bold; outline: none; }
         .style-row { display: flex; gap: 5px; width: 92%; margin: 0 auto; padding-top: 5px; }
         .style-select { flex: 1; padding: 8px; border-radius: 8px; border: 2px solid var(--ink); font-weight: bold; background: #fff; }
 
-        .scroll-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .scroll-area { 
+            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; 
+            scroll-behavior: smooth; 
+        }
         
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.1); padding: 10px 10px; line-height: 1.5; font-size: 15px; cursor: pointer; position: relative; transition: all 0.3s ease; border-left: 0px solid transparent; }
-        .user-msg { text-align: right; opacity: 0.6; font-style: italic; font-size: 14px; margin-bottom: 5px; color: var(--accent); }
+        .ai-box { 
+            border-bottom: 1px dashed rgba(0,0,0,0.1); padding: 12px; line-height: 1.6; font-size: 15px; 
+            cursor: pointer; position: relative; transition: all 0.3s ease; border-left: 0px solid transparent;
+            background: rgba(255,255,255,0.8); border-radius: 12px; margin-bottom: 8px;
+        }
+        .user-msg { 
+            text-align: right; background: rgba(212, 175, 55, 0.1); padding: 10px 14px; 
+            border-radius: 12px; font-size: 14px; margin-bottom: 5px; color: var(--accent);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
         .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
 
-        .input-bar { padding: 15px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+        .input-bar { 
+            padding: 15px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); 
+            padding-bottom: calc(15px + env(safe-area-inset-bottom)); 
+        }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
-        .field { flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px 15px; border-radius: 25px; font-size: 16px; outline: none; }
+        .field { 
+            flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px 15px; 
+            border-radius: 25px; font-size: 16px; outline: none; 
+        }
         .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
 
-        .nav-dots { position: fixed; bottom: 85px; left: 0; right: 0; display: flex; justify-content: center; gap: 15px; z-index: 5000; }
+        .nav-dots { 
+            position: fixed; bottom: 85px; left: 0; right: 0; display: flex; justify-content: center; 
+            gap: 15px; z-index: 5000; 
+        }
         .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); opacity: 0.3; border: 1px solid #000; transition: 0.3s; }
         .dot.active { opacity: 1; transform: scale(1.3); }
 
-        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
+        #z-overlay { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 9999; 
+            display: none; flex-direction: column; 
+        }
+        
+        .tg-loading { 
+            position: fixed; inset: 0; background: var(--tg-bg); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 10000; color: var(--tg-text);
+        }
+        .tg-spinner { width: 40px; height: 40px; border: 4px solid rgba(212, 175, 55, 0.3); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .tg-toast {
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+            background: var(--tg-button); color: var(--tg-button-text); padding: 12px 24px;
+            border-radius: 25px; font-weight: 500; z-index: 10000; animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        
+        .tg-menu {
+            position: fixed; top: 56px; right: 16px; background: var(--tg-bg); border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: none; flex-direction: column;
+            z-index: 1001; overflow: hidden; min-width: 200px;
+        }
+        .tg-menu-item {
+            padding: 14px 20px; color: var(--tg-text); text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 12px;
+        }
+        .tg-menu-item:last-child { border-bottom: none; }
+        .tg-menu-item:hover { background: rgba(255,255,255,0.1); }
+        
+        .context-menu {
+            position: fixed; background: var(--tg-bg); border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5); display: none; flex-direction: column;
+            z-index: 1002; min-width: 150px;
+        }
+        .context-item {
+            padding: 12px 16px; color: var(--tg-text); cursor: pointer;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .context-item:hover { background: rgba(255,255,255,0.1); }
+        
+        .tg-credits { position: fixed; bottom: 20px; right: 20px; font-size: 10px; opacity: 0.5; color: var(--tg-text); }
     </style>
 </head>
-<body onclick="wakeAudio()">
+<body>
 
+<!-- Telegram Header -->
+<div class="tg-header">
+    <button class="tg-back-btn" onclick="goBack()"><i class="fas fa-chevron-left"></i></button>
+    <div class="tg-title">НАША КНИГА <span class="tg-subtitle" id="page-subtitle">BOSS EDITION</span></div>
+    <button onclick="toggleMenu()" style="background:none; border:none; color:var(--tg-text); font-size:20px;">
+        <i class="fas fa-ellipsis-v"></i>
+    </button>
+</div>
+
+<!-- Loading Screen -->
+<div class="tg-loading" id="loading">
+    <div class="tg-spinner"></div>
+    <div>Загрузка Босс-Редакции...</div>
+</div>
+
+<!-- Menu -->
+<div class="tg-menu" id="tg-menu">
+    <a href="javascript:void(0)" class="tg-menu-item" onclick="saveSession()">
+        <i class="fas fa-save"></i> Сохранить сессию
+    </a>
+    <a href="javascript:void(0)" class="tg-menu-item" onclick="loadSession()">
+        <i class="fas fa-history"></i> Загрузить историю
+    </a>
+    <a href="javascript:void(0)" class="tg-menu-item" onclick="exportData()">
+        <i class="fas fa-file-export"></i> Экспорт данных
+    </a>
+    <a href="javascript:void(0)" class="tg-menu-item" onclick="toggleDarkMode()">
+        <i class="fas fa-moon"></i> Темная тема
+    </a>
+    <a href="javascript:void(0)" class="tg-menu-item" onclick="showCredits()">
+        <i class="fas fa-info-circle"></i> О проекте
+    </a>
+</div>
+
+<!-- Context Menu -->
+<div class="context-menu" id="context-menu"></div>
+
+<!-- Zoom Overlay -->
 <div id="z-overlay" onclick="closeZ()">
-    <div style="text-align:right; padding:20px; color:#fff; font-size:40px;">×</div>
+    <div style="text-align:right; padding:20px; color:#fff; font-size:40px; cursor:pointer;">×</div>
     <div id="z-wrap" style="width:100%; height:85%; display:flex; align-items:center; justify-content:center;">
         <img id="z-img" src="" style="max-width:100%; max-height:100%;">
     </div>
 </div>
 
+<!-- Navigation Dots -->
 <div class="nav-dots">
     <div class="dot active" onclick="jumpTo(1)"></div>
     <div class="dot" onclick="jumpTo(2)"></div>
     <div class="dot" onclick="jumpTo(3)"></div>
 </div>
 
+<!-- Main Content -->
 <div class="viewport">
     <div class="book">
         
+        <!-- Page 3: AI Chat -->
         <div class="page" id="p3">
             <div class="paper-sheet">
                 <div class="header">
                     <button class="header-btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
                     <span>⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</span>
-                    <span style="width:30px"></span>
+                    <button class="header-btn" onclick="showModelInfo()"><i class="fas fa-info-circle"></i></button>
                 </div>
                 <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Универсал)</option>
-                    <option value="p1">DeepSeek R1 (Аналитик)</option>
-                    <option value="mistral">Mistral Large (Технарь)</option>
-                    <option value="llama">Llama 3.3 (Мощный мозг)</option>
+                    <option value="gpt-4">GPT-4 Turbo (Универсал)</option>
+                    <option value="claude-3">Claude 3.5 (Аналитик)</option>
+                    <option value="gemini">Gemini Pro (Креатив)</option>
+                    <option value="llama-3">Llama 3.1 (Мощный)</option>
                 </select>
                 <div id="status-chat" class="status-bar"></div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="runMic('i-chat', sendMsg, 'm-chat')" id="m-chat" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-chat" class="field" placeholder="Запрос...">
+                        <input type="text" id="i-chat" class="field" placeholder="Запрос..." onkeypress="if(event.key==='Enter') sendMsg()">
                         <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Page 2: Image Generator -->
         <div class="page" id="p2" style="z-index: 2;">
             <div class="paper-sheet">
                 <div class="header">
                     <button class="header-btn" onclick="clearArt()"><i class="fas fa-trash"></i></button>
                     <span>⬥ ВИЗУАЛИЗАТОР ⬥</span>
-                    <span style="width:30px"></span>
+                    <button class="header-btn" onclick="showStyleInfo()"><i class="fas fa-info-circle"></i></button>
                 </div>
                 <div class="style-row">
-                    <select id="art-model" class="style-select"><option value="flux">💎 FLUX.1</option><option value="midjourney">🌌 MJ Style</option><option value="dall-e-3">🖌️ DALL-E 3</option></select>
+                    <select id="art-model" class="style-select">
+                        <option value="dall-e-3">🖌️ DALL-E 3</option>
+                        <option value="midjourney">🌌 MJ Style</option>
+                        <option value="stable-diffusion">🎨 SDXL</option>
+                    </select>
                     <select id="art-style" class="style-select">
                         <option value="none">🎯 Как есть</option>
-                        <option value="simon">🐱 Линейная 2D (Саймон)</option>
-                        <option value="pro">🔥 PRO Art</option>
-                        <option value="cartoon">🎨 Cartoon</option>
+                        <option value="photorealistic">📸 Фотореализм</option>
+                        <option value="anime">🎨 Аниме</option>
+                        <option value="vector">🔷 Вектор</option>
                         <option value="cinematic">🎬 Кино</option>
                     </select>
                 </div>
@@ -132,7 +260,7 @@
                 <div class="input-bar">
                     <div class="row">
                         <button onclick="runMic('i-art', genArt, 'm-art')" id="m-art" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Опишите образ...">
+                        <input type="text" id="i-art" class="field" placeholder="Опишите образ..." onkeypress="if(event.key==='Enter') genArt()">
                         <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
@@ -140,18 +268,20 @@
             <div class="back"></div>
         </div>
 
+        <!-- Page 1: Cover -->
         <div class="page" id="p1" style="z-index: 3;">
             <div class="paper-sheet" style="background:var(--leather); border:12px double var(--gold); align-items:center; justify-content:center;">
                 <div style="width: 85%; background: #fff; padding: 10px 10px 40px 10px; box-shadow: 0 25px 50px rgba(0,0,0,0.8); transform: rotate(-1deg);">
-                    <video autoplay loop muted playsinline style="width:100%; display:block; object-fit:cover;">
-                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
-                    </video>
+                    <div id="cover-video"></div>
                 </div>
                 <div style="margin-top:40px; text-align:center; color:var(--gold);">
                     <h1 style="margin:0; letter-spacing:5px; font-size:28px;">НАША КНИГА</h1>
-                    <div style="font-size:11px; opacity:0.8; margin-top:10px; font-weight:bold;">ULTIMATE BOSS EDITION</div>
+                    <div style="font-size:11px; opacity:0.8; margin-top:10px; font-weight:bold;">TELEGRAM BOSS EDITION</div>
+                    <div id="user-info" style="margin-top:20px; font-size:12px;"></div>
                 </div>
-                <div style="margin-top:30px; font-size:12px; color:var(--gold); opacity:0.5; animation: pulse 2s infinite;">← СВАЙП ДЛЯ ВХОДА</div>
+                <div style="margin-top:30px; font-size:12px; color:var(--gold); opacity:0.5; animation: pulse 2s infinite;">
+                    ← СВАЙП ДЛЯ ВХОДА
+                </div>
             </div>
             <div class="back"></div>
         </div>
@@ -159,40 +289,104 @@
     </div>
 </div>
 
+<!-- Credits -->
+<div class="tg-credits">BOSS AI Studio © 2024</div>
+
 <script>
-    let step = 1, pz = null, audioReady = false, isVoiceInput = false;
-    
-    // Ссылка на ваш звук с GitHub
-    const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
-
+    // Инициализация Telegram Web App
+    let tg = window.Telegram.WebApp;
+    let userData = null;
+    let step = 1;
+    let pz = null;
     let speechData = { isPaused: false, lastIndex: 0, currentText: "", activeElement: null };
+    let currentContext = null;
+    
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', async () => {
+        await initializeTelegramApp();
+        setTimeout(() => {
+            document.getElementById('loading').style.display = 'none';
+            tg.ready();
+        }, 1500);
+    });
 
-    // Пробуждение аудио по клику
-    function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
-
-    async function translateAndEnhance(text, mode = 'none') {
+    // Инициализация Telegram Web App
+    async function initializeTelegramApp() {
         try {
-            const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
-            const d = await r.json();
-            let en = d.responseData.translatedText;
+            tg.expand();
+            tg.enableClosingConfirmation();
+            tg.BackButton.onClick(goBack);
             
-            if (mode === 'simon') en = `Simon's cat style, simple 2D line art, minimalist hand-drawn animation character, black ink on white background, thick outlines, expressive, funny, ${en}`;
-            if (mode === 'pro') en += ", masterpiece, 8k, highly detailed";
-            if (mode === 'cartoon') en += ", cartoon style, vibrant";
-            if (mode === 'cinematic') en += ", cinematic lighting, movie shot";
-            return en;
-        } catch (e) { return text; }
+            userData = tg.initDataUnsafe?.user;
+            if (userData) {
+                document.getElementById('user-info').innerHTML = `
+                    👤 ${userData.first_name || ''} ${userData.last_name || ''}
+                    <br><small>@${userData.username || 'user'}</small>
+                `;
+            }
+            
+            // Настройка темы
+            applyTheme();
+            tg.onEvent('themeChanged', applyTheme);
+            
+            // Инициализация сохранений
+            await loadSavedSession();
+            
+            // Создание видео-квера
+            createVideoCover();
+            
+        } catch (error) {
+            console.error('Telegram init error:', error);
+            showToast('Telegram не обнаружен. Используем локальный режим.');
+        }
     }
 
+    function applyTheme() {
+        document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color || '#000000');
+        document.documentElement.style.setProperty('--tg-text', tg.themeParams.text_color || '#ffffff');
+        document.documentElement.style.setProperty('--tg-hint', tg.themeParams.hint_color || '#aaaaaa');
+        document.documentElement.style.setProperty('--tg-link', tg.themeParams.link_color || '#3390ec');
+        document.documentElement.style.setProperty('--tg-button', tg.themeParams.button_color || '#3390ec');
+        document.documentElement.style.setProperty('--tg-button-text', tg.themeParams.button_text_color || '#ffffff');
+    }
+
+    function createVideoCover() {
+        const videoDiv = document.getElementById('cover-video');
+        const video = document.createElement('video');
+        video.autoplay = true;
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.style.width = '100%';
+        video.style.display = 'block';
+        video.style.objectFit = 'cover';
+        
+        const source = document.createElement('source');
+        source.src = 'https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4';
+        source.type = 'video/mp4';
+        
+        video.appendChild(source);
+        videoDiv.appendChild(video);
+    }
+
+    // Навигация
     function jumpTo(s) {
         if(s === step) return;
-        stopAllSpeech(); 
-        vibrate(30); 
+        stopAllSpeech();
+        vibrate(30);
         
-        // Воспроизведение звука при смене страницы
-        flipSound.currentTime = 0; 
-        flipSound.play().catch(e => console.log("Audio play blocked"));
-
+        // Обновление подзаголовка
+        const subtitles = ['BOSS EDITION', 'ВИЗУАЛИЗАТОР', 'ИНТЕЛЛЕКТ-ХАБ'];
+        document.getElementById('page-subtitle').textContent = subtitles[s-1];
+        
+        // Показ/скрытие кнопки назад
+        if (s > 1) {
+            tg.BackButton.show();
+        } else {
+            tg.BackButton.hide();
+        }
+        
+        // Анимация перелистывания
         const dots = document.querySelectorAll('.dot');
         dots.forEach((d, i) => d.classList.toggle('active', i === s-1));
         document.getElementById('p1').classList.toggle('flipped', s > 1);
@@ -200,129 +394,27 @@
         step = s;
     }
 
-    // Свайпы
-    let sX = 0;
-    document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
+    function goBack() {
+        if (step > 1) {
+            jumpTo(step - 1);
+        }
+    }
+
+    // Свайпы для навигации
+    let startX = 0;
+    document.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+    }, { passive: true });
+    
     document.addEventListener('touchend', e => {
         if(document.getElementById('z-overlay').style.display === 'flex') return;
-        let d = sX - e.changedTouches[0].clientX;
-        if (Math.abs(d) > 60) {
-            if (d > 0 && step < 3) jumpTo(step + 1);
-            else if (d < 0 && step > 1) jumpTo(step - 1);
+        let diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 60) {
+            if (diff > 0 && step < 3) jumpTo(step + 1);
+            else if (diff < 0 && step > 1) jumpTo(step - 1);
         }
-    }, {passive: true});
+    }, { passive: true });
 
-    async function sendMsg() {
-        const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
-        if (!i.value) return;
-        const val = i.value; i.value = '';
-        b.insertAdjacentHTML('beforeend', `<div class="user-msg">Босс: ${val}</div>`);
-        const tid = 'l-'+Date.now();
-        b.insertAdjacentHTML('beforeend', `<div id="${tid}" style="font-size:12px;opacity:0.5">⚡ Думаю...</div>`);
-        b.scrollTop = b.scrollHeight;
-
-        try {
-            const en = await translateAndEnhance(val);
-            const r = await fetch(`https://text.pollinations.ai/prompt/Respond%20in%20Russian:%20${encodeURIComponent(en)}?model=${m}`);
-            const d = await r.text();
-            document.getElementById(tid).remove();
-            const div = document.createElement('div');
-            div.className = "ai-box";
-            div.innerHTML = `<b>AI:</b><br>${marked.parse(d)}`;
-            div.onclick = () => handleSpeech(d, div);
-            b.appendChild(div);
-            b.scrollTop = b.scrollHeight;
-            if(isVoiceInput) { handleSpeech(d, div); isVoiceInput = false; }
-        } catch(e) { document.getElementById(tid).innerText = "Ошибка API"; }
-    }
-
-    function handleSpeech(txt, el) {
-        if (speechData.activeElement === el) {
-            if (window.speechSynthesis.speaking && !speechData.isPaused) {
-                window.speechSynthesis.cancel();
-                speechData.isPaused = true;
-                el.style.borderLeft = "5px solid var(--pause-color)";
-                return;
-            } else if (speechData.isPaused) {
-                const remaining = speechData.currentText.slice(speechData.lastIndex);
-                playText(remaining, el);
-                speechData.isPaused = false;
-                return;
-            }
-        }
-        stopAllSpeech();
-        speechData.currentText = txt.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/[#*`]/g,'');
-        speechData.activeElement = el;
-        playText(speechData.currentText, el);
-    }
-
-    function playText(text, el) {
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'ru-RU';
-        el.style.background = "rgba(0,0,0,0.05)";
-        el.style.borderLeft = "5px solid var(--accent)";
-        u.onboundary = (e) => { if (e.name === 'word') speechData.lastIndex = (speechData.currentText.length - text.length) + e.charIndex; };
-        u.onend = () => { if (!speechData.isPaused) { el.style.background = "transparent"; el.style.borderLeft = "none"; speechData.activeElement = null; } };
-        window.speechSynthesis.speak(u);
-    }
-
-    function stopAllSpeech() {
-        window.speechSynthesis.cancel();
-        if (speechData.activeElement) { speechData.activeElement.style.background = "transparent"; speechData.activeElement.style.borderLeft = "none"; }
-        speechData.isPaused = false; speechData.lastIndex = 0; speechData.activeElement = null;
-    }
-
-    function runMic(id, cb, bid) {
-        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if(!R) return;
-        const r = new R(); r.lang = 'ru-RU';
-        r.onstart = () => { document.getElementById(bid).style.color = 'red'; if(id==='i-chat') isVoiceInput=true; };
-        r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
-        r.onend = () => document.getElementById(bid).style.color = 'inherit';
-        r.start();
-    }
-
-    async function genArt() {
-        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box'), m = document.getElementById('art-model').value, s = document.getElementById('art-style').value;
-        if(!i.value) return;
-        const txt = i.value; i.value = '';
-        document.getElementById('status-art').innerText = "Рисую шедевр...";
-        vibrate(30);
-
-        const en = await translateAndEnhance(txt, s);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&seed=${Math.floor(Math.random()*1e6)}&nologo=true`;
-        
-        const div = document.createElement('div');
-        div.style.cssText = "background:#fff;padding:5px;margin-bottom:15px;box-shadow:0 5px 15px rgba(0,0,0,0.2);position:relative;border-radius:4px;";
-        div.innerHTML = `
-            <img src="${url}" style="width:100%;" onclick="openZ('${url}')">
-            <div style="position:absolute; top:8px; right:8px; display:flex; gap:5px;">
-                <button onclick="downloadImage('${url}', '${txt.replace(/'/g, "")}')" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px;"><i class="fas fa-download"></i></button>
-                <button onclick="this.closest('div').parentElement.remove();" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px; color:var(--accent);">×</button>
-            </div>
-            <p style="text-align:center;font-size:12px;margin:8px 0;font-weight:bold;">${txt}</p>
-        `;
-        b.prepend(div);
-        div.querySelector('img').onload = () => { document.getElementById('status-art').innerText = ""; vibrate(100); };
-    }
-
-    async function downloadImage(url, promptText) {
-        try {
-            vibrate(50);
-            const r = await fetch(url);
-            const b = await r.blob();
-            const u = window.URL.createObjectURL(b);
-            const l = document.createElement('a');
-            l.href = u; l.download = promptText.slice(0,20) + ".jpg";
-            l.click(); window.URL.revokeObjectURL(u);
-        } catch (e) { alert("Ошибка загрузки"); }
-    }
-
-    function clearChat() { if(confirm("Очистить?")) document.getElementById('hub-box').innerHTML=''; }
-    function clearArt() { if(confirm("Удалить арты?")) document.getElementById('imgs-box').innerHTML=''; }
-    function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; pz = new PinchZoom.default(document.getElementById('z-wrap'), {maxZoom:4}); }
-    function closeZ() { document.getElementById('z-overlay').style.display = 'none'; if(pz) pz.destroy(); }
-    function vibrate(ms) { if(navigator.vibrate) navigator.vibrate(ms); }
-</script>
-</body>
-</html>
+    // Меню
+    function toggleMenu() {
+        const menu = document.getEle
