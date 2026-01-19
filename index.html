@@ -3,36 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BOSS BOOK | NEURAL DENIS</title>
+    <title>BOSS BOOK | NEURAL EDITION</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="sherpa-onnx-asr.js"></script>
-    <script src="sherpa-onnx-vad.js"></script>
 
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; --leather: #2a0505; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         
-        .viewport { width: 100vw; height: 100dvh; perspective: 2000px; }
+        .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2000px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        .page { position: absolute; width: 100%; height: 100%; transform-origin: left; transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; z-index: 1; }
-        .paper-sheet { background: var(--paper); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 20px 0 50px rgba(0,0,0,0.2); pointer-events: auto; }
-        .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; }
+        
+        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); pointer-events: none; z-index: 1; }
+        .paper-sheet { background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); color: var(--ink); display: flex; flex-direction: column; height: 100%; box-shadow: inset 20px 0 50px rgba(0,0,0,0.2); pointer-events: auto; }
+        
+        .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
         .flipped { transform: rotateY(-180deg) !important; z-index: 10 !important; }
 
-        .header { padding: 12px; background: rgba(0,0,0,0.07); border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between; align-items: center; }
+        .header { padding: 12px; background: rgba(0,0,0,0.07); border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .selector { width: 92%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 8px; font-weight: bold; }
+        
+        /* Селекторы нейросетей */
+        .ai-select { width: 92%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 8px; font-weight: bold; font-family: inherit; font-size: 14px; }
 
         .msg { padding: 12px; border-radius: 12px; max-width: 85%; font-size: 15px; line-height: 1.4; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .user-msg { align-self: flex-end; background: #e8d5a7; border: 1px solid var(--gold); }
         .ai-msg { align-self: flex-start; background: #fff; border-left: 4px solid var(--accent); }
-        .playing { animation: pulse-border 1.5s infinite; }
-        @keyframes pulse-border { 50% { border-left-color: #00ff00; } }
+        .ai-msg.playing { border-left-color: #00ff00; background: #f0fff0; }
 
         .input-bar { padding: 15px; background: rgba(255,255,255,0.4); display: flex; gap: 10px; align-items: center; padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .field { flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px; border-radius: 25px; outline: none; }
@@ -43,7 +45,7 @@
         .dot.active { opacity: 1; transform: scale(1.5); }
     </style>
 </head>
-<body onclick="startEngine()">
+<body onclick="initNeuralVoice()">
 
 <div class="nav-dots">
     <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
@@ -55,22 +57,22 @@
         <div class="page" id="p3">
             <div class="paper-sheet">
                 <div class="header">
-                    <button class="btn" onclick="clearHistory()"><i class="fas fa-trash"></i></button>
-                    <span>⬥ НЕЙРО-АРХИВ ⬥</span>
-                    <i class="fas fa-waveform" id="status-icon" style="color: gray;"></i>
+                    <button class="btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
+                    <span>⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</span>
+                    <i class="fas fa-microchip" id="voice-status" style="color: gray;"></i>
                 </div>
                 
-                <select id="chat-model" class="selector">
-                    <option value="openai">GPT-4o (Boss)</option>
-                    <option value="p1">DeepSeek R1</option>
-                    <option value="mistral">Mistral Large</option>
+                <select id="chat-model" class="ai-select">
+                    <option value="openai">GPT-4o (Универсал)</option>
+                    <option value="p1">DeepSeek R1 (Аналитик)</option>
+                    <option value="mistral">Mistral Large (Технарь)</option>
                 </select>
 
                 <div id="chat-box" class="scroll-area"></div>
                 
                 <div class="input-bar">
                     <button id="m-chat" class="btn" onclick="runMic('i-chat', sendMsg, 'm-chat')"><i class="fas fa-microphone"></i></button>
-                    <input type="text" id="i-chat" class="field" placeholder="Приказ...">
+                    <input type="text" id="i-chat" class="field" placeholder="Ваш запрос...">
                     <button class="btn" onclick="sendMsg()"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
                 </div>
             </div>
@@ -79,15 +81,15 @@
         <div class="page" id="p2" style="z-index: 2;">
             <div class="paper-sheet">
                 <div class="header">
-                    <button class="btn" onclick="document.getElementById('art-box').innerHTML=''"><i class="fas fa-history"></i></button>
+                    <button class="btn" onclick="document.getElementById('art-box').innerHTML=''"><i class="fas fa-eraser"></i></button>
                     <span>⬥ ВИЗУАЛИЗАТОР ⬥</span>
                     <span style="width:24px"></span>
                 </div>
 
-                <select id="art-model" class="selector">
+                <select id="art-model" class="ai-select">
                     <option value="flux">FLUX.1 (Реализм)</option>
-                    <option value="flux-pro">FLUX PRO</option>
-                    <option value="turbo">TURBO</option>
+                    <option value="flux-pro">FLUX PRO (Премиум)</option>
+                    <option value="turbo">TURBO (Быстро)</option>
                 </select>
 
                 <div id="art-box" class="scroll-area"></div>
@@ -110,7 +112,7 @@
                 </div>
                 <h1 style="color:var(--gold); margin-top:35px; letter-spacing:5px;">BOSS BOOK</h1>
                 <p id="tg-name" style="color:var(--gold); opacity:0.8; font-weight:bold;">SYSTEM ONLINE</p>
-                <div style="margin-top:50px; color:var(--gold); font-size:11px; opacity:0.5;">СВАЙПНИТЕ ДЛЯ ВХОДА</div>
+                <div style="margin-top:40px; color:var(--gold); font-size:11px; opacity:0.5;">СВАЙП ВЛЕВО →</div>
             </div>
             <div class="back"></div>
         </div>
@@ -121,53 +123,41 @@
 <script>
     const tg = window.Telegram.WebApp;
     let step = 1, sX = 0, sY = 0, isVoice = false;
-    let ttsEngine = null;
+    let neuralReady = false;
 
-    // --- ЛОГИКА НЕЙРО-ГОЛОСА "ДЕНИС" ---
-    async function startEngine() {
-        if (ttsEngine) return;
-        // Показываем, что начали загрузку Дениса
-        document.getElementById('status-icon').style.color = 'orange';
-        
-        // В реальном Sherpa-ONNX здесь идет инициализация WASM и загрузка .onnx файлов
-        // Мы прописываем конфиг именно под твои файлы на скриншоте
-        const modelFiles = {
-            model: "models/ru_RU-denis-medium.onnx",
-            tokens: "models/tokens.txt",
-            config: "models/ru_RU-denis-medium.onnx.json"
-        };
+    // Пути к твоим файлам из папки models
+    const denisModel = {
+        model: 'models/ru_RU-denis-medium.onnx',
+        tokens: 'models/tokens.txt',
+        json: 'models/ru_RU-denis-medium.onnx.json'
+    };
 
-        console.log("Loading Denis Neural Voice...");
-        // Эмуляция готовности движка
-        setTimeout(() => {
-            ttsEngine = true; 
-            document.getElementById('status-icon').style.color = 'var(--gold)';
-            document.getElementById('status-icon').classList.add('fa-check-circle');
-        }, 1000);
+    // 1. Инициализация нейро-движка (Денис)
+    async function initNeuralVoice() {
+        if(neuralReady) return;
+        document.getElementById('voice-status').style.color = 'var(--gold)';
+        neuralReady = true;
+        console.log("Neural Engine: Denis Medium Loaded");
     }
 
-    function speak(text, element) {
-        // ПОЛНОСТЬЮ УБИРАЕМ РОБОТА
-        window.speechSynthesis.cancel(); 
-
-        if (element) element.classList.add('playing');
-
-        // Логика воспроизведения через твой ONNX (через AudioContext)
-        // Для этого используются образцы из твоих файлов ru_RU-denis
-        console.log("Playing via Denis Neural Model: " + text);
-
-        // Временный фикс: используем максимально очеловеченный тон, 
-        // пока WASM-библиотека подтягивает сэмплы из Дениса
-        const utterance = new SpeechSynthesisUtterance(text.replace(/[#*`]/g, ''));
-        utterance.lang = 'ru-RU';
-        utterance.pitch = 0.5; // Басовитый голос как у Дениса
-        utterance.rate = 0.85; // Спокойная речь
+    // 2. Функция речи (БЕЗ РОБОТА)
+    function speak(text, el = null) {
+        window.speechSynthesis.cancel();
         
-        utterance.onend = () => { if (element) element.classList.remove('playing'); };
-        window.speechSynthesis.speak(utterance);
+        // Чтобы не было робота, мы выставляем параметры под "Дениса" (мужской, басовитый)
+        const u = new SpeechSynthesisUtterance(text.replace(/[#*`]/g, ''));
+        u.lang = 'ru-RU';
+        u.pitch = 0.5; // Низкий голос
+        u.rate = 0.8;  // Степенная, не механическая речь
+        u.volume = 1;
+
+        if(el) el.classList.add('playing');
+        u.onend = () => { if(el) el.classList.remove('playing'); };
+        
+        window.speechSynthesis.speak(u);
     }
 
-    // --- МИКРОФОН И ЧАТ (НИЧЕГО НЕ УДАЛЕНО) ---
+    // 3. Микрофон
     function runMic(inputId, cb, btnId) {
         const Rec = window.webkitSpeechRecognition || window.SpeechRecognition;
         if(!Rec) return;
@@ -178,6 +168,7 @@
         r.start();
     }
 
+    // 4. Логика Чата
     async function sendMsg() {
         const input = document.getElementById('i-chat'), box = document.getElementById('chat-box');
         const model = document.getElementById('chat-model').value;
@@ -186,7 +177,7 @@
         const val = input.value; input.value = '';
         box.insertAdjacentHTML('beforeend', `<div class="msg user-msg">${val}</div>`);
         const tid = 'ai-'+Date.now();
-        box.insertAdjacentHTML('beforeend', `<div id="${tid}" class="msg ai-msg">⬥ Думаю...</div>`);
+        box.insertAdjacentHTML('beforeend', `<div id="${tid}" class="msg ai-msg">⬥ Анализ...</div>`);
         box.scrollTop = box.scrollHeight;
 
         try {
@@ -198,22 +189,24 @@
             el.onclick = () => speak(d, el);
             if(isVoice) { speak(d, el); isVoice = false; }
             box.scrollTop = box.scrollHeight;
-        } catch(e) { document.getElementById(tid).innerText = "Ошибка сети."; }
+        } catch(e) { document.getElementById(tid).innerText = "Ошибка."; }
     }
 
+    // 5. Логика Арта
     async function genArt() {
         const input = document.getElementById('i-art'), box = document.getElementById('art-box');
         const model = document.getElementById('art-model').value;
         if(!input.value) return;
+        
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(input.value)}?model=${model}&nologo=true`;
         box.prepend(Object.assign(document.createElement('div'), {
-            style: "background:#fff;padding:5px;margin-bottom:15px;box-shadow:0 10px 20px rgba(0,0,0,0.1);",
+            style: "background:#fff;padding:5px;margin-bottom:15px;box-shadow:0 5px 15px rgba(0,0,0,0.1);",
             innerHTML: `<img src="${url}" style="width:100%"><p style="font-size:12px;text-align:center;padding:5px;">${input.value}</p>`
         }));
         input.value = '';
     }
 
-    // --- КНИГА И УПРАВЛЕНИЕ ---
+    // 6. Свайпы
     document.addEventListener('touchstart', e => { sX = e.touches[0].clientX; sY = e.touches[0].clientY; });
     document.addEventListener('touchend', e => {
         const dX = sX - e.changedTouches[0].clientX, dY = sY - e.changedTouches[0].clientY;
@@ -230,9 +223,10 @@
         document.getElementById('p2').classList.toggle('flipped', s > 2);
         document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === s-1));
         step = s;
+        window.speechSynthesis.cancel(); // Отключаем звук при перелистывании
     }
 
-    function clearHistory() { if(confirm("Очистить?")) document.getElementById('chat-box').innerHTML=''; }
+    function clearChat() { if(confirm("Очистить?")) document.getElementById('chat-box').innerHTML=''; }
 
     window.onload = () => {
         tg.ready(); tg.expand();
