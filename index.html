@@ -3,45 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StreamLine AI | BOSS PRO</title>
+    <title>StreamLine AI | BOSS ULTIMATE FIX</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; --leather: #2a0505; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; touch-action: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         
-        /* 3D Книга */
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2500px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); background: var(--paper); }
+        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); background: var(--paper); }
         
         #p1 { z-index: 5; } #p2 { z-index: 4; } #p3 { z-index: 3; } #p4 { z-index: 2; }
         .flipped { transform: rotateY(-180deg) !important; pointer-events: none; }
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
 
         .paper-sheet { display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden; box-shadow: inset 10px 0 30px rgba(0,0,0,0.1); }
-        .header { padding: 15px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .header { padding: 15px; background: rgba(0,0,0,0.07); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .scroll-area { flex: 1; overflow-y: auto; padding: 15px; touch-action: pan-y; }
         
-        .ai-select, .style-select { width: 92%; margin: 5px auto; padding: 10px; border: 2px solid var(--ink); border-radius: 8px; display: block; background: #fff; font-size: 14px; }
-        .input-bar { padding: 10px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-        .row { display: flex; gap: 8px; align-items: center; }
-        .field { flex: 1; padding: 12px; border: 2px solid var(--ink); border-radius: 25px; outline: none; font-size: 16px; }
-        .btn { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; }
-
-        /* Встроенная Библиотека (Второй вариант) */
+        /* Стили для управления */
+        .ai-select, .style-select { width: 92%; margin: 8px auto; padding: 12px; border: 2px solid var(--ink); border-radius: 12px; background: #fff; font-weight: bold; }
+        .input-bar { padding: 15px; background: rgba(255,255,255,0.4); border-top: 2px solid var(--ink); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+        .row { display: flex; gap: 10px; align-items: center; }
+        .field { flex: 1; padding: 14px; border: 2px solid var(--ink); border-radius: 30px; outline: none; font-size: 16px; background: #fff; }
+        .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
+        
+        /* Библиотека (Wiki) */
         #wiki-modal { position: absolute; inset: 0; background: #fff; z-index: 2000; display: none; flex-direction: column; }
         .wiki-frame { flex: 1; border: none; width: 100%; }
 
-        .nav-dots { position: fixed; bottom: 80px; width: 100%; text-align: center; z-index: 100; pointer-events: none; }
-        .dot { display: inline-block; width: 10px; height: 10px; background: var(--gold); border-radius: 50%; margin: 0 5px; opacity: 0.3; pointer-events: auto; }
-        .dot.active { opacity: 1; transform: scale(1.3); background: var(--accent); }
-        .active-sentence { background: rgba(212, 175, 55, 0.4); border-radius: 4px; border-bottom: 2px solid var(--gold); }
+        /* Навигация */
+        .nav-dots { position: fixed; bottom: 95px; width: 100%; text-align: center; z-index: 100; pointer-events: none; }
+        .dot { display: inline-block; width: 12px; height: 12px; background: var(--gold); border-radius: 50%; margin: 0 6px; opacity: 0.3; pointer-events: auto; }
+        .dot.active { opacity: 1; transform: scale(1.4); background: var(--accent); }
         
-        .mic-active { color: red !important; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-        .status-msg { font-size: 11px; text-align: center; color: var(--accent); margin-bottom: 5px; display: none; }
+        .active-sentence { background: rgba(212, 175, 55, 0.4); border-bottom: 2px solid var(--gold); }
+        .mic-active { color: #ff0000 !important; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        .ai-msg { padding: 12px; background: rgba(255,255,255,0.5); border-radius: 15px; margin-bottom: 15px; position: relative; border-left: 5px solid var(--gold); }
+        .voice-btn-mini { position: absolute; top: 5px; right: 5px; font-size: 16px; opacity: 0.6; }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -60,33 +63,34 @@
             <div class="paper-sheet">
                 <div id="wiki-modal">
                     <div class="header" style="background: var(--leather); color: var(--gold);">
-                        <button onclick="toggleWiki()" class="btn" style="color: var(--gold);"><i class="fas fa-arrow-left"></i></button>
-                        <span>ПОИСК В ВИКИТЕКЕ</span>
+                        <button onclick="toggleWiki()" class="btn" style="color: var(--gold);"><i class="fas fa-times"></i></button>
+                        <span>БИБЛИОТЕКА (WIKI)</span>
                         <button onclick="window.open('https://ru.m.wikisource.org', '_blank')" class="btn" style="color: var(--gold);"><i class="fas fa-external-link-alt"></i></button>
                     </div>
-                    <iframe src="https://ru.m.wikisource.org/wiki/%D0%97%D0%B0%D0%B3%D0%BB%D0%B0%D0%B2%D0%BD%D0%B0%D1%8F_%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0" class="wiki-frame"></iframe>
-                    <div style="padding: 10px; background: #f0f0f0; font-size: 12px; text-align: center; color: #666;">
-                        Нашли текст? Выделите, скопируйте и закройте окно, чтобы вставить.
-                    </div>
+                    <iframe src="https://ru.m.wikisource.org" class="wiki-frame"></iframe>
                 </div>
 
                 <div class="header">
-                    <button class="btn" onclick="toggleWiki()"><i class="fas fa-search"></i></button>
+                    <button class="btn" onclick="toggleWiki()"><i class="fas fa-book-medical"></i></button>
                     <span>АУДИОКНИГА</span>
-                    <button class="btn" onclick="clearBook()"><i class="fas fa-trash"></i></button>
+                    <button class="btn" onclick="clearBook()"><i class="fas fa-trash-alt"></i></button>
                 </div>
+                
                 <div class="scroll-area" id="book-area">
-                    <div id="book-content" style="font-size:18px; line-height:1.7;"></div>
-                    <div id="book-empty" style="text-align:center; margin-top:50px; opacity:0.5;">
-                        <i class="fas fa-book-open" style="font-size: 40px; margin-bottom: 15px;"></i><br>
-                        Нажмите на поиск, чтобы найти книгу,<br>или вставьте текст вручную.
+                    <div id="book-content" style="font-size:19px; line-height:1.8;"></div>
+                    <div id="book-empty" style="text-align:center; margin-top:60px; opacity:0.6;">
+                        <i class="fas fa-headphones" style="font-size: 50px; color: var(--gold);"></i><br><br>
+                        Босс, найдите книгу в библиотеке (иконка слева)<br>или вставьте текст в поле ниже.
                     </div>
                 </div>
+
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="togglePlay()" id="play-btn" class="btn"><i class="fas fa-play"></i></button>
-                        <input id="i-book" class="field" placeholder="Текст из библиотеки...">
-                        <button onclick="manualLoad()" class="btn"><i class="fas fa-check-circle"></i></button>
+                        <button onclick="togglePlay()" id="play-btn" class="btn" style="background: var(--gold); border-radius: 50%; color: #fff;">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <input id="i-book" class="field" placeholder="Вставьте текст книги...">
+                        <button onclick="manualLoad()" class="btn"><i class="fas fa-plus-circle"></i></button>
                     </div>
                 </div>
             </div>
@@ -94,19 +98,19 @@
 
         <div class="page" id="p3">
             <div class="paper-sheet">
-                <div class="header"><span>ИНТЕЛЛЕКТ-ХАБ</span><button class="btn" onclick="document.getElementById('hub').innerHTML=''"><i class="fas fa-trash"></i></button></div>
+                <div class="header"><span>ИНТЕЛЛЕКТ-ХАБ</span><button class="btn" onclick="document.getElementById('hub').innerHTML=''"><i class="fas fa-broom"></i></button></div>
                 <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Универсал)</option>
-                    <option value="mistral">Mistral Large (Технарь)</option>
-                    <option value="llama">Llama 3.3 (Мощный)</option>
+                    <option value="openai/gpt-4o">GPT-4o (Самый умный)</option>
+                    <option value="mistralai/mistral-large">Mistral Large</option>
+                    <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3</option>
                 </select>
                 <div id="hub" class="scroll-area"></div>
-                <div id="chat-status" class="status-msg">Трансляция запроса на AI-язык...</div>
+                <div id="chat-status" style="display:none; text-align:center; font-size:12px; color:var(--accent); padding:5px;">AI думает...</div>
                 <div class="input-bar">
                     <div class="row">
                         <button id="m-chat" onclick="runMic('i-chat', askAI, 'm-chat')" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input id="i-chat" class="field" placeholder="Спросить Boss AI...">
-                        <button onclick="askAI()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
+                        <input id="i-chat" class="field" placeholder="Запрос для Boss AI...">
+                        <button onclick="askAI()" class="btn"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
             </div>
@@ -116,22 +120,20 @@
         <div class="page" id="p2">
             <div class="paper-sheet">
                 <div class="header"><span>ВИЗУАЛИЗАТОР</span><button class="btn" onclick="document.getElementById('gallery').innerHTML=''"><i class="fas fa-trash"></i></button></div>
-                <div style="display:flex; gap:5px; padding:0 15px;">
-                    <select id="art-model" class="style-select"><option value="flux">FLUX.1 (New)</option><option value="midjourney">MJ Style</option></select>
+                <div style="display:flex; gap:5px; padding:0 10px;">
+                    <select id="art-model" class="style-select"><option value="flux">FLUX.1</option><option value="midjourney">MJ Style</option></select>
                     <select id="art-style" class="style-select">
                         <option value="">Стиль: Стандарт</option>
-                        <option value="ultra realistic, 8k, cinematic lighting">Фотореализм</option>
-                        <option value="digital illustration, detailed, oil painting">Живопись</option>
-                        <option value="cyberpunk style, neon, dark atmosphere">Киберпанк</option>
+                        <option value="photorealistic, 8k, highly detailed">Фотореализм</option>
+                        <option value="cyberpunk, neon glow, futuristic">Киберпанк</option>
                     </select>
                 </div>
-                <div id="gallery" class="scroll-area"></div>
-                <div id="art-status" class="status-msg">Генерация уникального образа...</div>
+                <div id="gallery" class="scroll-area" style="display: grid; grid-template-columns: 1fr; gap: 15px;"></div>
                 <div class="input-bar">
                     <div class="row">
                         <button id="m-art" onclick="runMic('i-art', drawArt, 'm-art')" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input id="i-art" class="field" placeholder="Что нарисовать?">
-                        <button onclick="drawArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
+                        <input id="i-art" class="field" placeholder="Что рисуем, Босс?">
+                        <button onclick="drawArt()" class="btn"><i class="fas fa-palette"></i></button>
                     </div>
                 </div>
             </div>
@@ -139,17 +141,15 @@
         </div>
 
         <div class="page" id="p1" onclick="jumpTo(2)">
-            <div class="paper-sheet" style="background:var(--leather); border:10px double var(--gold); align-items:center; justify-content:center; text-align:center;">
-                <div style="width:85%; padding:10px; background:#fff; transform:rotate(-2deg); box-shadow:0 20px 50px #000;">
+            <div class="paper-sheet" style="background:var(--leather); border:12px double var(--gold); align-items:center; justify-content:center; text-align:center;">
+                <div style="width:85%; padding:8px; background:#fff; transform:rotate(-1deg); box-shadow:0 15px 40px #000; margin-bottom: 20px;">
                     <video autoplay loop muted playsinline style="width:100%; display:block;">
                         <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4">
                     </video>
                 </div>
-                <h1 style="color:var(--gold); margin-top:30px; letter-spacing:5px; text-shadow: 2px 2px #000;">STREAMLINE AI</h1>
-                <p style="color:var(--gold); opacity:0.7; font-size:14px;">PREMIUM SYSTEM BY BOSS</p>
-                <div style="color:var(--gold); margin-top:30px; border:1px solid var(--gold); padding:10px 20px; border-radius:30px; animation:pulse 2s infinite;">
-                    ОТКРЫТЬ КНИГУ
-                </div>
+                <h1 style="color:var(--gold); letter-spacing:4px; text-shadow: 2px 2px #000; font-family: serif;">STREAMLINE AI</h1>
+                <p style="color:var(--gold); opacity:0.8; margin-bottom: 40px;">ULTIMATE BOSS EDITION</p>
+                <div style="color:var(--gold); border:2px solid var(--gold); padding:12px 25px; border-radius:40px; font-weight:bold; animation: pulse 2s infinite;">СВАЙП ДЛЯ ВХОДА</div>
             </div>
             <div class="back"></div>
         </div>
@@ -162,25 +162,22 @@
     const synth = window.speechSynthesis;
     let bookData = { text: [], idx: 0, playing: false };
 
-    // --- ФУНКЦИИ БИБЛИОТЕКИ ---
     function toggleWiki() {
-        const modal = document.getElementById('wiki-modal');
-        modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+        const m = document.getElementById('wiki-modal');
+        m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
     }
 
-    // --- ПЕРЕВОДЧИК ---
     async function translateToEn(text) {
         try {
             const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
-            const data = await res.json();
-            return data.responseData.translatedText || text;
+            const d = await res.json();
+            return d.responseData.translatedText || text;
         } catch (e) { return text; }
     }
 
-    // --- ГОЛОСОВОЙ ВВОД ---
     function runMic(inputId, callback, btnId) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) { alert("Ваш браузер не поддерживает голос."); return; }
+        if (!SpeechRecognition) return;
         const recognition = new SpeechRecognition();
         recognition.lang = 'ru-RU';
         const btn = document.getElementById(btnId);
@@ -193,7 +190,6 @@
         recognition.start();
     }
 
-    // --- НАВИГАЦИЯ ---
     function jumpTo(s) {
         if(s === step) return;
         for(let i=1; i<=3; i++) document.getElementById('p'+i).classList.toggle('flipped', s > i);
@@ -209,40 +205,55 @@
         if(Math.abs(d) > 60) d > 0 ? (step < 4 && jumpTo(step+1)) : (step > 1 && jumpTo(step-1));
     });
 
-    // --- AI ЧАТ ---
+    // --- AI ЧАТ С ГОЛОСОВЫМ ОТВЕТОМ ---
     async function askAI() {
         let i = document.getElementById('i-chat'), q = i.value, h = document.getElementById('hub'), m = document.getElementById('chat-model').value;
         if(!q) return; i.value = '';
-        h.innerHTML += `<div style="text-align:right; color:var(--accent); margin:10px 0;"><b>Вы:</b> ${q}</div>`;
+        h.innerHTML += `<div style="text-align:right; margin-bottom:15px; font-weight:bold;">Босс: ${q}</div>`;
         document.getElementById('chat-status').style.display = 'block';
         
         try {
             let enQ = await translateToEn(q);
-            let res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent("Respond in Russian to: " + enQ)}?model=${m}`);
+            let res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent("Отвечай на русском языке: " + enQ)}?model=${m}`);
             let txt = await res.text();
-            h.innerHTML += `<div style="padding:15px; background:rgba(0,0,0,0.03); border-radius:10px; margin-bottom:15px; border-left:4px solid var(--gold);"><b>AI:</b><br>${marked.parse(txt)}</div>`;
-        } catch(e) { h.innerHTML += `<div>Ошибка сети</div>`; }
+            let html = marked.parse(txt);
+            let msgId = 'msg-' + Date.now();
+            
+            h.innerHTML += `
+                <div class="ai-msg" id="${msgId}">
+                    <b>AI:</b><br>${html}
+                    <button class="btn voice-btn-mini" onclick="speakText('${txt.replace(/'/g, "")}')"><i class="fas fa-volume-up"></i></button>
+                </div>`;
+            // Автоматическая озвучка ответа
+            speakText(txt);
+        } catch(e) { h.innerHTML += `<div>Ошибка Босс, проверьте интернет.</div>`; }
         
         document.getElementById('chat-status').style.display = 'none';
         h.scrollTop = h.scrollHeight;
     }
 
-    // --- АРТ ---
+    function speakText(text) {
+        synth.cancel();
+        const u = new SpeechSynthesisUtterance(text.substring(0, 400)); // Ограничение для стабильности
+        u.lang = 'ru-RU';
+        u.rate = 1.0;
+        synth.speak(u);
+    }
+
+    // --- УНИКАЛЬНЫЙ АРТ ---
     async function drawArt() {
         let i = document.getElementById('i-art'), q = i.value, g = document.getElementById('gallery'), m = document.getElementById('art-model').value, s = document.getElementById('art-style').value;
         if(!q) return; i.value = '';
-        document.getElementById('art-status').style.display = 'block';
         
         try {
             let enQ = await translateToEn(q);
-            let seed = Math.floor(Date.now() + Math.random() * 1000); // Гарантирует уникальность
+            let seed = Math.floor(Math.random() * 999999); 
             let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enQ + ", " + s)}?model=${m}&seed=${seed}&nologo=true`;
-            g.innerHTML = `<div style="margin-bottom:20px; border:2px solid var(--gold); padding:5px; background:#fff;"><img src="${url}" style="width:100%; display:block;"><p style="text-align:center; font-size:12px; margin:5px 0; color:#555;">${q}</p></div>` + g.innerHTML;
+            g.innerHTML = `<div style="border:3px solid var(--gold); background:#fff; padding:5px;"><img src="${url}" style="width:100%; display:block;"><p style="text-align:center; padding:5px; font-size:12px;">${q}</p></div>` + g.innerHTML;
         } catch(e) {}
-        document.getElementById('art-status').style.display = 'none';
     }
 
-    // --- АУДИОКНИГА ---
+    // --- ПЛЕЕР АУДИОКНИГИ ---
     function manualLoad() {
         let v = document.getElementById('i-book').value; if(!v) return;
         bookData.text = v.match(/[^.!?]+[.!?]+["']?|[\s\S]+$/g) || [v];
@@ -258,11 +269,15 @@
         if(!bookData.text.length) return;
         bookData.playing = !bookData.playing;
         document.getElementById('play-btn').innerHTML = bookData.playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
-        if(bookData.playing) speak(); else synth.cancel();
+        if(bookData.playing) speakBook(); else synth.cancel();
     }
 
-    function speak() {
-        if(!bookData.playing || bookData.idx >= bookData.text.length) { bookData.playing = false; return; }
+    function speakBook() {
+        if(!bookData.playing || bookData.idx >= bookData.text.length) { 
+            bookData.playing = false; 
+            document.getElementById('play-btn').innerHTML = '<i class="fas fa-play"></i>';
+            return; 
+        }
         document.querySelectorAll('.active-sentence').forEach(e => e.classList.remove('active-sentence'));
         let el = document.getElementById('s' + bookData.idx);
         if(el) { el.classList.add('active-sentence'); el.scrollIntoView({block:'center', behavior:'smooth'}); }
@@ -270,11 +285,11 @@
         synth.cancel();
         let u = new SpeechSynthesisUtterance(bookData.text[bookData.idx]);
         u.lang = 'ru-RU';
-        u.onend = () => { if(bookData.playing) { bookData.idx++; speak(); } };
+        u.onend = () => { if(bookData.playing) { bookData.idx++; speakBook(); } };
         synth.speak(u);
     }
 
-    function clearBook() { synth.cancel(); bookData = {text:[], idx:0, playing:false}; document.getElementById('book-content').innerHTML=''; document.getElementById('book-empty').style.display='block'; }
+    function clearBook() { synth.cancel(); bookData = {text:[], idx:0, playing:false}; document.getElementById('book-content').innerHTML=''; document.getElementById('book-empty').style.display='block'; document.getElementById('play-btn').innerHTML = '<i class="fas fa-play"></i>'; }
 </script>
 </body>
 </html>
