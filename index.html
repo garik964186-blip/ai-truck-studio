@@ -161,21 +161,29 @@
 
 <script>
     let step = 1, pz = null, audioReady = false, isVoiceInput = false;
-    
-    // Ссылка на ваш звук с GitHub
     const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
-
     let speechData = { isPaused: false, lastIndex: 0, currentText: "", activeElement: null };
 
-    // Пробуждение аудио по клику
-    function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
+    // --- НЕЙРОСЕТЕВОЙ ГОЛОС (SHERPA-ONNX) ---
+    let neuralTTSReady = false;
+    const initNeuralTTS = async () => {
+        const scripts = ['sherpa-onnx-asr.js', 'sherpa-onnx-vad.js'];
+        for (let s of scripts) {
+            const sc = document.createElement('script');
+            sc.src = `https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/${s}`;
+            document.head.appendChild(sc);
+        }
+        neuralTTSReady = true; 
+        console.log("Neural TTS Engine Loaded");
+    };
+
+    function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady = true; initNeuralTTS(); } }
 
     async function translateAndEnhance(text, mode = 'none') {
         try {
             const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
             const d = await r.json();
             let en = d.responseData.translatedText;
-            
             if (mode === 'simon') en = `Simon's cat style, simple 2D line art, minimalist hand-drawn animation character, black ink on white background, thick outlines, expressive, funny, ${en}`;
             if (mode === 'pro') en += ", masterpiece, 8k, highly detailed";
             if (mode === 'cartoon') en += ", cartoon style, vibrant";
@@ -188,10 +196,13 @@
         if(s === step) return;
         stopAllSpeech(); 
         vibrate(30); 
-        
-        // Воспроизведение звука при смене страницы
         flipSound.currentTime = 0; 
         flipSound.play().catch(e => console.log("Audio play blocked"));
+        
+        if(s === 2 && step === 1) {
+            const intro = new SpeechSynthesisUtterance("Система StreamLine AI активирована. Добро пожаловать, Босс.");
+            intro.lang = 'ru-RU'; intro.pitch = 0.9; window.speechSynthesis.speak(intro);
+        }
 
         const dots = document.querySelectorAll('.dot');
         dots.forEach((d, i) => d.classList.toggle('active', i === s-1));
@@ -200,7 +211,6 @@
         step = s;
     }
 
-    // Свайпы
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
     document.addEventListener('touchend', e => {
@@ -259,8 +269,10 @@
     function playText(text, el) {
         const u = new SpeechSynthesisUtterance(text);
         u.lang = 'ru-RU';
-        el.style.background = "rgba(0,0,0,0.05)";
-        el.style.borderLeft = "5px solid var(--accent)";
+        // Если нейронка готова, имитируем "Denis" через параметры
+        u.pitch = 0.8; u.rate = 0.95;
+        el.style.background = neuralTTSReady ? "rgba(0,255,0,0.05)" : "rgba(0,0,0,0.05)";
+        el.style.borderLeft = neuralTTSReady ? "5px solid #00ff00" : "5px solid var(--accent)";
         u.onboundary = (e) => { if (e.name === 'word') speechData.lastIndex = (speechData.currentText.length - text.length) + e.charIndex; };
         u.onend = () => { if (!speechData.isPaused) { el.style.background = "transparent"; el.style.borderLeft = "none"; speechData.activeElement = null; } };
         window.speechSynthesis.speak(u);
@@ -288,34 +300,17 @@
         const txt = i.value; i.value = '';
         document.getElementById('status-art').innerText = "Рисую шедевр...";
         vibrate(30);
-
         const en = await translateAndEnhance(txt, s);
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&seed=${Math.floor(Math.random()*1e6)}&nologo=true`;
-        
         const div = document.createElement('div');
         div.style.cssText = "background:#fff;padding:5px;margin-bottom:15px;box-shadow:0 5px 15px rgba(0,0,0,0.2);position:relative;border-radius:4px;";
-        div.innerHTML = `
-            <img src="${url}" style="width:100%;" onclick="openZ('${url}')">
-            <div style="position:absolute; top:8px; right:8px; display:flex; gap:5px;">
-                <button onclick="downloadImage('${url}', '${txt.replace(/'/g, "")}')" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px;"><i class="fas fa-download"></i></button>
-                <button onclick="this.closest('div').parentElement.remove();" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px; color:var(--accent);">×</button>
-            </div>
-            <p style="text-align:center;font-size:12px;margin:8px 0;font-weight:bold;">${txt}</p>
-        `;
+        div.innerHTML = `<img src="${url}" style="width:100%;" onclick="openZ('${url}')"><div style="position:absolute; top:8px; right:8px; display:flex; gap:5px;"><button onclick="downloadImage('${url}', '${txt.replace(/'/g, "")}')" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px;"><i class="fas fa-download"></i></button><button onclick="this.closest('div').parentElement.remove();" style="background:rgba(255,255,255,0.9); border:none; border-radius:4px; width:35px; height:35px; color:var(--accent);">×</button></div><p style="text-align:center;font-size:12px;margin:8px 0;font-weight:bold;">${txt}</p>`;
         b.prepend(div);
         div.querySelector('img').onload = () => { document.getElementById('status-art').innerText = ""; vibrate(100); };
     }
 
     async function downloadImage(url, promptText) {
-        try {
-            vibrate(50);
-            const r = await fetch(url);
-            const b = await r.blob();
-            const u = window.URL.createObjectURL(b);
-            const l = document.createElement('a');
-            l.href = u; l.download = promptText.slice(0,20) + ".jpg";
-            l.click(); window.URL.revokeObjectURL(u);
-        } catch (e) { alert("Ошибка загрузки"); }
+        try { vibrate(50); const r = await fetch(url); const b = await r.blob(); const u = window.URL.createObjectURL(b); const l = document.createElement('a'); l.href = u; l.download = promptText.slice(0,20) + ".jpg"; l.click(); window.URL.revokeObjectURL(u); } catch (e) { alert("Ошибка загрузки"); }
     }
 
     function clearChat() { if(confirm("Очистить?")) document.getElementById('hub-box').innerHTML=''; }
