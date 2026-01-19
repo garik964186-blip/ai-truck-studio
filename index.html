@@ -3,38 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' cdn.jsdelivr.net unpkg.com cdnjs.cloudflare.com; style-src 'self' cdnjs.cloudflare.com; img-src * data:; media-src raw.githubusercontent.com; connect-src api.mymemory.translated.net text.pollinations.ai image.pollinations.ai;">
-    <title>НАША КНИГА | BOSS CUSTOM EDITION</title>
+    <title>НАША КНИГА | BOSS AUDIO EDITION</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
     
     <style>
         :root { 
             --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; 
-            --leather: #2a0505; --pause-color: #d4af37;
+            --leather: #2a0505; --highlight: rgba(255, 215, 0, 0.4);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; touch-action: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         
         @keyframes fogMove { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
         body::after {
             content: ""; position: fixed; inset: 0; background: url('https://www.transparenttextures.com/patterns/stardust.png');
-            opacity: 0.08; pointer-events: none; z-index: 10000; animation: fogMove 300s linear infinite;
+            opacity: 0.08; pointer-events: none; z-index: 10000; animation: fogMove 120s linear infinite;
         }
 
-        .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2000px; }
+        .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2500px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
         
+        /* Логика страниц и слоев */
         .page { 
             position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
             transform-origin: left; transform-style: preserve-3d; 
             transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
-            pointer-events: none; z-index: 1; 
+            pointer-events: none;
         }
         
+        /* Z-Index для правильного наложения 4 страниц */
+        #p1 { z-index: 4; }
+        #p2 { z-index: 3; }
+        #p3 { z-index: 2; }
+        #p4 { z-index: 1; }
+
         .paper-sheet { 
             background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); 
             color: var(--ink); display: flex; flex-direction: column; height: 100%; 
@@ -42,18 +47,22 @@
         }
 
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
-        .flipped { transform: rotateY(-180deg) !important; z-index: 10 !important; }
+        .flipped { transform: rotateY(-180deg) !important; }
+        
+        /* Чтобы перевернутая страница перекрывала предыдущие */
+        .flipped#p1 { z-index: 10 !important; }
+        .flipped#p2 { z-index: 11 !important; }
+        .flipped#p3 { z-index: 12 !important; }
 
         .header { padding: 12px; background: rgba(0,0,0,0.07); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .header-btn { background: none; border: none; font-size: 18px; color: var(--accent); cursor: pointer; padding: 5px; }
         
-        .ai-select { width: 92%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 8px; font-weight: bold; outline: none; }
+        .ai-select, .style-select { width: 92%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 8px; font-weight: bold; outline: none; }
         .style-row { display: flex; gap: 5px; width: 92%; margin: 0 auto; padding-top: 5px; }
-        .style-select { flex: 1; padding: 8px; border-radius: 8px; border: 2px solid var(--ink); font-weight: bold; background: #fff; }
 
         .scroll-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
         
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.1); padding: 10px 10px; line-height: 1.5; font-size: 15px; cursor: pointer; position: relative; transition: all 0.3s ease; border-left: 0px solid transparent; }
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.1); padding: 10px 10px; line-height: 1.5; font-size: 15px; cursor: pointer; }
         .user-msg { text-align: right; opacity: 0.6; font-style: italic; font-size: 14px; margin-bottom: 5px; color: var(--accent); }
         .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
 
@@ -66,12 +75,27 @@
         .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); opacity: 0.3; border: 1px solid #000; transition: 0.3s; }
         .dot.active { opacity: 1; transform: scale(1.3); }
 
+        /* Аудио плеер стили */
+        .audio-controls {
+            display: flex; justify-content: center; gap: 20px; margin-bottom: 10px;
+            background: rgba(0,0,0,0.05); padding: 10px; border-radius: 15px;
+        }
+        .audio-btn {
+            width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--ink);
+            background: #fff; font-size: 20px; color: var(--ink); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.2s;
+        }
+        .audio-btn:active { transform: scale(0.95); }
+        .active-sentence { background-color: var(--highlight); border-radius: 4px; padding: 2px 0; transition: background 0.3s; }
+        #book-content { font-size: 18px; line-height: 1.8; white-space: pre-wrap; text-align: justify; }
+        
         #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
     </style>
 </head>
-<body onclick="app.wakeAudio()">
+<body onclick="wakeAudio()">
 
-<div id="z-overlay" onclick="app.closeZ()">
+<div id="z-overlay" onclick="closeZ()">
     <div style="text-align:right; padding:20px; color:#fff; font-size:40px;">×</div>
     <div id="z-wrap" style="width:100%; height:85%; display:flex; align-items:center; justify-content:center;">
         <img id="z-img" src="" style="max-width:100%; max-height:100%;">
@@ -79,73 +103,103 @@
 </div>
 
 <div class="nav-dots">
-    <div class="dot active" onclick="app.jumpTo(1)"></div>
-    <div class="dot" onclick="app.jumpTo(2)"></div>
-    <div class="dot" onclick="app.jumpTo(3)"></div>
+    <div class="dot active" onclick="jumpTo(1)"></div>
+    <div class="dot" onclick="jumpTo(2)"></div>
+    <div class="dot" onclick="jumpTo(3)"></div>
+    <div class="dot" onclick="jumpTo(4)"></div>
 </div>
 
 <div class="viewport">
     <div class="book">
         
-        <div class="page" id="p3">
+        <div class="page" id="p4">
             <div class="paper-sheet">
                 <div class="header">
-                    <button class="header-btn" onclick="app.clearChat()" aria-label="Очистить чат"><i class="fas fa-trash"></i></button>
-                    <span>⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</span>
+                    <button class="header-btn" onclick="clearBook()"><i class="fas fa-trash"></i></button>
+                    <span>⬥ АУДИОКНИГА ⬥</span>
                     <span style="width:30px"></span>
                 </div>
-                <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Универсал)</option>
-                    <option value="p1">DeepSeek R1 (Аналитик)</option>
-                    <option value="mistral">Mistral Large (Технарь)</option>
-                    <option value="llama">Llama 3.3 (Мощный мозг)</option>
-                </select>
-                <div id="status-chat" class="status-bar"></div>
-                <div id="hub-box" class="scroll-area"></div>
+                
+                <div class="audio-controls">
+                    <button class="audio-btn" onclick="bookPrev()"><i class="fas fa-backward"></i></button>
+                    <button class="audio-btn" onclick="togglePlayBook()" id="play-pause-btn"><i class="fas fa-play"></i></button>
+                    <button class="audio-btn" onclick="bookNext()"><i class="fas fa-forward"></i></button>
+                </div>
+                
+                <div id="book-container" class="scroll-area">
+                    <div id="book-placeholder" style="text-align:center; opacity:0.5; margin-top:50px;">
+                        <i class="fas fa-book-open" style="font-size:50px; margin-bottom:20px;"></i><br>
+                        Вставьте текст книги или статьи ниже,<br>чтобы я прочитал её для тебя, Босс.
+                    </div>
+                    <div id="book-content"></div>
+                </div>
+
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="app.runMic('i-chat', app.sendMsg, 'm-chat')" id="m-chat" class="btn" aria-label="Голосовой ввод"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-chat" class="field" placeholder="Запрос...">
-                        <button onclick="app.sendMsg()" class="btn" aria-label="Отправить"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
+                        <input type="text" id="i-book" class="field" placeholder="Вставь текст сюда...">
+                        <button onclick="loadBook()" class="btn"><i class="fas fa-upload" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="page" id="p2" style="z-index: 2;">
+        <div class="page" id="p3">
             <div class="paper-sheet">
                 <div class="header">
-                    <button class="header-btn" onclick="app.clearArt()" aria-label="Очистить изображения"><i class="fas fa-trash"></i></button>
-                    <span>⬥ ВИЗУАЛИЗАТОР ⬥</span>
+                    <button class="header-btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
+                    <span>⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</span>
                     <span style="width:30px"></span>
                 </div>
-                <div class="style-row">
-                    <select id="art-model" class="style-select"><option value="flux">💎 FLUX.1</option><option value="midjourney">🌌 MJ Style</option><option value="dall-e-3">🖌️ DALL-E 3</option></select>
-                    <select id="art-style" class="style-select">
-                        <option value="none">🎯 Как есть</option>
-                        <option value="simon">🐱 Линейная 2D (Саймон)</option>
-                        <option value="pro">🔥 PRO Art</option>
-                        <option value="cartoon">🎨 Cartoon</option>
-                        <option value="cinematic">🎬 Кино</option>
-                    </select>
-                </div>
-                <div id="status-art" class="status-bar"></div>
-                <div id="imgs-box" class="scroll-area"></div>
+                <select id="chat-model" class="ai-select">
+                    <option value="openai">GPT-4o (Универсал)</option>
+                    <option value="mistral">Mistral Large (Технарь)</option>
+                    <option value="llama">Llama 3.3 (Мощный)</option>
+                </select>
+                <div id="status-chat" class="status-bar"></div>
+                <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="app.runMic('i-art', app.genArt, 'm-art')" id="m-art" class="btn" aria-label="Голосовой ввод"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Опишите образ...">
-                        <button onclick="app.genArt()" class="btn" aria-label="Сгенерировать"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
+                        <button onclick="runMic('i-chat', sendMsg, 'm-chat')" id="m-chat" class="btn"><i class="fas fa-microphone"></i></button>
+                        <input type="text" id="i-chat" class="field" placeholder="Запрос...">
+                        <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
             </div>
             <div class="back"></div>
         </div>
 
-        <div class="page" id="p1" style="z-index: 3;">
+        <div class="page" id="p2">
+            <div class="paper-sheet">
+                <div class="header">
+                    <button class="header-btn" onclick="clearArt()"><i class="fas fa-trash"></i></button>
+                    <span>⬥ ВИЗУАЛИЗАТОР ⬥</span>
+                    <span style="width:30px"></span>
+                </div>
+                <div class="style-row">
+                    <select id="art-model" class="style-select"><option value="flux">💎 FLUX.1</option><option value="midjourney">🌌 MJ Style</option></select>
+                    <select id="art-style" class="style-select">
+                        <option value="none">🎯 Как есть</option>
+                        <option value="simon">🐱 2D (Саймон)</option>
+                        <option value="pro">🔥 PRO Art</option>
+                    </select>
+                </div>
+                <div id="status-art" class="status-bar"></div>
+                <div id="imgs-box" class="scroll-area"></div>
+                <div class="input-bar">
+                    <div class="row">
+                        <button onclick="runMic('i-art', genArt, 'm-art')" id="m-art" class="btn"><i class="fas fa-microphone"></i></button>
+                        <input type="text" id="i-art" class="field" placeholder="Опишите образ...">
+                        <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="back"></div>
+        </div>
+
+        <div class="page" id="p1">
             <div class="paper-sheet" style="background:var(--leather); border:12px double var(--gold); align-items:center; justify-content:center;">
                 <div style="width: 85%; background: #fff; padding: 10px 10px 40px 10px; box-shadow: 0 25px 50px rgba(0,0,0,0.8); transform: rotate(-1deg);">
-                    <video autoplay loop muted playsinline loading="lazy" style="width:100%; display:block; object-fit:cover;">
+                    <video autoplay loop muted playsinline style="width:100%; display:block; object-fit:cover;">
                         <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
                     </video>
                 </div>
@@ -162,214 +216,198 @@
 </div>
 
 <script>
-    // Глобальный объект для состояния и функций
-    const app = {
-        state: {
-            step: 1,
-            pz: null,
-            audioReady: false,
-            isVoiceInput: false,
-            speechData: { isPaused: false, lastIndex: 0, currentText: "", activeElement: null }
-        },
-        flipSound: new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3'),
+    let step = 1, pz = null, audioReady = false;
+    const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
 
-        // Пробуждение аудио
-        wakeAudio() {
-            if (!this.state.audioReady) {
-                window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
-                this.state.audioReady = true;
-            }
-        },
+    // === ЛОГИКА АУДИОКНИГИ (ЗОЛОТОЙ СТАНДАРТ) ===
+    let bookData = {
+        sentences: [],
+        currentIndex: 0,
+        isPlaying: false,
+        synth: window.speechSynthesis,
+        utterance: null
+    };
 
-        // Перевод и улучшение промпта
-        async translateAndEnhance(text, mode = 'none') {
-            try {
-                const response = await this.fetchWithTimeout(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
-                const data = await response.json();
-                let en = data.responseData.translatedText;
-                
-                if (mode === 'simon') en = `Simon's cat style, simple 2D line art, minimalist hand-drawn animation character, black ink on white background, thick outlines, expressive, funny, ${en}`;
-                if (mode === 'pro') en += ", masterpiece, 8k, highly detailed";
-                if (mode === 'cartoon') en += ", cartoon style, vibrant";
-                if (mode === 'cinematic') en += ", cinematic lighting, movie shot";
-                return en;
-            } catch (e) {
-                console.error('Ошибка перевода:', e);
-                return text;
-            }
-        },
+    function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
 
-        // Навигация по страницам
-        jumpTo(s) {
-            if (s === this.state.step) return;
-            this.stopAllSpeech(); 
-            this.vibrate(30); 
+    function loadBook() {
+        const input = document.getElementById('i-book');
+        const text = input.value.trim();
+        if(!text) return;
+        
+        document.getElementById('book-placeholder').style.display = 'none';
+        const contentDiv = document.getElementById('book-content');
+        
+        // Разбиваем текст на предложения (регулярное выражение для . ! ? и концов строк)
+        // Это позволяет читать стабильно и ставить на паузу
+        const sentences = text.match(/[^.!?]+[.!?]+["']?|[\s\S]+$/g);
+        
+        if(sentences) {
+            bookData.sentences = sentences.map(s => s.trim()).filter(s => s.length > 0);
+            bookData.currentIndex = 0;
+            bookData.isPlaying = false;
             
-            this.flipSound.currentTime = 0; 
-            this.flipSound.play().catch(e => console.log("Audio play blocked"));
-
-            const dots = document.querySelectorAll('.dot');
-            dots.forEach((d, i) => d.classList.toggle('active', i === s-1));
-            document.getElementById('p1').classList.toggle('flipped', s > 1);
-            document.getElementById('p2').classList.toggle('flipped', s > 2);
-            this.state.step = s;
-        },
-
-        // Обработка свайпов
-        initSwipes() {
-            let startX = 0;
-            document.addEventListener('touchstart', e => startX = e.touches[0].clientX, {passive: true});
-            document.addEventListener('touchend', e => {
-                if (document.getElementById('z-overlay').style.display === 'flex') return;
-                let delta = startX - e.changedTouches[0].clientX;
-                if (Math.abs(delta) > 60) {
-                    if (delta > 0 && this.state.step < 3) this.jumpTo(this.state.step + 1);
-                    else if (delta < 0 && this.state.step > 1) this.jumpTo(this.state.step - 1);
-                }
-            }, {passive: true});
-        },
-
-        // Отправка сообщения в чат
-        async sendMsg() {
-            const input = document.getElementById('i-chat');
-            const box = document.getElementById('hub-box');
-            const model = document.getElementById('chat-model').value;
-            if (!input.value) return;
-            const value = input.value;
+            // Рендерим текст с ID для каждого предложения
+            contentDiv.innerHTML = bookData.sentences.map((s, i) => `<span id="s-${i}" onclick="jumpToSentence(${i})">${s} </span>`).join('');
+            
             input.value = '';
+            alert("Текст загружен, Босс. Нажми Play.");
+        }
+    }
 
-            // Сохраняем историю в localStorage
-            let chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
-            chatHistory.push({ type: 'user', text: value });
-            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+    function togglePlayBook() {
+        if(bookData.sentences.length === 0) return;
+        
+        if (bookData.isPlaying) {
+            pauseBook();
+        } else {
+            playBook();
+        }
+    }
 
-            const userDiv = document.createElement('div');
-            userDiv.className = 'user-msg';
-            userDiv.textContent = `Босс: ${value}`;
-            box.appendChild(userDiv);
+    function playBook() {
+        if(bookData.currentIndex >= bookData.sentences.length) bookData.currentIndex = 0;
+        
+        bookData.isPlaying = true;
+        document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-pause"></i>';
+        speakSentence(bookData.currentIndex);
+    }
 
-            const tid = 'l-' + Date.now();
-            const loadingDiv = document.createElement('div');
-            loadingDiv.id = tid;
-            loadingDiv.style.cssText = 'font-size:12px;opacity:0.5';
-            loadingDiv.textContent = '⚡ Думаю...';
-            box.appendChild(loadingDiv);
-            box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+    function pauseBook() {
+        bookData.isPlaying = false;
+        bookData.synth.cancel();
+        document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-play"></i>';
+    }
 
-            try {
-                const en = await this.translateAndEnhance(value);
-                const response = await this.fetchWithTimeout(`https://text.pollinations.ai/prompt/Respond%20in%20Russian:%20${encodeURIComponent(en)}?model=${model}`);
-                const data = await response.text();
-                loadingDiv.remove();
+    function speakSentence(index) {
+        if (!bookData.isPlaying) return;
+        if (index >= bookData.sentences.length) {
+            pauseBook(); // Конец книги
+            return;
+        }
 
-                chatHistory.push({ type: 'ai', text: data });
-                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+        bookData.currentIndex = index;
+        
+        // Визуальная подсветка
+        document.querySelectorAll('.active-sentence').forEach(el => el.classList.remove('active-sentence'));
+        const el = document.getElementById(`s-${index}`);
+        if(el) {
+            el.classList.add('active-sentence');
+            el.scrollIntoView({behavior: "smooth", block: "center"});
+        }
 
-                const div = document.createElement('div');
-                div.className = 'ai-box';
-                const purified = DOMPurify.sanitize(marked.parse(data));
-                div.innerHTML = `<b>AI:</b><br>${purified}`;
-                div.onclick = () => this.handleSpeech(data, div);
-                box.appendChild(div);
-                box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
-                if (this.state.isVoiceInput) {
-                    this.handleSpeech(data, div);
-                    this.state.isVoiceInput = false;
-                }
-            } catch (e) {
-                loadingDiv.textContent = 'Ошибка: ' + (e.message || 'Сеть недоступна, попробуйте позже.');
+        // Озвучка
+        bookData.synth.cancel();
+        const u = new SpeechSynthesisUtterance(bookData.sentences[index]);
+        u.lang = 'ru-RU';
+        u.rate = 1.0; 
+        
+        u.onend = () => {
+            if(bookData.isPlaying) {
+                speakSentence(index + 1);
             }
-        },
+        };
+        
+        u.onerror = (e) => {
+            console.log("Audio Error", e);
+            // Если ошибка, пытаемся читать дальше
+            if(bookData.isPlaying) setTimeout(() => speakSentence(index + 1), 500);
+        };
 
-        // Обработка речи
-        handleSpeech(txt, el) {
-            if (!('speechSynthesis' in window)) {
-                alert('Речь не поддерживается в вашем браузере.');
-                return;
+        bookData.synth.speak(u);
+    }
+
+    function bookPrev() {
+        if(bookData.currentIndex > 0) {
+            bookData.currentIndex--;
+            if(bookData.isPlaying) speakSentence(bookData.currentIndex);
+            else {
+                document.querySelectorAll('.active-sentence').forEach(el => el.classList.remove('active-sentence'));
+                document.getElementById(`s-${bookData.currentIndex}`).classList.add('active-sentence');
+                document.getElementById(`s-${bookData.currentIndex}`).scrollIntoView({block:"center"});
             }
-            if (this.state.speechData.activeElement === el) {
-                if (window.speechSynthesis.speaking && !this.state.speechData.isPaused) {
-                    window.speechSynthesis.pause();
-                    this.state.speechData.isPaused = true;
-                    el.style.borderLeft = "5px solid var(--pause-color)";
-                    return;
-                } else if (this.state.speechData.isPaused) {
-                    window.speechSynthesis.resume();
-                    this.state.speechData.isPaused = false;
-                    return;
-                }
+        }
+    }
+
+    function bookNext() {
+        if(bookData.currentIndex < bookData.sentences.length - 1) {
+            bookData.currentIndex++;
+            if(bookData.isPlaying) speakSentence(bookData.currentIndex);
+            else {
+                document.querySelectorAll('.active-sentence').forEach(el => el.classList.remove('active-sentence'));
+                document.getElementById(`s-${bookData.currentIndex}`).classList.add('active-sentence');
+                document.getElementById(`s-${bookData.currentIndex}`).scrollIntoView({block:"center"});
             }
-            this.stopAllSpeech();
-            this.state.speechData.currentText = txt.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/[#*`]/g,'');
-            this.state.speechData.activeElement = el;
-            this.playText(this.state.speechData.currentText, el);
-        },
+        }
+    }
 
-        playText(text, el) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'ru-RU';
-            el.style.background = "rgba(0,0,0,0.05)";
-            el.style.borderLeft = "5px solid var(--accent)";
-            utterance.onboundary = (e) => {
-                if (e.name === 'word') this.state.speechData.lastIndex = e.charIndex;
-            };
-            utterance.onend = () => {
-                if (!this.state.speechData.isPaused) {
-                    el.style.background = "transparent";
-                    el.style.borderLeft = "none";
-                    this.state.speechData.activeElement = null;
-                }
-            };
-            window.speechSynthesis.speak(utterance);
-        },
+    function jumpToSentence(i) {
+        bookData.currentIndex = i;
+        if(bookData.isPlaying) speakSentence(i);
+        else {
+            document.querySelectorAll('.active-sentence').forEach(el => el.classList.remove('active-sentence'));
+            document.getElementById(`s-${i}`).classList.add('active-sentence');
+        }
+    }
 
-        stopAllSpeech() {
-            window.speechSynthesis.cancel();
-            if (this.state.speechData.activeElement) {
-                this.state.speechData.activeElement.style.background = "transparent";
-                this.state.speechData.activeElement.style.borderLeft = "none";
-            }
-            this.state.speechData.isPaused = false;
-            this.state.speechData.lastIndex = 0;
-            this.state.speechData.activeElement = null;
-        },
+    function clearBook() {
+        pauseBook();
+        bookData.sentences = [];
+        document.getElementById('book-content').innerHTML = '';
+        document.getElementById('book-placeholder').style.display = 'block';
+    }
 
-        // Голосовой ввод
-        runMic(id, callback, buttonId) {
-            const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!Recognition) {
-                alert('Голосовой ввод не поддерживается.');
-                return;
-            }
-            const recognizer = new Recognition();
-            recognizer.lang = 'ru-RU';
-            recognizer.onstart = () => {
-                document.getElementById(buttonId).style.color = 'red';
-                if (id === 'i-chat') this.state.isVoiceInput = true;
-            };
-            recognizer.onresult = (e) => {
-                document.getElementById(id).value = e.results[0][0].transcript;
-                callback();
-            };
-            recognizer.onend = () => document.getElementById(buttonId).style.color = 'inherit';
-            recognizer.start();
-        },
+    // === ОБЩАЯ НАВИГАЦИЯ ===
+    function jumpTo(s) {
+        if(s === step) return;
+        
+        // Если уходим со страницы аудиокниги, ставим на паузу? 
+        // Нет, пусть играет фоном, Босс может захотеть смотреть картинки пока слушает.
+        // Но перелистывание должно быть слышно.
+        
+        vibrate(30); 
+        flipSound.currentTime = 0; 
+        flipSound.play().catch(e => console.log("Audio play blocked"));
 
-        // Генерация арта
-        async genArt() {
-            const input = document.getElementById('i-art');
-            const box = document.getElementById('imgs-box');
-            const model = document.getElementById('art-model').value;
-            const style = document.getElementById('art-style').value;
-            if (!input.value) return;
-            const text = input.value;
-            input.value = '';
-            document.getElementById('status-art').textContent = "Рисую шедевр...";
-            this.vibrate(30);
+        const dots = document.querySelectorAll('.dot');
+        dots.forEach((d, i) => d.classList.toggle('active', i === s-1));
+        
+        // Логика переворота для 4 страниц
+        document.getElementById('p1').classList.toggle('flipped', s > 1);
+        document.getElementById('p2').classList.toggle('flipped', s > 2);
+        document.getElementById('p3').classList.toggle('flipped', s > 3);
+        
+        step = s;
+    }
 
-            try {
-                const en = await this.translateAndEnhance(text, style);
-                const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${model}&seed=${Math.floor(Math.random()*1e6)}&nologo=true`;
+    let sX = 0;
+    document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
+    document.addEventListener('touchend', e => {
+        if(document.getElementById('z-overlay').style.display === 'flex') return;
+        let d = sX - e.changedTouches[0].clientX;
+        if (Math.abs(d) > 60) {
+            if (d > 0 && step < 4) jumpTo(step + 1); // Теперь до 4
+            else if (d < 0 && step > 1) jumpTo(step - 1);
+        }
+    }, {passive: true});
 
-                const div = document.createElement('div');
-                d
+    // === ФУНКЦИИ ЧАТА И АРТА (СТАРЫЕ) ===
+    async function translateAndEnhance(text, mode = 'none') {
+        try {
+            const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
+            const d = await r.json();
+            let en = d.responseData.translatedText;
+            if (mode === 'simon') en = `Simon's cat style, simple 2D line art, black ink on white background, ${en}`;
+            if (mode === 'pro') en += ", masterpiece, 8k, highly detailed";
+            return en;
+        } catch (e) { return text; }
+    }
+
+    async function sendMsg() {
+        const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
+        if (!i.value) return;
+        const val = i.value; i.value = '';
+        b.insertAdjacentHTML('beforeend', `<div class="user-msg">Босс: ${val}</div>`);
+        const tid = 'l-'+Date.now();
+        b.insertAdjacentHTML('beforeend', `<div id="${tid}" style="font-size:12px;opacity:0.5">⚡ Думаю...</div>`);
+        b.scrollTop = b.scrollHeigh
