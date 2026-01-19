@@ -3,112 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА | BOSS AUDIO EDITION</title>
+    <title>НАША КНИГА | BOSS FINAL</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
     
     <style>
-        /* === БАЗОВЫЕ НАСТРОЙКИ === */
-        :root { 
-            --paper: #f4e4bc; 
-            --ink: #2c241a; 
-            --gold: #d4af37; 
-            --accent: #8b0000; 
-            --leather: #2a0505; 
-            --highlight: rgba(255, 215, 0, 0.4);
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
+        /* === БЛОКИРОВКА ЛИШНИХ ЖЕСТОВ БРАУЗЕРА === */
+        :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; --leather: #2a0505; --highlight: rgba(255, 215, 0, 0.4); }
         
-        /* Фон с пыльцой */
-        @keyframes fogMove { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
-        body::after {
-            content: ""; position: fixed; inset: 0; background: url('https://www.transparenttextures.com/patterns/stardust.png');
-            opacity: 0.08; pointer-events: none; z-index: 10000; animation: fogMove 120s linear infinite;
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100dvh; 
+            background: #000; overflow: hidden; 
+            font-family: "Georgia", serif; 
+            /* ЭТО ЗАПРЕЩАЕТ БРАУЗЕРУ ПЕРЕХВАТЫВАТЬ СВАЙПЫ: */
+            touch-action: none; 
+            user-select: none;
         }
 
-        /* === 3D КНИГА === */
+        /* 3D Сцена */
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2500px; overflow: hidden; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
         
+        /* Страницы */
         .page { 
             position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
             transform-origin: left; transform-style: preserve-3d; 
-            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); 
-            pointer-events: none; /* Чтобы клики проходили сквозь верхние страницы */
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); 
+            background: #fff; /* Заглушка от прозрачности */
         }
         
-        /* Стили бумаги */
-        .paper-sheet { 
-            background: var(--paper); background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); 
-            color: var(--ink); display: flex; flex-direction: column; height: 100%; 
-            box-shadow: inset 20px 0 50px rgba(0,0,0,0.2); pointer-events: auto; position: relative; overflow: hidden;
-        }
-
-        /* Оборотная сторона страницы */
-        .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
-        
-        /* Классы переворота и слоев (Z-Index) */
+        /* Z-Index: Обложка (p1) самая верхняя */
         #p1 { z-index: 4; }
         #p2 { z-index: 3; }
         #p3 { z-index: 2; }
         #p4 { z-index: 1; }
 
-        .flipped { transform: rotateY(-180deg) !important; }
-        .flipped#p1 { z-index: 10 !important; }
-        .flipped#p2 { z-index: 11 !important; }
-        .flipped#p3 { z-index: 12 !important; }
-
-        /* === ЭЛЕМЕНТЫ ИНТЕРФЕЙСА === */
-        .header { padding: 12px; background: rgba(0,0,0,0.07); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .header-btn { background: none; border: none; font-size: 18px; color: var(--accent); cursor: pointer; padding: 5px; }
+        /* Логика переворота */
+        .flipped { transform: rotateY(-180deg) !important; pointer-events: none; }
         
-        .ai-select, .style-select { width: 92%; background: #fff; border: 2px solid var(--ink); margin: 5px auto; padding: 10px; border-radius: 8px; font-weight: bold; outline: none; }
-        .style-row { display: flex; gap: 5px; width: 92%; margin: 0 auto; padding-top: 5px; }
-
-        .scroll-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
-        
-        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.1); padding: 10px 10px; line-height: 1.5; font-size: 15px; cursor: pointer; }
-        .user-msg { text-align: right; opacity: 0.6; font-style: italic; font-size: 14px; margin-bottom: 5px; color: var(--accent); }
-        .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
-
-        .input-bar { padding: 15px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
-        .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
-        .field { flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px 15px; border-radius: 25px; font-size: 16px; outline: none; }
-        .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
-
-        .nav-dots { position: fixed; bottom: 85px; left: 0; right: 0; display: flex; justify-content: center; gap: 15px; z-index: 5000; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); opacity: 0.3; border: 1px solid #000; transition: 0.3s; }
-        .dot.active { opacity: 1; transform: scale(1.3); }
-
-        /* === АУДИО ПЛЕЕР === */
-        .audio-controls {
-            display: flex; justify-content: center; gap: 20px; margin-bottom: 10px;
-            background: rgba(0,0,0,0.05); padding: 10px; border-radius: 15px;
+        /* Бумага */
+        .paper-sheet { 
+            background: var(--paper); 
+            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); 
+            color: var(--ink); display: flex; flex-direction: column; height: 100%; 
+            box-shadow: inset 10px 0 30px rgba(0,0,0,0.1); 
+            position: relative;
         }
-        .audio-btn {
-            width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--ink);
-            background: #fff; font-size: 20px; color: var(--ink); cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.2s;
-        }
-        .audio-btn:active { transform: scale(0.95); }
-        .active-sentence { background-color: var(--highlight); border-radius: 4px; padding: 2px 0; transition: background 0.3s; }
-        #book-content { font-size: 18px; line-height: 1.8; white-space: pre-wrap; text-align: justify; }
+
+        /* Обратная сторона */
+        .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; }
+
+        /* === ИНТЕРФЕЙС === */
+        .header { padding: 10px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        .header-btn { border: none; background: none; font-size: 20px; color: var(--accent); padding: 10px; }
         
-        /* Зум оверлей */
-        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; -webkit-overflow-scrolling: touch; touch-action: pan-y; } /* Разрешаем скролл внутри контента */
+        
+        .ai-select { width: 90%; margin: 10px auto; padding: 10px; display: block; border: 2px solid var(--ink); border-radius: 8px; background: #fff; font-size: 16px; }
+        
+        .input-bar { padding: 10px; background: rgba(255,255,255,0.5); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+        .row { display: flex; gap: 8px; }
+        .field { flex: 1; padding: 10px; border: 2px solid var(--ink); border-radius: 20px; font-size: 16px; outline: none; }
+        .btn { border: none; background: none; font-size: 22px; color: var(--ink); padding: 0 10px; }
+
+        /* Сообщения */
+        .ai-box { padding: 10px; border-bottom: 1px dashed #ccc; font-size: 15px; }
+        .user-msg { text-align: right; color: var(--accent); font-style: italic; margin: 5px 0; font-size: 14px; }
+
+        /* Навигация (Точки) */
+        .nav-dots { position: fixed; bottom: 80px; width: 100%; text-align: center; pointer-events: none; z-index: 5000; }
+        .dot { display: inline-block; width: 12px; height: 12px; background: var(--gold); border-radius: 50%; margin: 0 5px; opacity: 0.4; border: 1px solid #000; transition: 0.3s; pointer-events: auto; }
+        .dot.active { opacity: 1; transform: scale(1.2); background: var(--accent); }
+
+        /* Аудио плеер */
+        .audio-controls { display: flex; justify-content: center; gap: 20px; margin: 10px 0; }
+        .audio-btn { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--ink); background: #fff; font-size: 18px; }
+        .active-sentence { background: var(--highlight); }
+
+        /* Зум картинки */
+        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: none; align-items: center; justify-content: center; }
     </style>
 </head>
 <body onclick="wakeAudio()">
 
 <div id="z-overlay" onclick="closeZ()">
-    <div style="text-align:right; padding:20px; color:#fff; font-size:40px;">×</div>
-    <div id="z-wrap" style="width:100%; height:85%; display:flex; align-items:center; justify-content:center;">
-        <img id="z-img" src="" style="max-width:100%; max-height:100%;">
-    </div>
+    <img id="z-img" src="" style="max-width:100%; max-height:100%;">
 </div>
 
 <div class="nav-dots">
@@ -125,28 +108,24 @@
             <div class="paper-sheet">
                 <div class="header">
                     <button class="header-btn" onclick="clearBook()"><i class="fas fa-trash"></i></button>
-                    <span>⬥ АУДИОКНИГА ⬥</span>
+                    <span>АУДИОКНИГА</span>
                     <span style="width:30px"></span>
                 </div>
-                
-                <div class="audio-controls">
-                    <button class="audio-btn" onclick="bookPrev()"><i class="fas fa-backward"></i></button>
-                    <button class="audio-btn" onclick="togglePlayBook()" id="play-pause-btn"><i class="fas fa-play"></i></button>
-                    <button class="audio-btn" onclick="bookNext()"><i class="fas fa-forward"></i></button>
-                </div>
-                
-                <div id="book-container" class="scroll-area">
-                    <div id="book-placeholder" style="text-align:center; opacity:0.5; margin-top:50px;">
-                        <i class="fas fa-book-open" style="font-size:50px; margin-bottom:20px;"></i><br>
-                        Вставьте текст книги или статьи ниже,<br>чтобы я прочитал её для тебя, Босс.
+                <div class="scroll-area">
+                    <div class="audio-controls">
+                        <button class="audio-btn" onclick="bookPrev()"><i class="fas fa-backward"></i></button>
+                        <button class="audio-btn" onclick="togglePlayBook()" id="play-btn"><i class="fas fa-play"></i></button>
+                        <button class="audio-btn" onclick="bookNext()"><i class="fas fa-forward"></i></button>
                     </div>
-                    <div id="book-content"></div>
+                    <div id="book-content" style="font-size:18px; line-height:1.6;"></div>
+                    <div id="book-placeholder" style="text-align:center; opacity:0.5; margin-top:50px;">
+                        Вставьте текст ниже,<br>я прочитаю его.
+                    </div>
                 </div>
-
                 <div class="input-bar">
                     <div class="row">
-                        <input type="text" id="i-book" class="field" placeholder="Вставь текст сюда...">
-                        <button onclick="loadBook()" class="btn"><i class="fas fa-upload" style="color:var(--accent)"></i></button>
+                        <input id="i-book" class="field" placeholder="Текст сюда...">
+                        <button onclick="loadBook()" class="btn"><i class="fas fa-upload"></i></button>
                     </div>
                 </div>
             </div>
@@ -156,259 +135,192 @@
             <div class="paper-sheet">
                 <div class="header">
                     <button class="header-btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
-                    <span>⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</span>
+                    <span>ИНТЕЛЛЕКТ-ХАБ</span>
                     <span style="width:30px"></span>
                 </div>
                 <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Универсал)</option>
-                    <option value="mistral">Mistral Large (Технарь)</option>
-                    <option value="llama">Llama 3.3 (Мощный)</option>
+                    <option value="openai">GPT-4o</option>
+                    <option value="mistral">Mistral Large</option>
                 </select>
-                <div id="status-chat" class="status-bar"></div>
                 <div id="hub-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="runMic('i-chat', sendMsg, 'm-chat')" id="m-chat" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-chat" class="field" placeholder="Запрос...">
+                        <input id="i-chat" class="field" placeholder="Вопрос...">
                         <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
             </div>
-            <div class="back"></div>
         </div>
 
         <div class="page" id="p2">
             <div class="paper-sheet">
                 <div class="header">
                     <button class="header-btn" onclick="clearArt()"><i class="fas fa-trash"></i></button>
-                    <span>⬥ ВИЗУАЛИЗАТОР ⬥</span>
+                    <span>ВИЗУАЛИЗАТОР</span>
                     <span style="width:30px"></span>
                 </div>
-                <div class="style-row">
-                    <select id="art-model" class="style-select"><option value="flux">💎 FLUX.1</option><option value="midjourney">🌌 MJ Style</option></select>
-                    <select id="art-style" class="style-select">
-                        <option value="none">🎯 Как есть</option>
-                        <option value="simon">🐱 2D (Саймон)</option>
-                        <option value="pro">🔥 PRO Art</option>
-                    </select>
-                </div>
-                <div id="status-art" class="status-bar"></div>
+                <select id="art-model" class="ai-select"><option value="flux">FLUX.1 (Realism)</option><option value="midjourney">Midjourney Style</option></select>
                 <div id="imgs-box" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <button onclick="runMic('i-art', genArt, 'm-art')" id="m-art" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Опишите образ...">
+                        <input id="i-art" class="field" placeholder="Что нарисовать?">
                         <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
             </div>
-            <div class="back"></div>
         </div>
 
-        <div class="page" id="p1">
-            <div class="paper-sheet" style="background:var(--leather); border:12px double var(--gold); align-items:center; justify-content:center;">
-                <div style="width: 85%; background: #fff; padding: 10px 10px 40px 10px; box-shadow: 0 25px 50px rgba(0,0,0,0.8); transform: rotate(-1deg);">
-                    <video autoplay loop muted playsinline style="width:100%; display:block; object-fit:cover;">
+        <div class="page" id="p1" onclick="jumpTo(2)">
+            <div class="paper-sheet" style="background:var(--leather); border:10px double var(--gold); justify-content:center; align-items:center;">
+                <div style="width:90%; padding:10px; background:#fff; transform: rotate(-2deg); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+                    <video autoplay loop muted playsinline style="width:100%; display:block;">
                         <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
                     </video>
                 </div>
-                <div style="margin-top:40px; text-align:center; color:var(--gold);">
-                    <h1 style="margin:0; letter-spacing:5px; font-size:28px;">НАША КНИГА</h1>
-                    <div style="font-size:11px; opacity:0.8; margin-top:10px; font-weight:bold;">ULTIMATE BOSS EDITION</div>
+                
+                <div style="text-align:center; margin-top:30px; color:var(--gold);">
+                    <h1 style="margin:0; font-size:32px; letter-spacing:3px; text-shadow: 2px 2px 0 #000;">НАША КНИГА</h1>
+                    <p style="opacity:0.7; font-size:12px;">BOSS EDITION</p>
+                    
+                    <div style="margin-top:40px; border: 1px solid var(--gold); padding: 10px; border-radius: 20px; animation: pulse 2s infinite;">
+                        👆 НАЖМИ ИЛИ СВАЙПНИ ←
+                    </div>
                 </div>
-                <div style="margin-top:30px; font-size:12px; color:var(--gold); opacity:0.5; animation: pulse 2s infinite;">← СВАЙП ДЛЯ ВХОДА</div>
             </div>
-            <div class="back"></div>
         </div>
-        
+
     </div>
 </div>
 
 <script>
-    let step = 1, pz = null, audioReady = false;
-    // Звук перелистывания
+    let step = 1;
+    let audioReady = false;
     const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
 
-    // === ДВИЖОК АУДИОКНИГИ ===
-    let bookData = {
-        sentences: [],
-        currentIndex: 0,
-        isPlaying: false,
-        synth: window.speechSynthesis,
-        utterance: null
-    };
-
-    function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
-
-    function loadBook() {
-        const input = document.getElementById('i-book');
-        const text = input.value.trim();
-        if(!text) return;
-        
-        document.getElementById('book-placeholder').style.display = 'none';
-        const contentDiv = document.getElementById('book-content');
-        
-        const sentences = text.match(/[^.!?]+[.!?]+["']?|[\s\S]+$/g);
-        
-        if(sentences) {
-            bookData.sentences = sentences.map(s => s.trim()).filter(s => s.length > 0);
-            bookData.currentIndex = 0;
-            bookData.isPlaying = false;
-            
-            contentDiv.innerHTML = bookData.sentences.map((s, i) => `<span id="s-${i}" onclick="jumpToSentence(${i})">${s} </span>`).join('');
-            
-            input.value = '';
-            alert("Загружено " + bookData.sentences.length + " предложений.");
-        }
-    }
-
-    function togglePlayBook() {
-        if(bookData.sentences.length === 0) return;
-        if (bookData.isPlaying) pauseBook(); else playBook();
-    }
-
-    function playBook() {
-        if(bookData.currentIndex >= bookData.sentences.length) bookData.currentIndex = 0;
-        bookData.isPlaying = true;
-        document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-pause"></i>';
-        speakSentence(bookData.currentIndex);
-    }
-
-    function pauseBook() {
-        bookData.isPlaying = false;
-        bookData.synth.cancel();
-        document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-play"></i>';
-    }
-
-    function speakSentence(index) {
-        if (!bookData.isPlaying) return;
-        if (index >= bookData.sentences.length) { pauseBook(); return; }
-
-        bookData.currentIndex = index;
-        
-        document.querySelectorAll('.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-        const el = document.getElementById(`s-${index}`);
-        if(el) {
-            el.classList.add('active-sentence');
-            el.scrollIntoView({behavior: "smooth", block: "center"});
-        }
-
-        bookData.synth.cancel();
-        const u = new SpeechSynthesisUtterance(bookData.sentences[index]);
-        u.lang = 'ru-RU';
-        u.rate = 1.1; 
-        
-        u.onend = () => { if(bookData.isPlaying) speakSentence(index + 1); };
-        u.onerror = () => { if(bookData.isPlaying) setTimeout(() => speakSentence(index + 1), 500); };
-
-        bookData.synth.speak(u);
-    }
-
-    function bookPrev() {
-        if(bookData.currentIndex > 0) {
-            bookData.currentIndex--;
-            if(bookData.isPlaying) speakSentence(bookData.currentIndex);
-            else highlightOnly(bookData.currentIndex);
-        }
-    }
-
-    function bookNext() {
-        if(bookData.currentIndex < bookData.sentences.length - 1) {
-            bookData.currentIndex++;
-            if(bookData.isPlaying) speakSentence(bookData.currentIndex);
-            else highlightOnly(bookData.currentIndex);
-        }
-    }
-
-    function jumpToSentence(i) {
-        bookData.currentIndex = i;
-        if(bookData.isPlaying) speakSentence(i);
-        else highlightOnly(i);
-    }
-
-    function highlightOnly(i) {
-        document.querySelectorAll('.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-        const el = document.getElementById(`s-${i}`);
-        if(el) { el.classList.add('active-sentence'); el.scrollIntoView({block:"center"}); }
-    }
-
-    function clearBook() {
-        pauseBook();
-        bookData.sentences = [];
-        document.getElementById('book-content').innerHTML = '';
-        document.getElementById('book-placeholder').style.display = 'block';
-    }
-
-    // === НАВИГАЦИЯ ===
+    // === ПЕРЕЛИСТЫВАНИЕ (СВАЙП + КЛИК) ===
     function jumpTo(s) {
         if(s === step) return;
-        vibrate(30); 
+        
+        // Звук
         flipSound.currentTime = 0; 
-        flipSound.play().catch(e => {});
+        flipSound.play().catch(()=>{});
+        if(navigator.vibrate) navigator.vibrate(20);
 
-        const dots = document.querySelectorAll('.dot');
-        dots.forEach((d, i) => d.classList.toggle('active', i === s-1));
-        
-        document.getElementById('p1').classList.toggle('flipped', s > 1);
-        document.getElementById('p2').classList.toggle('flipped', s > 2);
-        document.getElementById('p3').classList.toggle('flipped', s > 3);
-        
+        // Анимация
+        for(let i=1; i<=3; i++) {
+            const p = document.getElementById('p'+i);
+            if(s > i) p.classList.add('flipped');
+            else p.classList.remove('flipped');
+        }
+
+        // Точки
+        document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === s-1));
         step = s;
     }
 
-    let sX = 0;
-    document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
+    // === УЛУЧШЕННЫЙ СЕНСОР СВАЙПОВ ===
+    let startX = 0;
+    document.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+    }, {passive: false}); // passive: false важно для iOS
+
     document.addEventListener('touchend', e => {
+        // Если открыт зум картинки - не свайпаем
         if(document.getElementById('z-overlay').style.display === 'flex') return;
-        let d = sX - e.changedTouches[0].clientX;
-        if (Math.abs(d) > 60) {
-            if (d > 0 && step < 4) jumpTo(step + 1);
-            else if (d < 0 && step > 1) jumpTo(step - 1);
+
+        let endX = e.changedTouches[0].clientX;
+        let diff = startX - endX;
+
+        // Чувствительность 50px
+        if (Math.abs(diff) > 50) {
+            if (diff > 0 && step < 4) jumpTo(step + 1); // Влево (вперед)
+            else if (diff < 0 && step > 1) jumpTo(step - 1); // Вправо (назад)
         }
-    }, {passive: true});
+    }, {passive: false});
 
-    // === AI ФУНКЦИИ ===
-    async function translateAndEnhance(text, mode = 'none') {
-        try {
-            const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
-            const d = await r.json();
-            let en = d.responseData.translatedText;
-            if (mode === 'simon') en = `Simon's cat style, simple 2D line art, black ink on white background, ${en}`;
-            if (mode === 'pro') en += ", masterpiece, 8k, highly detailed";
-            return en;
-        } catch (e) { return text; }
+
+    // === ЛОГИКА АУДИОКНИГИ ===
+    let book = { text: [], idx: 0, play: false, synth: window.speechSynthesis };
+
+    function wakeAudio() { if(!audioReady) { book.synth.speak(new SpeechSynthesisUtterance('')); audioReady=true; } }
+
+    function loadBook() {
+        let val = document.getElementById('i-book').value;
+        if(!val) return;
+        // Разбиваем на предложения
+        book.text = val.match(/[^.!?]+[.!?]+["']?|[\s\S]+$/g) || [val];
+        book.idx = 0;
+        document.getElementById('book-content').innerHTML = book.text.map((t,i)=>`<span id="s${i}">${t} </span>`).join('');
+        document.getElementById('book-placeholder').style.display='none';
+        document.getElementById('i-book').value = '';
+        alert('Загружено! Жми Play.');
     }
 
+    function togglePlayBook() {
+        if(book.text.length===0) return;
+        book.play = !book.play;
+        document.getElementById('play-btn').innerHTML = book.play ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+        if(book.play) speak(); else book.synth.cancel();
+    }
+
+    function speak() {
+        if(!book.play || book.idx >= book.text.length) { book.play=false; return; }
+        
+        // Подсветка
+        document.querySelectorAll('.active-sentence').forEach(e=>e.classList.remove('active-sentence'));
+        let el = document.getElementById('s'+book.idx);
+        if(el) { el.classList.add('active-sentence'); el.scrollIntoView({block:"center", behavior:"smooth"}); }
+
+        book.synth.cancel();
+        let u = new SpeechSynthesisUtterance(book.text[book.idx]);
+        u.lang = 'ru-RU';
+        u.onend = () => { if(book.play) { book.idx++; speak(); } };
+        book.synth.speak(u);
+    }
+    
+    function bookNext() { if(book.idx < book.text.length-1) { book.idx++; speak(); } }
+    function bookPrev() { if(book.idx > 0) { book.idx--; speak(); } }
+    function clearBook() { book.play=false; book.synth.cancel(); book.text=[]; document.getElementById('book-content').innerHTML=''; document.getElementById('book-placeholder').style.display='block'; }
+
+    // === ЛОГИКА AI ЧАТА ===
     async function sendMsg() {
-        const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
-        if (!i.value) return;
-        const val = i.value; i.value = '';
-        b.insertAdjacentHTML('beforeend', `<div class="user-msg">Босс: ${val}</div>`);
-        const tid = 'l-'+Date.now();
-        b.insertAdjacentHTML('beforeend', `<div id="${tid}" style="font-size:12px;opacity:0.5">⚡ Думаю...</div>`);
-        b.scrollTop = b.scrollHeight;
+        let i = document.getElementById('i-chat'), val = i.value, b = document.getElementById('hub-box');
+        if(!val) return;
+        i.value = '';
+        b.innerHTML += `<div class="user-msg">${val}</div>`;
+        
+        // Перевод для AI (чтобы он понимал лучше)
+        let en = val; 
+        try { let r = await fetch(`https://api.mymemory.translated.net/get?q=${val}&langpair=ru|en`); let j = await r.json(); en = j.responseData.translatedText; } catch(e){}
 
+        let url = `https://text.pollinations.ai/prompt/${encodeURIComponent("Respond in Russian briefly: "+en)}?model=${document.getElementById('chat-model').value}`;
+        
         try {
-            const en = await translateAndEnhance(val);
-            const r = await fetch(`https://text.pollinations.ai/prompt/Respond%20in%20Russian:%20${encodeURIComponent(en)}?model=${m}`);
-            const d = await r.text();
-            document.getElementById(tid).remove();
-            const div = document.createElement('div');
-            div.className = "ai-box";
-            div.innerHTML = `<b>AI:</b><br>${marked.parse(d)}`;
-            b.appendChild(div);
+            let r = await fetch(url);
+            let txt = await r.text();
+            b.innerHTML += `<div class="ai-box"><b>AI:</b> ${marked.parse(txt)}</div>`;
             b.scrollTop = b.scrollHeight;
-        } catch(e) { document.getElementById(tid).innerText = "Ошибка API"; }
+        } catch(e) { b.innerHTML += `<div class="ai-box">Ошибка сети</div>`; }
     }
 
-    function runMic(id, cb, bid) {
-        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if(!R) return;
-        const r = new R(); r.lang = 'ru-RU';
-        r.onstart = () => { document.getElementById(bid).style.color = 'red'; };
-        r.onresult = (e) => { document.getElementById(id).value = e.results[0][0].transcript; cb(); };
-        r.onend = () => document.getElementById(bid).style.color = 'inherit';
-        r.start();
+    // === ЛОГИКА РИСОВАНИЯ ===
+    async function genArt() {
+        let i = document.getElementById('i-art'), val = i.value, b = document.getElementById('imgs-box');
+        if(!val) return;
+        i.value = '';
+        
+        // Перевод промпта
+        let en = val;
+        try { let r = await fetch(`https://api.mymemory.translated.net/get?q=${val}&langpair=ru|en`); let j = await r.json(); en = j.responseData.translatedText; } catch(e){}
+
+        let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${document.getElementById('art-model').value}&nologo=true&seed=${Math.random()}`;
+        b.innerHTML = `<img src="${url}" style="width:100%; border-radius:10px; margin-bottom:10px; box-shadow:0 5px 15px rgba(0,0,0,0.3);" onclick="openZ(this.src)">` + b.innerHTML;
     }
 
-    async functio
+    function clearChat() { document.getElementById('hub-box').innerHTML=''; }
+    function clearArt() { document.getElementById('imgs-box').innerHTML=''; }
+    function openZ(src) { document.getElementById('z-img').src=src; document.getElementById('z-overlay').style.display='flex'; }
+    function closeZ() { document.getElementById('z-overlay').style.display='none'; }
+</script>
+</body>
+</html>
