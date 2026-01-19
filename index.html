@@ -15,39 +15,17 @@
             --leather: #2a0505; --pause-color: #d4af37;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100dvh; 
-            background: #000; overflow: hidden; font-family: "Georgia", serif; 
-        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
         
-        /* Фоновая анимация */
-        @keyframes fogMove { 
-            0% { background-position: 0% 0%; } 
-            100% { background-position: 100% 100%; } 
-        }
-        
+        @keyframes fogMove { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
         body::after {
-            content: ""; position: fixed; inset: 0; 
-            background: linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, 
-                                       transparent 50%, rgba(0,0,0,0.1) 50%, 
-                                       rgba(0,0,0,0.1) 75%, transparent 75%);
-            background-size: 100px 100px;
-            opacity: 0.1; pointer-events: none; z-index: 10000; 
-            animation: fogMove 120s linear infinite;
+            content: ""; position: fixed; inset: 0; background: url('https://www.transparenttextures.com/patterns/stardust.png');
+            opacity: 0.08; pointer-events: none; z-index: 10000; animation: fogMove 120s linear infinite;
         }
 
-        /* Основной контейнер */
-        .viewport { 
-            width: 100vw; height: 100dvh; 
-            position: relative; perspective: 2000px; 
-        }
+        .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2000px; }
+        .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
         
-        .book { 
-            width: 100%; height: 100%; 
-            position: relative; transform-style: preserve-3d; 
-        }
-        
-        /* Страницы */
         .page { 
             position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
             transform-origin: left; transform-style: preserve-3d; 
@@ -55,306 +33,106 @@
             pointer-events: none; z-index: 1; 
         }
         
+        /* ЭФФЕКТ СТАРОЙ БУМАГИ */
         .paper-sheet { 
             background: var(--paper); 
-            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23000000' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+            background-image: 
+                radial-gradient(circle, transparent 50%, rgba(139, 69, 19, 0.15) 100%),
+                url('https://www.transparenttextures.com/patterns/paper-fibers.png'); 
             color: var(--ink); display: flex; flex-direction: column; height: 100%; 
-            box-shadow: inset 20px 0 50px rgba(0,0,0,0.2); 
+            box-shadow: 
+                inset 25px 0 60px rgba(0,0,0,0.3), 
+                inset -5px -5px 15px rgba(139, 69, 19, 0.2);
             pointer-events: auto; position: relative; overflow: hidden;
         }
 
-        .back { 
-            position: absolute; inset: 0; transform: rotateY(180deg); 
-            backface-visibility: hidden; background: #e8d5a7; 
-            border-left: 2px solid rgba(0,0,0,0.1); 
+        /* КОЖАНЫЙ ПЕРЕПЛЕТ */
+        .leather-cover {
+            background: radial-gradient(circle at 50% 50%, #3d0a0a 0%, #2a0505 100%) !important;
+            border: 12px double var(--gold) !important;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.8), 20px 0 50px rgba(0,0,0,0.5) !important;
         }
-        
-        .flipped { 
-            transform: rotateY(-180deg) !important; z-index: 10 !important; 
-        }
-
-        /* Заголовок */
-        .header { 
-            padding: 12px; background: rgba(0,0,0,0.07); 
-            border-bottom: 2px solid var(--ink); text-align: center; 
-            font-weight: bold; display: flex; justify-content: space-between; 
-            align-items: center; 
-        }
-        
-        .header-btn { 
-            background: none; border: none; font-size: 18px; 
-            color: var(--accent); cursor: pointer; padding: 5px; 
-        }
-        
-        /* Выбор модели */
-        .ai-select { 
-            width: 92%; background: #fff; border: 2px solid var(--ink); 
-            margin: 5px auto; padding: 10px; border-radius: 8px; 
-            font-weight: bold; outline: none; 
-        }
-        
-        .style-row { 
-            display: flex; gap: 5px; width: 92%; 
-            margin: 0 auto; padding-top: 5px; 
-        }
-        
-        .style-select { 
-            flex: 1; padding: 8px; border-radius: 8px; 
-            border: 2px solid var(--ink); font-weight: bold; 
-            background: #fff; 
+        .leather-cover::before {
+            content: ""; position: absolute; inset: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/leather.png');
+            opacity: 0.4; pointer-events: none;
         }
 
-        /* Область прокрутки */
-        .scroll-area { 
-            flex: 1; overflow-y: auto; padding: 20px; 
-            display: flex; flex-direction: column; gap: 15px; 
-            scroll-behavior: smooth; 
-        }
-        
-        /* Сообщения AI */
-        .ai-box { 
-            border-bottom: 1px dashed rgba(0,0,0,0.1); 
-            padding: 12px; line-height: 1.5; font-size: 15px; 
-            cursor: pointer; position: relative; 
-            transition: all 0.3s ease; border-left: 0px solid transparent;
-            background: rgba(255,255,255,0.8);
-            border-radius: 8px;
-        }
-        
-        .ai-box:hover {
-            background: rgba(255,255,255,0.9);
-            border-left: 4px solid var(--accent);
-        }
-        
-        /* Сообщения пользователя */
-        .user-msg { 
-            text-align: right; opacity: 0.8; font-style: italic; 
-            font-size: 14px; margin-bottom: 5px; color: var(--accent);
-            padding: 8px 12px;
-            background: rgba(212, 175, 55, 0.1);
-            border-radius: 8px;
-            border: 1px solid rgba(212, 175, 55, 0.2);
-        }
-        
-        /* Статус бар */
-        .status-bar { 
-            font-size: 11px; text-align: center; color: var(--accent); 
-            min-height: 20px; font-weight: bold; 
-            padding: 5px;
-        }
+        .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
+        .flipped { transform: rotateY(-180deg) !important; z-index: 10 !important; }
 
-        /* Панель ввода */
-        .input-bar { 
-            padding: 15px; background: rgba(255,255,255,0.3); 
-            border-top: 1px solid rgba(0,0,0,0.1); 
-            padding-bottom: calc(15px + env(safe-area-inset-bottom)); 
-        }
+        .header { padding: 12px; background: rgba(139, 69, 19, 0.1); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .header-btn { background: none; border: none; font-size: 18px; color: var(--accent); cursor: pointer; padding: 5px; }
         
-        .row { 
-            display: flex; gap: 10px; align-items: center; 
-            max-width: 600px; margin: 0 auto; 
-        }
-        
-        .field { 
-            flex: 1; background: #fff; border: 2px solid var(--ink); 
-            padding: 12px 15px; border-radius: 25px; font-size: 16px; 
-            outline: none; 
-        }
-        
-        .btn { 
-            background: none; border: none; font-size: 24px; 
-            cursor: pointer; color: var(--ink); 
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.2s;
-        }
-        
-        .btn:hover {
-            background: rgba(0,0,0,0.05);
-        }
+        /* АНИМАЦИЯ ПЕРА */
+        .typewriter { overflow: hidden; border-right: .15em solid var(--accent); white-space: normal; animation: blink-caret .75s step-end infinite; }
+        @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: var(--accent); } }
 
-        /* Навигационные точки */
-        .nav-dots { 
-            position: fixed; bottom: 85px; left: 0; right: 0; 
-            display: flex; justify-content: center; gap: 15px; 
-            z-index: 5000; 
-        }
-        
-        .dot { 
-            width: 10px; height: 10px; border-radius: 50%; 
-            background: var(--gold); opacity: 0.3; border: 1px solid #000; 
-            transition: 0.3s; cursor: pointer;
-        }
-        
-        .dot.active { 
-            opacity: 1; transform: scale(1.3); 
-        }
+        .ai-box { border-bottom: 1px dashed rgba(0,0,0,0.1); padding: 15px 10px; line-height: 1.6; font-size: 15px; cursor: pointer; transition: all 0.3s ease; border-left: 0px solid transparent; }
+        .user-msg { text-align: right; opacity: 0.7; font-style: italic; font-size: 14px; margin-bottom: 5px; color: var(--accent); padding-right: 10px; }
 
-        /* Zoom overlay */
-        #z-overlay { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
-            z-index: 9999; display: none; flex-direction: column; 
-        }
+        .input-bar { padding: 15px; background: rgba(255,255,255,0.2); border-top: 1px solid rgba(0,0,0,0.1); }
+        .field { flex: 1; background: rgba(255,255,255,0.8); border: 2px solid var(--ink); padding: 12px 15px; border-radius: 25px; font-size: 16px; outline: none; }
+        .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
+
+        .nav-dots { position: fixed; bottom: 85px; left: 0; right: 0; display: flex; justify-content: center; gap: 15px; z-index: 5000; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); opacity: 0.3; transition: 0.3s; }
+        .dot.active { opacity: 1; transform: scale(1.3); }
         
-        /* Лоадер */
-        .loader {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10000;
-            text-align: center;
-            color: var(--gold);
-        }
-        
-        .loader .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(212, 175, 55, 0.3);
-            border-top: 4px solid var(--gold);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Уведомления */
-        .notification {
-            position: fixed;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--accent);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-weight: bold;
-            z-index: 10000;
-            display: none;
-            animation: slideUp 0.3s;
-        }
-        
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translate(-50%, 20px);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, 0);
-            }
-        }
-        
-        /* Адаптивность */
-        @media (max-width: 768px) {
-            .paper-sheet {
-                padding: 5px;
-            }
-            
-            .scroll-area {
-                padding: 10px;
-            }
-            
-            .ai-box, .user-msg {
-                font-size: 14px;
-                padding: 8px;
-            }
-        }
+        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
     </style>
 </head>
-<body>
+<body onclick="wakeAudio()">
 
-<!-- Лоадер -->
-<div class="loader" id="loader">
-    <div class="spinner"></div>
-    <div>Загрузка...</div>
-</div>
-
-<!-- Уведомление -->
-<div class="notification" id="notification"></div>
-
-<!-- Zoom overlay -->
 <div id="z-overlay" onclick="closeZ()">
-    <div style="text-align:right; padding:20px; color:#fff; font-size:40px; cursor:pointer;">×</div>
+    <div style="text-align:right; padding:20px; color:#fff; font-size:40px;">×</div>
     <div id="z-wrap" style="width:100%; height:85%; display:flex; align-items:center; justify-content:center;">
         <img id="z-img" src="" style="max-width:100%; max-height:100%;">
     </div>
 </div>
 
-<!-- Навигационные точки -->
 <div class="nav-dots">
     <div class="dot active" onclick="jumpTo(1)"></div>
     <div class="dot" onclick="jumpTo(2)"></div>
     <div class="dot" onclick="jumpTo(3)"></div>
 </div>
 
-<!-- Основной контейнер -->
 <div class="viewport">
     <div class="book">
         
-        <!-- Страница 3: AI Чат -->
         <div class="page" id="p3">
             <div class="paper-sheet">
                 <div class="header">
                     <button class="header-btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
-                    <span>⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</span>
+                    <span style="letter-spacing:2px">⬥ ИНТЕЛЛЕКТ-ХАБ ⬥</span>
                     <span style="width:30px"></span>
                 </div>
-                <select id="chat-model" class="ai-select">
-                    <option value="gpt">GPT-4 (Универсал)</option>
-                    <option value="assistant">Ассистент</option>
-                    <option value="creative">Креативный</option>
-                    <option value="analyst">Аналитик</option>
+                <select id="chat-model" style="width:92%; margin:10px auto; padding:10px; border:2px solid var(--ink); border-radius:8px;">
+                    <option value="openai">GPT-4o (Универсал)</option>
+                    <option value="p1">DeepSeek R1 (Аналитик)</option>
                 </select>
-                <div id="status-chat" class="status-bar"></div>
-                <div id="hub-box" class="scroll-area"></div>
+                <div id="hub-box" style="flex:1; overflow-y:auto; padding:20px;"></div>
                 <div class="input-bar">
-                    <div class="row">
+                    <div style="display:flex; gap:10px; align-items:center;">
                         <button onclick="runMic('i-chat', sendMsg, 'm-chat')" id="m-chat" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-chat" class="field" placeholder="Запрос..." onkeypress="if(event.key === 'Enter') sendMsg()">
+                        <input type="text" id="i-chat" class="field" placeholder="Запрос босса...">
                         <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Страница 2: Визуализатор -->
         <div class="page" id="p2" style="z-index: 2;">
             <div class="paper-sheet">
                 <div class="header">
                     <button class="header-btn" onclick="clearArt()"><i class="fas fa-trash"></i></button>
-                    <span>⬥ ВИЗУАЛИЗАТОР ⬥</span>
+                    <span style="letter-spacing:2px">⬥ ВИЗУАЛИЗАТОР ⬥</span>
                     <span style="width:30px"></span>
                 </div>
-                <div class="style-row">
-                    <select id="art-model" class="style-select">
-                        <option value="unsplash">Unsplash (Фото)</option>
-                        <option value="picsum">Picsum (Рандом)</option>
-                        <option value="placeholder">Placeholder</option>
-                    </select>
-                    <select id="art-style" class="style-select">
-                        <option value="none">🎯 Как есть</option>
-                        <option value="nature">🌳 Природа</option>
-                        <option value="city">🏙️ Город</option>
-                        <option value="abstract">🎨 Абстракция</option>
-                        <option value="animal">🐶 Животные</option>
-                    </select>
-                </div>
-                <div id="status-art" class="status-bar"></div>
-                <div id="imgs-box" class="scroll-area"></div>
+                <div id="imgs-box" style="flex:1; overflow-y:auto; padding:20px;"></div>
                 <div class="input-bar">
-                    <div class="row">
-                        <button onclick="runMic('i-art', genArt, 'm-art')" id="m-art" class="btn"><i class="fas fa-microphone"></i></button>
-                        <input type="text" id="i-art" class="field" placeholder="Опишите образ..." onkeypress="if(event.key === 'Enter') genArt()">
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <input type="text" id="i-art" class="field" placeholder="Опишите образ...">
                         <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
                     </div>
                 </div>
@@ -362,20 +140,18 @@
             <div class="back"></div>
         </div>
 
-        <!-- Страница 1: Обложка -->
         <div class="page" id="p1" style="z-index: 3;">
-            <div class="paper-sheet" style="background:var(--leather); border:12px double var(--gold); align-items:center; justify-content:center;">
-                <div style="width: 85%; background: #fff; padding: 10px 10px 40px 10px; box-shadow: 0 25px 50px rgba(0,0,0,0.8); transform: rotate(-1deg);">
-                    <video autoplay loop muted playsinline style="width:100%; display:block; border-radius: 4px;">
+            <div class="paper-sheet leather-cover" style="align-items:center; justify-content:center;">
+                <div style="width:80%; background:#fff; padding:10px; box-shadow:0 20px 40px rgba(0,0,0,0.9); transform:rotate(-1.5deg); border:2px solid #1a0505;">
+                    <video autoplay loop muted playsinline style="width:100%; display:block;">
                         <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
-                        Ваш браузер не поддерживает видео.
                     </video>
                 </div>
-                <div style="margin-top:40px; text-align:center; color:var(--gold);">
-                    <h1 style="margin:0; letter-spacing:5px; font-size:28px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">НАША КНИГА</h1>
-                    <div style="font-size:11px; opacity:0.8; margin-top:10px; font-weight:bold;">BOSS CUSTOM EDITION</div>
+                <div style="margin-top:40px; text-align:center; color:var(--gold); z-index:2;">
+                    <h1 style="margin:0; letter-spacing:6px; font-size:32px; text-shadow:2px 2px 4px #000;">НАША КНИГА</h1>
+                    <div style="font-size:12px; opacity:0.8; margin-top:10px; font-weight:bold; letter-spacing:2px;">STREAMLINE AI EDITION</div>
                 </div>
-                <div style="margin-top:30px; font-size:12px; color:var(--gold); opacity:0.5; animation: pulse 2s infinite;">← СВАЙП ДЛЯ ВХОДА →</div>
+                <div style="margin-top:50px; color:var(--gold); font-weight:bold; animation: pulse 2s infinite; opacity:0.6;">← СВАЙП ВЛЕВО</div>
             </div>
             <div class="back"></div>
         </div>
@@ -384,136 +160,90 @@
 </div>
 
 <script>
-    // ========== ИНИЦИАЛИЗАЦИЯ ==========
-    let step = 1;
-    let pz = null;
-    let audioReady = false;
-    let isVoiceInput = false;
-    let speechData = { 
-        isPaused: false, 
-        lastIndex: 0, 
-        currentText: "", 
-        activeElement: null 
-    };
-
-    // Звуки
+    let step = 1, audioReady = false;
     const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
-    flipSound.volume = 0.5;
+    // Звук скрипа кожи (используем похожий системный или можно заменить на свой URL)
+    const leatherSound = new Audio('https://www.soundjay.com/misc/sounds/leather-wallet-1.mp3');
 
-    // Инициализация при загрузке
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('Приложение загружено');
-        
-        // Проверяем поддержку Web Speech API
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            showNotification('Голосовой ввод не поддерживается в вашем браузере');
-        }
-        
-        // Загружаем сохраненные данные
-        loadSavedData();
-        
-        // Инициализируем свайпы
-        initSwipes();
-        
-        // Автовоспроизведение видео
-        const video = document.querySelector('video');
-        if (video) {
-            video.play().catch(e => {
-                console.log('Автовоспроизведение видео заблокировано');
-            });
-        }
-    });
+    function wakeAudio() { if(!audioReady) { leatherSound.play().catch(e=>{}); audioReady = true; } }
 
-    // ========== УВЕДОМЛЕНИЯ ==========
-    function showNotification(message, duration = 3000) {
-        const notification = document.getElementById('notification');
-        notification.textContent = message;
-        notification.style.display = 'block';
-        
-        setTimeout(() => {
-            notification.style.display = 'none';
-        }, duration);
-    }
-
-    function showLoader(show) {
-        document.getElementById('loader').style.display = show ? 'block' : 'none';
-    }
-
-    // ========== НАВИГАЦИЯ ==========
     function jumpTo(s) {
-        if (s === step) return;
+        if(s === step) return;
+        window.speechSynthesis.cancel();
         
-        stopAllSpeech();
-        
-        // Звук перелистывания
-        try {
-            flipSound.currentTime = 0;
-            flipSound.play().catch(e => console.log("Звук заблокирован"));
-        } catch (e) {}
-        
-        // Обновляем точки навигации
-        const dots = document.querySelectorAll('.dot');
-        dots.forEach((d, i) => d.classList.toggle('active', i === s - 1));
-        
-        // Анимируем страницы
+        if(step === 1 || s === 1) leatherSound.play();
+        else flipSound.play();
+
         document.getElementById('p1').classList.toggle('flipped', s > 1);
         document.getElementById('p2').classList.toggle('flipped', s > 2);
         
-        // Вибрация если доступна
-        if (navigator.vibrate) {
-            navigator.vibrate(30);
-        }
-        
+        document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === s-1));
         step = s;
     }
 
-    function initSwipes() {
-        let startX = 0;
+    // Имитация печати текста
+    function typeEffect(element, text) {
+        let i = 0;
+        element.innerHTML = "<b>AI:</b><br>";
+        element.classList.add('typewriter');
         
-        document.addEventListener('touchstart', (e) => {
-            startX = e.touches[0].clientX;
-        }, { passive: true });
-        
-        document.addEventListener('touchend', (e) => {
-            if (document.getElementById('z-overlay').style.display === 'flex') return;
-            
-            const endX = e.changedTouches[0].clientX;
-            const diff = startX - endX;
-            
-            if (Math.abs(diff) > 60) {
-                if (diff > 0 && step < 3) {
-                    jumpTo(step + 1);
-                } else if (diff < 0 && step > 1) {
-                    jumpTo(step - 1);
-                }
+        function type() {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i);
+                i++;
+                setTimeout(type, 30);
+                document.getElementById('hub-box').scrollTop = document.getElementById('hub-box').scrollHeight;
+            } else {
+                element.classList.remove('typewriter');
             }
-        }, { passive: true });
-        
-        // Клавиатура для десктопа
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' && step < 3) {
-                jumpTo(step + 1);
-            } else if (e.key === 'ArrowLeft' && step > 1) {
-                jumpTo(step - 1);
-            }
-        });
+        }
+        type();
     }
 
-    // ========== AI ЧАТ ==========
     async function sendMsg() {
-        const input = document.getElementById('i-chat');
-        const message = input.value.trim();
+        const i = document.getElementById('i-chat'), b = document.getElementById('hub-box');
+        if (!i.value) return;
+        const val = i.value; i.value = '';
+        b.insertAdjacentHTML('beforeend', `<div class="user-msg">Босс: ${val}</div>`);
         
-        if (!message) {
-            showNotification('Введите сообщение');
-            return;
+        const div = document.createElement('div');
+        div.className = "ai-box";
+        b.appendChild(div);
+        
+        try {
+            const r = await fetch(`https://text.pollinations.ai/prompt/Respond%20in%20Russian:%20${encodeURIComponent(val)}?model=${document.getElementById('chat-model').value}`);
+            const d = await r.text();
+            typeEffect(div, d);
+        } catch(e) { div.innerText = "Ошибка связи."; }
+    }
+
+    async function genArt() {
+        const i = document.getElementById('i-art'), b = document.getElementById('imgs-box');
+        if(!i.value) return;
+        const prompt = i.value; i.value = '';
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?nologo=true&seed=${Math.random()}`;
+        
+        const wrap = document.createElement('div');
+        wrap.style.cssText = "background:#fff; padding:10px; margin-bottom:20px; box-shadow:0 10px 20px rgba(0,0,0,0.2); transform:rotate(${Math.random()*2-1}deg)";
+        wrap.innerHTML = `<img src="${url}" style="width:100%" onclick="openZ('${url}')"><p style="text-align:center; font-size:12px; margin:5px 0;">${prompt}</p>`;
+        b.prepend(wrap);
+    }
+
+    // Свайпы
+    let sX = 0;
+    document.addEventListener('touchstart', e => sX = e.touches[0].clientX);
+    document.addEventListener('touchend', e => {
+        let d = sX - e.changedTouches[0].clientX;
+        if (Math.abs(d) > 60) {
+            if (d > 0 && step < 3) jumpTo(step + 1);
+            else if (d < 0 && step > 1) jumpTo(step - 1);
         }
-        
-        input.value = '';
-        
-        // Добавляем сообщение пользователя
-        const chatBox = document.getElementById('hub-box');
-        const userMsg = document.createElement('div');
-        userMsg.className = 'user-msg';
-        userMsg.textContent = `Вы: ${message}`;
-    
+    });
+
+    function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; }
+    function closeZ() { document.getElementById('z-overlay').style.display = 'none'; }
+    function clearChat() { document.getElementById('hub-box').innerHTML=''; }
+    function clearArt() { document.getElementById('imgs-box').innerHTML=''; }
+</script>
+</body>
+</html>
