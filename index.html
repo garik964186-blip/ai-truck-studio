@@ -3,96 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>НАША КНИГА | BOSS FINAL</title>
-    
+    <title>StreamLine AI | BOSS EDITION</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
-    
     <style>
-        /* === БЛОКИРОВКА ЛИШНИХ ЖЕСТОВ БРАУЗЕРА === */
-        :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; --leather: #2a0505; --highlight: rgba(255, 215, 0, 0.4); }
-        
+        :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; --leather: #2a0505; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; touch-action: none; }
         
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100dvh; 
-            background: #000; overflow: hidden; 
-            font-family: "Georgia", serif; 
-            /* ЭТО ЗАПРЕЩАЕТ БРАУЗЕРУ ПЕРЕХВАТЫВАТЬ СВАЙПЫ: */
-            touch-action: none; 
-            user-select: none;
-        }
-
-        /* 3D Сцена */
-        .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2500px; overflow: hidden; }
+        .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2500px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
+        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s ease; background: var(--paper); }
         
-        /* Страницы */
-        .page { 
-            position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
-            transform-origin: left; transform-style: preserve-3d; 
-            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); 
-            background: #fff; /* Заглушка от прозрачности */
-        }
-        
-        /* Z-Index: Обложка (p1) самая верхняя */
-        #p1 { z-index: 4; }
-        #p2 { z-index: 3; }
-        #p3 { z-index: 2; }
-        #p4 { z-index: 1; }
-
-        /* Логика переворота */
+        #p1 { z-index: 5; } #p2 { z-index: 4; } #p3 { z-index: 3; } #p4 { z-index: 2; }
         .flipped { transform: rotateY(-180deg) !important; pointer-events: none; }
+        .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
+
+        .paper-sheet { display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden; box-shadow: inset 10px 0 30px rgba(0,0,0,0.1); }
+        .header { padding: 15px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; display: flex; justify-content: space-between; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; touch-action: pan-y; }
         
-        /* Бумага */
-        .paper-sheet { 
-            background: var(--paper); 
-            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); 
-            color: var(--ink); display: flex; flex-direction: column; height: 100%; 
-            box-shadow: inset 10px 0 30px rgba(0,0,0,0.1); 
-            position: relative;
-        }
+        .ai-select, .style-select { width: 92%; margin: 5px auto; padding: 10px; border: 2px solid var(--ink); border-radius: 8px; display: block; }
+        .input-bar { padding: 10px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+        .row { display: flex; gap: 8px; align-items: center; }
+        .field { flex: 1; padding: 12px; border: 2px solid var(--ink); border-radius: 25px; }
+        .btn { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--ink); }
 
-        /* Обратная сторона */
-        .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; }
+        /* Библиотека */
+        #lib-modal { position: absolute; inset: 20px; background: var(--paper); border: 3px solid var(--ink); z-index: 1000; display: none; flex-direction: column; border-radius: 15px; }
+        .lib-item { padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.1); cursor: pointer; font-weight: bold; }
+        .lib-item:active { background: var(--gold); }
 
-        /* === ИНТЕРФЕЙС === */
-        .header { padding: 10px; background: rgba(0,0,0,0.05); border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-        .header-btn { border: none; background: none; font-size: 20px; color: var(--accent); padding: 10px; }
-        
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; -webkit-overflow-scrolling: touch; touch-action: pan-y; } /* Разрешаем скролл внутри контента */
-        
-        .ai-select { width: 90%; margin: 10px auto; padding: 10px; display: block; border: 2px solid var(--ink); border-radius: 8px; background: #fff; font-size: 16px; }
-        
-        .input-bar { padding: 10px; background: rgba(255,255,255,0.5); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-        .row { display: flex; gap: 8px; }
-        .field { flex: 1; padding: 10px; border: 2px solid var(--ink); border-radius: 20px; font-size: 16px; outline: none; }
-        .btn { border: none; background: none; font-size: 22px; color: var(--ink); padding: 0 10px; }
-
-        /* Сообщения */
-        .ai-box { padding: 10px; border-bottom: 1px dashed #ccc; font-size: 15px; }
-        .user-msg { text-align: right; color: var(--accent); font-style: italic; margin: 5px 0; font-size: 14px; }
-
-        /* Навигация (Точки) */
-        .nav-dots { position: fixed; bottom: 80px; width: 100%; text-align: center; pointer-events: none; z-index: 5000; }
-        .dot { display: inline-block; width: 12px; height: 12px; background: var(--gold); border-radius: 50%; margin: 0 5px; opacity: 0.4; border: 1px solid #000; transition: 0.3s; pointer-events: auto; }
-        .dot.active { opacity: 1; transform: scale(1.2); background: var(--accent); }
-
-        /* Аудио плеер */
-        .audio-controls { display: flex; justify-content: center; gap: 20px; margin: 10px 0; }
-        .audio-btn { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--ink); background: #fff; font-size: 18px; }
-        .active-sentence { background: var(--highlight); }
-
-        /* Зум картинки */
-        #z-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: none; align-items: center; justify-content: center; }
+        .nav-dots { position: fixed; bottom: 80px; width: 100%; text-align: center; z-index: 100; pointer-events: none; }
+        .dot { display: inline-block; width: 10px; height: 10px; background: var(--gold); border-radius: 50%; margin: 0 5px; opacity: 0.3; pointer-events: auto; }
+        .dot.active { opacity: 1; transform: scale(1.3); }
+        .active-sentence { background: rgba(212, 175, 55, 0.4); border-radius: 4px; }
     </style>
 </head>
-<body onclick="wakeAudio()">
-
-<div id="z-overlay" onclick="closeZ()">
-    <img id="z-img" src="" style="max-width:100%; max-height:100%;">
-</div>
+<body onclick="initAudio()">
 
 <div class="nav-dots">
     <div class="dot active" onclick="jumpTo(1)"></div>
@@ -103,29 +51,32 @@
 
 <div class="viewport">
     <div class="book">
-        
         <div class="page" id="p4">
             <div class="paper-sheet">
-                <div class="header">
-                    <button class="header-btn" onclick="clearBook()"><i class="fas fa-trash"></i></button>
-                    <span>АУДИОКНИГА</span>
-                    <span style="width:30px"></span>
-                </div>
-                <div class="scroll-area">
-                    <div class="audio-controls">
-                        <button class="audio-btn" onclick="bookPrev()"><i class="fas fa-backward"></i></button>
-                        <button class="audio-btn" onclick="togglePlayBook()" id="play-btn"><i class="fas fa-play"></i></button>
-                        <button class="audio-btn" onclick="bookNext()"><i class="fas fa-forward"></i></button>
+                <div id="lib-modal">
+                    <div class="header"><span>БИБЛИОТЕКА</span><button onclick="toggleLib()" class="btn">×</button></div>
+                    <div class="scroll-area">
+                        <div class="lib-item" onclick="loadLib('chekhov')">А. Чехов — Палата №6</div>
+                        <div class="lib-item" onclick="loadLib('tolstoy')">Л. Толстой — Акула</div>
+                        <div class="lib-item" onclick="loadLib('london')">Джек Лондон — Костер</div>
                     </div>
-                    <div id="book-content" style="font-size:18px; line-height:1.6;"></div>
-                    <div id="book-placeholder" style="text-align:center; opacity:0.5; margin-top:50px;">
-                        Вставьте текст ниже,<br>я прочитаю его.
+                </div>
+                <div class="header">
+                    <button class="btn" onclick="toggleLib()"><i class="fas fa-book"></i></button>
+                    <span>АУДИОКНИГА</span>
+                    <button class="btn" onclick="clearBook()"><i class="fas fa-trash"></i></button>
+                </div>
+                <div class="scroll-area" id="book-area">
+                    <div id="book-content" style="font-size:18px; line-height:1.7;"></div>
+                    <div id="book-empty" style="text-align:center; margin-top:50px; opacity:0.5;">
+                        Выберите книгу из библиотеки<br>или вставьте свой текст.
                     </div>
                 </div>
                 <div class="input-bar">
                     <div class="row">
-                        <input id="i-book" class="field" placeholder="Текст сюда...">
-                        <button onclick="loadBook()" class="btn"><i class="fas fa-upload"></i></button>
+                        <button onclick="togglePlay()" id="play-btn" class="btn"><i class="fas fa-play"></i></button>
+                        <input id="i-book" class="field" placeholder="Вставьте текст...">
+                        <button onclick="manualLoad()" class="btn"><i class="fas fa-check"></i></button>
                     </div>
                 </div>
             </div>
@@ -133,194 +84,149 @@
 
         <div class="page" id="p3">
             <div class="paper-sheet">
-                <div class="header">
-                    <button class="header-btn" onclick="clearChat()"><i class="fas fa-trash"></i></button>
-                    <span>ИНТЕЛЛЕКТ-ХАБ</span>
-                    <span style="width:30px"></span>
-                </div>
+                <div class="header"><span>ИНТЕЛЛЕКТ-ХАБ</span><button class="btn" onclick="document.getElementById('hub').innerHTML=''"><i class="fas fa-trash"></i></button></div>
                 <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o</option>
-                    <option value="mistral">Mistral Large</option>
+                    <option value="openai">GPT-4o (Универсал)</option>
+                    <option value="mistral">Mistral Large (Технарь)</option>
+                    <option value="llama">Llama 3.3 (Мощный)</option>
                 </select>
-                <div id="hub-box" class="scroll-area"></div>
+                <div id="hub" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <input id="i-chat" class="field" placeholder="Вопрос...">
-                        <button onclick="sendMsg()" class="btn"><i class="fas fa-paper-plane" style="color:var(--accent)"></i></button>
+                        <input id="i-chat" class="field" placeholder="Ваш запрос...">
+                        <button onclick="askAI()" class="btn"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
             </div>
+            <div class="back"></div>
         </div>
 
         <div class="page" id="p2">
             <div class="paper-sheet">
-                <div class="header">
-                    <button class="header-btn" onclick="clearArt()"><i class="fas fa-trash"></i></button>
-                    <span>ВИЗУАЛИЗАТОР</span>
-                    <span style="width:30px"></span>
+                <div class="header"><span>ВИЗУАЛИЗАТОР</span><button class="btn" onclick="document.getElementById('gallery').innerHTML=''"><i class="fas fa-trash"></i></button></div>
+                <div style="display:flex; gap:5px; padding:0 15px;">
+                    <select id="art-model" class="style-select"><option value="flux">FLUX.1</option><option value="midjourney">MJ Style</option></select>
+                    <select id="art-style" class="style-select">
+                        <option value="">Без стиля</option>
+                        <option value="photorealistic, 8k, highly detailed">Фотореализм</option>
+                        <option value="simple 2D line art, Simon's cat style">Стиль Саймона</option>
+                        <option value="cyberpunk, neon lights, futuristic">Киберпанк</option>
+                    </select>
                 </div>
-                <select id="art-model" class="ai-select"><option value="flux">FLUX.1 (Realism)</option><option value="midjourney">Midjourney Style</option></select>
-                <div id="imgs-box" class="scroll-area"></div>
+                <div id="gallery" class="scroll-area"></div>
                 <div class="input-bar">
                     <div class="row">
-                        <input id="i-art" class="field" placeholder="Что нарисовать?">
-                        <button onclick="genArt()" class="btn"><i class="fas fa-magic" style="color:var(--accent)"></i></button>
+                        <input id="i-art" class="field" placeholder="Опишите образ...">
+                        <button onclick="drawArt()" class="btn"><i class="fas fa-magic"></i></button>
                     </div>
                 </div>
             </div>
+            <div class="back"></div>
         </div>
 
         <div class="page" id="p1" onclick="jumpTo(2)">
-            <div class="paper-sheet" style="background:var(--leather); border:10px double var(--gold); justify-content:center; align-items:center;">
-                <div style="width:90%; padding:10px; background:#fff; transform: rotate(-2deg); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-                    <video autoplay loop muted playsinline style="width:100%; display:block;">
-                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4" type="video/mp4">
+            <div class="paper-sheet" style="background:var(--leather); border:10px double var(--gold); align-items:center; justify-content:center;">
+                <div style="width:80%; padding:10px; background:#fff; transform:rotate(-2deg); box-shadow:0 20px 50px #000;">
+                    <video autoplay loop muted playsinline style="width:100%;">
+                        <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4">
                     </video>
                 </div>
-                
-                <div style="text-align:center; margin-top:30px; color:var(--gold);">
-                    <h1 style="margin:0; font-size:32px; letter-spacing:3px; text-shadow: 2px 2px 0 #000;">НАША КНИГА</h1>
-                    <p style="opacity:0.7; font-size:12px;">BOSS EDITION</p>
-                    
-                    <div style="margin-top:40px; border: 1px solid var(--gold); padding: 10px; border-radius: 20px; animation: pulse 2s infinite;">
-                        👆 НАЖМИ ИЛИ СВАЙПНИ ←
-                    </div>
-                </div>
+                <h1 style="color:var(--gold); margin-top:30px; letter-spacing:5px;">STREAMLINE AI</h1>
+                <div style="color:var(--gold); opacity:0.6; animation:pulse 2s infinite;">← НАЖМИ ИЛИ СВАЙПНИ</div>
             </div>
+            <div class="back"></div>
         </div>
-
     </div>
 </div>
 
 <script>
-    let step = 1;
-    let audioReady = false;
-    const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
+    let step = 1, audioReady = false;
+    const synth = window.speechSynthesis;
+    let bookData = { text: [], idx: 0, playing: false };
 
-    // === ПЕРЕЛИСТЫВАНИЕ (СВАЙП + КЛИК) ===
+    // --- НАВИГАЦИЯ ---
     function jumpTo(s) {
         if(s === step) return;
-        
-        // Звук
-        flipSound.currentTime = 0; 
-        flipSound.play().catch(()=>{});
-        if(navigator.vibrate) navigator.vibrate(20);
-
-        // Анимация
         for(let i=1; i<=3; i++) {
-            const p = document.getElementById('p'+i);
-            if(s > i) p.classList.add('flipped');
-            else p.classList.remove('flipped');
+            document.getElementById('p'+i).classList.toggle('flipped', s > i);
         }
-
-        // Точки
         document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === s-1));
         step = s;
     }
 
-    // === УЛУЧШЕННЫЙ СЕНСОР СВАЙПОВ ===
     let startX = 0;
-    document.addEventListener('touchstart', e => {
-        startX = e.touches[0].clientX;
-    }, {passive: false}); // passive: false важно для iOS
-
+    document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
     document.addEventListener('touchend', e => {
-        // Если открыт зум картинки - не свайпаем
-        if(document.getElementById('z-overlay').style.display === 'flex') return;
+        let diff = startX - e.changedTouches[0].clientX;
+        if(Math.abs(diff) > 60) diff > 0 ? (step < 4 && jumpTo(step+1)) : (step > 1 && jumpTo(step-1));
+    });
 
-        let endX = e.changedTouches[0].clientX;
-        let diff = startX - endX;
-
-        // Чувствительность 50px
-        if (Math.abs(diff) > 50) {
-            if (diff > 0 && step < 4) jumpTo(step + 1); // Влево (вперед)
-            else if (diff < 0 && step > 1) jumpTo(step - 1); // Вправо (назад)
-        }
-    }, {passive: false});
-
-
-    // === ЛОГИКА АУДИОКНИГИ ===
-    let book = { text: [], idx: 0, play: false, synth: window.speechSynthesis };
-
-    function wakeAudio() { if(!audioReady) { book.synth.speak(new SpeechSynthesisUtterance('')); audioReady=true; } }
-
-    function loadBook() {
-        let val = document.getElementById('i-book').value;
-        if(!val) return;
-        // Разбиваем на предложения
-        book.text = val.match(/[^.!?]+[.!?]+["']?|[\s\S]+$/g) || [val];
-        book.idx = 0;
-        document.getElementById('book-content').innerHTML = book.text.map((t,i)=>`<span id="s${i}">${t} </span>`).join('');
-        document.getElementById('book-placeholder').style.display='none';
-        document.getElementById('i-book').value = '';
-        alert('Загружено! Жми Play.');
+    // --- AI ФУНКЦИИ ---
+    async function askAI() {
+        let i = document.getElementById('i-chat'), q = i.value, h = document.getElementById('hub'), m = document.getElementById('chat-model').value;
+        if(!q) return; i.value = '';
+        h.innerHTML += `<div style="text-align:right; color:var(--accent); margin:10px 0;">${q}</div>`;
+        let res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent("Ответь на русском: " + q)}?model=${m}`);
+        let txt = await res.text();
+        h.innerHTML += `<div style="padding:10px; border-bottom:1px dashed #ccc;">${marked.parse(txt)}</div>`;
+        h.scrollTop = h.scrollHeight;
     }
 
-    function togglePlayBook() {
-        if(book.text.length===0) return;
-        book.play = !book.play;
-        document.getElementById('play-btn').innerHTML = book.play ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
-        if(book.play) speak(); else book.synth.cancel();
+    async function drawArt() {
+        let i = document.getElementById('i-art'), q = i.value, g = document.getElementById('gallery'), m = document.getElementById('art-model').value, s = document.getElementById('art-style').value;
+        if(!q) return; i.value = '';
+        let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(q + ", " + s)}?model=${m}&seed=${Math.random()}&nologo=true`;
+        g.innerHTML = `<img src="${url}" style="width:100%; border-radius:10px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.2);">` + g.innerHTML;
+    }
+
+    // --- АУДИОКНИГА И БИБЛИОТЕКА ---
+    const library = {
+        chekhov: "Палата №6. В больничном дворе стоит небольшой флигель, окруженный целым лесом репейника, крапивы и дикой конопли. Крыша на нем ржавая, труба наполовину обвалилась.",
+        tolstoy: "Наш корабль стоял на якоре у берега Африки. День был прекрасный, с моря дул свежий ветер; но к вечеру погода изменилась: стало душно.",
+        london: "День только что народился, холодный и серый, когда человек свернул с замерзшего русла Юкона и стал подниматься на высокий берег."
+    };
+
+    function toggleLib() { let m = document.getElementById('lib-modal'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; }
+    
+    function loadLib(key) {
+        document.getElementById('i-book').value = library[key];
+        manualLoad();
+        toggleLib();
+    }
+
+    function manualLoad() {
+        let val = document.getElementById('i-book').value;
+        if(!val) return;
+        bookData.text = val.match(/[^.!?]+[.!?]+["']?|[\s\S]+$/g) || [val];
+        bookData.idx = 0;
+        document.getElementById('book-content').innerHTML = bookData.text.map((t,i) => `<span id="s${i}">${t} </span>`).join('');
+        document.getElementById('book-empty').style.display = 'none';
+        document.getElementById('i-book').value = '';
+    }
+
+    function initAudio() { if(!audioReady) { synth.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
+
+    function togglePlay() {
+        if(!bookData.text.length) return;
+        bookData.playing = !bookData.playing;
+        document.getElementById('play-btn').innerHTML = bookData.playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+        if(bookData.playing) speak(); else synth.cancel();
     }
 
     function speak() {
-        if(!book.play || book.idx >= book.text.length) { book.play=false; return; }
+        if(!bookData.playing || bookData.idx >= bookData.text.length) return;
+        document.querySelectorAll('.active-sentence').forEach(e => e.classList.remove('active-sentence'));
+        let el = document.getElementById('s' + bookData.idx);
+        if(el) { el.classList.add('active-sentence'); el.scrollIntoView({block:'center', behavior:'smooth'}); }
         
-        // Подсветка
-        document.querySelectorAll('.active-sentence').forEach(e=>e.classList.remove('active-sentence'));
-        let el = document.getElementById('s'+book.idx);
-        if(el) { el.classList.add('active-sentence'); el.scrollIntoView({block:"center", behavior:"smooth"}); }
-
-        book.synth.cancel();
-        let u = new SpeechSynthesisUtterance(book.text[book.idx]);
+        synth.cancel();
+        let u = new SpeechSynthesisUtterance(bookData.text[bookData.idx]);
         u.lang = 'ru-RU';
-        u.onend = () => { if(book.play) { book.idx++; speak(); } };
-        book.synth.speak(u);
-    }
-    
-    function bookNext() { if(book.idx < book.text.length-1) { book.idx++; speak(); } }
-    function bookPrev() { if(book.idx > 0) { book.idx--; speak(); } }
-    function clearBook() { book.play=false; book.synth.cancel(); book.text=[]; document.getElementById('book-content').innerHTML=''; document.getElementById('book-placeholder').style.display='block'; }
-
-    // === ЛОГИКА AI ЧАТА ===
-    async function sendMsg() {
-        let i = document.getElementById('i-chat'), val = i.value, b = document.getElementById('hub-box');
-        if(!val) return;
-        i.value = '';
-        b.innerHTML += `<div class="user-msg">${val}</div>`;
-        
-        // Перевод для AI (чтобы он понимал лучше)
-        let en = val; 
-        try { let r = await fetch(`https://api.mymemory.translated.net/get?q=${val}&langpair=ru|en`); let j = await r.json(); en = j.responseData.translatedText; } catch(e){}
-
-        let url = `https://text.pollinations.ai/prompt/${encodeURIComponent("Respond in Russian briefly: "+en)}?model=${document.getElementById('chat-model').value}`;
-        
-        try {
-            let r = await fetch(url);
-            let txt = await r.text();
-            b.innerHTML += `<div class="ai-box"><b>AI:</b> ${marked.parse(txt)}</div>`;
-            b.scrollTop = b.scrollHeight;
-        } catch(e) { b.innerHTML += `<div class="ai-box">Ошибка сети</div>`; }
+        u.onend = () => { if(bookData.playing) { bookData.idx++; speak(); } };
+        synth.speak(u);
     }
 
-    // === ЛОГИКА РИСОВАНИЯ ===
-    async function genArt() {
-        let i = document.getElementById('i-art'), val = i.value, b = document.getElementById('imgs-box');
-        if(!val) return;
-        i.value = '';
-        
-        // Перевод промпта
-        let en = val;
-        try { let r = await fetch(`https://api.mymemory.translated.net/get?q=${val}&langpair=ru|en`); let j = await r.json(); en = j.responseData.translatedText; } catch(e){}
-
-        let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${document.getElementById('art-model').value}&nologo=true&seed=${Math.random()}`;
-        b.innerHTML = `<img src="${url}" style="width:100%; border-radius:10px; margin-bottom:10px; box-shadow:0 5px 15px rgba(0,0,0,0.3);" onclick="openZ(this.src)">` + b.innerHTML;
-    }
-
-    function clearChat() { document.getElementById('hub-box').innerHTML=''; }
-    function clearArt() { document.getElementById('imgs-box').innerHTML=''; }
-    function openZ(src) { document.getElementById('z-img').src=src; document.getElementById('z-overlay').style.display='flex'; }
-    function closeZ() { document.getElementById('z-overlay').style.display='none'; }
+    function clearBook() { synth.cancel(); bookData = {text:[], idx:0, playing:false}; document.getElementById('book-content').innerHTML=''; document.getElementById('book-empty').style.display='block'; }
 </script>
 </body>
 </html>
