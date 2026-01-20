@@ -3,45 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StreamLine AI | BOSS ULTIMATE</title>
+    <title>StreamLine AI | BOSS ELITE</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --paper: #f4e4bc; --ink: #2c241a; --gold: #d4af37; --accent: #8b0000; --leather: #2a0505; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body, html { width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: 'Helvetica', Arial, sans-serif; }
+        body, html { width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: 'Helvetica', sans-serif; }
         
         .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2500px; }
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
-        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); background: var(--paper); display: flex; flex-direction: column; }
+        .page { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-origin: left; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); background: var(--paper); display: flex; flex-direction: column; box-shadow: inset 0 0 100px rgba(0,0,0,0.1); }
         
         #p1 { z-index: 5; } #p2 { z-index: 4; } #p3 { z-index: 3; } #p4 { z-index: 2; }
         .flipped { transform: rotateY(-180deg) !important; pointer-events: none; }
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
 
-        .header { padding: 15px; background: rgba(0,0,0,0.08); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .header { padding: 12px; background: rgba(0,0,0,0.08); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         
-        /* Исправленный скролл для картинок и чата */
+        /* КРИТИЧЕСКИЙ ФИКС СКРОЛЛА */
         .scroll-area { 
             flex: 1; 
-            overflow-y: auto; 
+            overflow-y: scroll; 
             padding: 15px; 
-            touch-action: pan-y !important; 
-            -webkit-overflow-scrolling: touch; 
+            touch-action: pan-y !important; /* Разрешаем только вертикальный скролл внутри */
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
         }
         
+        .search-row { padding: 8px 15px; background: rgba(0,0,0,0.05); display: flex; gap: 8px; border-bottom: 1px solid var(--ink); }
+        .search-input { flex: 1; padding: 10px; border: 1px solid var(--ink); border-radius: 8px; font-size: 14px; }
+
         .ai-select { flex: 1; padding: 10px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; font-size: 13px; font-weight: bold; }
-        .input-bar { padding: 15px; background: rgba(255,255,255,0.4); border-top: 2px solid var(--ink); padding-bottom: calc(15px + env(safe-area-inset-bottom)); flex-shrink: 0; }
+        .input-bar { padding: 12px; background: rgba(255,255,255,0.4); border-top: 2px solid var(--ink); padding-bottom: calc(12px + env(safe-area-inset-bottom)); flex-shrink: 0; }
         .row { display: flex; gap: 10px; align-items: center; }
-        .field { flex: 1; padding: 14px; border: 2px solid var(--ink); border-radius: 30px; outline: none; font-size: 16px; background: #fff; }
-        .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; }
+        .field { flex: 1; padding: 14px; border: 2px solid var(--ink); border-radius: 30px; outline: none; font-size: 16px; background: #fff; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); }
+        .btn { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn:active { transform: scale(0.9); }
         
-        .nav-dots { position: fixed; bottom: 95px; width: 100%; text-align: center; z-index: 100; pointer-events: none; }
-        .dot { display: inline-block; width: 12px; height: 12px; background: var(--gold); border-radius: 50%; margin: 0 6px; opacity: 0.3; pointer-events: auto; }
+        .nav-dots { position: fixed; bottom: 85px; width: 100%; text-align: center; z-index: 100; pointer-events: none; }
+        .dot { display: inline-block; width: 10px; height: 10px; background: var(--gold); border-radius: 50%; margin: 0 5px; opacity: 0.3; pointer-events: auto; }
         .dot.active { opacity: 1; transform: scale(1.4); background: var(--accent); }
         
-        .art-card { margin-bottom: 20px; border: 4px solid var(--gold); background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .ai-msg { padding: 15px; background: rgba(255,255,255,0.6); border-radius: 15px; margin-bottom: 15px; border-left: 5px solid var(--gold); }
+        .art-card { margin-bottom: 20px; border: 4px solid var(--gold); background: #fff; border-radius: 5px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .art-card img { width: 100%; display: block; min-height: 200px; background: #eee; }
+        
+        .ai-msg { padding: 15px; background: rgba(255,255,255,0.7); border-radius: 15px; margin-bottom: 15px; border-left: 5px solid var(--gold); font-size: 16px; line-height: 1.5; }
         .active-sentence { background: rgba(212, 175, 55, 0.4); border-bottom: 2px solid var(--gold); }
     </style>
 </head>
@@ -59,18 +66,24 @@
         
         <div class="page" id="p4">
             <div class="header">
-                <label class="btn"><i class="fas fa-folder-open"></i><input type="file" accept=".fb2" style="display:none" onchange="loadFB2(this)"></label>
-                <span>FB2 РИДЕР</span>
+                <label class="btn"><i class="fas fa-file-import"></i><input type="file" accept=".fb2" style="display:none" onchange="loadFB2(this)"></label>
+                <span>БИБЛИОТЕКА FB2</span>
                 <button class="btn" onclick="clearBook()"><i class="fas fa-trash-alt"></i></button>
             </div>
+            <div class="search-row">
+                <input id="q-book" class="search-input" placeholder="Поиск (напр. Лукьяненко)...">
+                <button class="btn" onclick="searchBook()"><i class="fas fa-search"></i></button>
+            </div>
             <div class="scroll-area" id="book-area">
-                <div id="book-content" style="font-size:19px; line-height:1.8;"></div>
-                <div id="book-empty" style="text-align:center; margin-top:60px; opacity:0.6;">Загрузите .fb2 файл или вставьте текст ниже</div>
+                <div id="book-content"></div>
+                <div id="book-empty" style="text-align:center; margin-top:50px; opacity:0.5;">
+                    <i class="fas fa-book-open" style="font-size:40px;"></i><br><br>Используйте поиск или<br>загрузите .fb2 с телефона
+                </div>
             </div>
             <div class="input-bar">
                 <div class="row">
-                    <button onclick="togglePlay()" id="play-btn" class="btn" style="background: var(--gold); color: #fff; border-radius: 50%; width: 50px; height: 50px;"><i class="fas fa-play"></i></button>
-                    <input id="i-book" class="field" placeholder="Текст книги...">
+                    <button onclick="togglePlay()" id="play-btn" class="btn" style="background:var(--gold); color:#fff; border-radius:50%; width:50px; height:50px;"><i class="fas fa-play"></i></button>
+                    <input id="i-book" class="field" placeholder="Текст...">
                     <button onclick="manualLoad()" class="btn"><i class="fas fa-check-circle"></i></button>
                 </div>
             </div>
@@ -78,10 +91,10 @@
 
         <div class="page" id="p3">
             <div class="header"><span>ИНТЕЛЛЕКТ-ХАБ</span><button class="btn" onclick="document.getElementById('hub').innerHTML=''"><i class="fas fa-eraser"></i></button></div>
-            <div style="padding: 5px 15px; display: flex; gap: 10px;">
+            <div style="padding: 8px 15px; display: flex; gap: 10px;">
                 <select id="chat-model" class="ai-select">
-                    <option value="openai">GPT-4o (Умный)</option>
-                    <option value="mistral">Mistral (Быстрый)</option>
+                    <option value="openai">GPT-4o (Boss)</option>
+                    <option value="mistral">Mistral Large</option>
                     <option value="llama">Llama 3.3</option>
                 </select>
             </div>
@@ -89,7 +102,7 @@
             <div class="input-bar">
                 <div class="row">
                     <button id="m-chat" onclick="runMic('i-chat', askAI, 'm-chat')" class="btn"><i class="fas fa-microphone"></i></button>
-                    <input id="i-chat" class="field" placeholder="Спросить...">
+                    <input id="i-chat" class="field" placeholder="Задать вопрос...">
                     <button onclick="askAI()" class="btn"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
@@ -97,16 +110,16 @@
         </div>
 
         <div class="page" id="p2">
-            <div class="header"><span>ВИЗУАЛИЗАТОР</span><button class="btn" onclick="document.getElementById('gallery').innerHTML=''"><i class="fas fa-sync"></i></button></div>
-            <div style="padding: 5px 15px; display: flex; gap: 10px;">
+            <div class="header"><span>ВИЗУАЛИЗАТОР</span><button class="btn" onclick="document.getElementById('gallery').innerHTML=''"><i class="fas fa-sync-alt"></i></button></div>
+            <div style="padding: 8px 15px; display: flex; gap: 10px;">
                 <select id="art-model" class="ai-select"><option value="flux">FLUX.1</option><option value="midjourney">Midjourney</option></select>
-                <select id="art-style" class="ai-select"><option value="">Без стиля</option><option value="photorealistic">Фото</option><option value="anime">Аниме</option></select>
+                <select id="art-style" class="ai-select"><option value="photorealistic">Реализм</option><option value="cyberpunk">Киберпанк</option></select>
             </div>
             <div id="gallery" class="scroll-area"></div>
             <div class="input-bar">
                 <div class="row">
                     <button id="m-art" onclick="runMic('i-art', drawArt, 'm-art')" class="btn"><i class="fas fa-microphone"></i></button>
-                    <input id="i-art" class="field" placeholder="Образ...">
+                    <input id="i-art" class="field" placeholder="Опишите образ...">
                     <button onclick="drawArt()" class="btn"><i class="fas fa-magic"></i></button>
                 </div>
             </div>
@@ -114,14 +127,15 @@
         </div>
 
         <div class="page" id="p1" onclick="jumpTo(2)">
-            <div class="paper-sheet" style="background:var(--leather); border:10px double var(--gold); display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center;">
-                <div style="width:85%; padding:10px; background:#fff; box-shadow:0 20px 50px #000; margin-bottom: 25px;">
+            <div style="flex:1; background:var(--leather); border:12px double var(--gold); display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--gold); text-align:center;">
+                <div style="width:80%; padding:10px; background:#fff; box-shadow:0 20px 60px #000; margin-bottom:25px;">
                     <video autoplay loop muted playsinline style="width:100%; display:block;">
                         <source src="https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/1768452401066.mp4">
                     </video>
                 </div>
-                <h1 style="color:var(--gold); letter-spacing:5px;">STREAMLINE AI</h1>
-                <div style="color:var(--gold); margin-top:40px; border:2px solid var(--gold); padding:12px 25px; border-radius:40px; font-weight:bold;">ВОЙТИ В СИСТЕМУ</div>
+                <h1 style="letter-spacing:6px; font-size:28px;">STREAMLINE AI</h1>
+                <p style="opacity:0.7; font-size:14px; margin-top:10px;">BOSS SYSTEM v6.0</p>
+                <div style="margin-top:40px; border:2px solid var(--gold); padding:12px 30px; border-radius:40px; font-weight:bold;">ВОЙТИ</div>
             </div>
             <div class="back"></div>
         </div>
@@ -134,15 +148,29 @@
     const synth = window.speechSynthesis;
     let bookData = { text: [], idx: 0, playing: false };
 
-    // --- УМНЫЕ СВАЙПЫ ---
-    let sX = 0, sY = 0;
-    document.addEventListener('touchstart', e => { sX = e.touches[0].clientX; sY = e.touches[0].clientY; }, {passive: true});
+    // --- УЛУЧШЕННЫЙ СВАЙП-КОНТРОЛЛЕР ---
+    let sX = 0, sY = 0, isScrolling = false;
+
+    document.addEventListener('touchstart', e => {
+        sX = e.touches[0].clientX;
+        sY = e.touches[0].clientY;
+        isScrolling = false;
+    }, {passive: true});
+
+    document.addEventListener('touchmove', e => {
+        let dX = Math.abs(e.touches[0].clientX - sX);
+        let dY = Math.abs(e.touches[0].clientY - sY);
+        // Если движение больше по вертикали — это скролл внутри страницы, блокируем перелистывание
+        if (dY > dX) isScrolling = true;
+    }, {passive: true});
+
     document.addEventListener('touchend', e => {
+        if (isScrolling) return; // Если был скролл картинок, не листаем страницу
+        
         let dX = sX - e.changedTouches[0].clientX;
-        let dY = sY - e.changedTouches[0].clientY;
-        if (Math.abs(dX) > Math.abs(dY) && Math.abs(dX) > 80) { // Только горизонтальные свайпы
-            if(dX > 0 && step < 4) jumpTo(step + 1);
-            if(dX < 0 && step > 1) jumpTo(step - 1);
+        if (Math.abs(dX) > 100) {
+            if (dX > 0 && step < 4) jumpTo(step + 1);
+            if (dX < 0 && step > 1) jumpTo(step - 1);
         }
     });
 
@@ -152,7 +180,12 @@
         step = s;
     }
 
-    // --- FB2 ЛОГИКА ---
+    // --- БИБЛИОТЕКА И FB2 ---
+    function searchBook() {
+        const q = document.getElementById('q-book').value;
+        if(q) window.open(`https://www.google.com/search?q=${encodeURIComponent(q + " скачать fb2")}`, '_blank');
+    }
+
     function loadFB2(input) {
         const file = input.files[0];
         if(!file) return;
@@ -162,65 +195,72 @@
             const ps = xml.getElementsByTagName("p");
             let txt = "";
             for(let p of ps) txt += p.textContent + " ";
-            processText(txt);
+            processBook(txt);
         };
         reader.readAsText(file);
     }
 
-    function processText(v) {
-        bookData.text = v.match(/[^.!?]+[.!?]+["']?|[\s\S]+$/g) || [v];
+    function processBook(txt) {
+        bookData.text = txt.match(/[^.!?]+[.!?]+["']?|[\s\S]+$/g) || [txt];
         bookData.idx = 0;
         document.getElementById('book-content').innerHTML = bookData.text.map((t,i) => `<span id="s${i}">${t} </span>`).join('');
         document.getElementById('book-empty').style.display = 'none';
+        document.getElementById('book-area').scrollTop = 0;
     }
 
-    function manualLoad() { let v = document.getElementById('i-book').value; if(v) { processText(v); document.getElementById('i-book').value=''; } }
+    function manualLoad() { let v = document.getElementById('i-book').value; if(v) { processBook(v); document.getElementById('i-book').value=''; } }
 
     // --- ИИ ФУНКЦИИ ---
     async function askAI() {
         let i = document.getElementById('i-chat'), q = i.value, h = document.getElementById('hub'), m = document.getElementById('chat-model').value;
         if(!q) return; i.value = '';
-        h.innerHTML += `<div style="text-align:right; margin-bottom:15px;"><b>Вы:</b> ${q}</div>`;
+        h.innerHTML += `<div style="text-align:right; margin-bottom:15px;"><b>Босс:</b> ${q}</div>`;
+        h.scrollTop = h.scrollHeight;
         try {
             let res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(q)}?model=${m}`);
             let txt = await res.text();
             h.innerHTML += `<div class="ai-msg"><b>AI:</b><br>${marked.parse(txt)}</div>`;
-            speakText(txt);
-        } catch(e) {}
+            speak(txt);
+        } catch(e) { h.innerHTML += `<div>Ошибка связи.</div>`; }
         h.scrollTop = h.scrollHeight;
     }
 
     async function drawArt() {
         let i = document.getElementById('i-art'), q = i.value, g = document.getElementById('gallery'), m = document.getElementById('art-model').value, s = document.getElementById('art-style').value;
         if(!q) return; i.value = '';
-        let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(q + ", " + s)}?model=${m}&seed=${Math.floor(Math.random()*10000)}&nologo=true`;
-        g.innerHTML = `<div class="art-card"><img src="${url}" style="width:100%;"><p style="padding:10px;">${q}</p></div>` + g.innerHTML;
+        let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(q + ", " + s)}?model=${m}&seed=${Math.floor(Math.random()*99999)}&nologo=true`;
+        let div = document.createElement('div');
+        div.className = 'art-card';
+        div.innerHTML = `<img src="${url}" loading="lazy"><p style="padding:10px; font-size:13px;">${q}</p>`;
+        g.insertBefore(div, g.firstChild);
     }
 
-    // --- ГОЛОС ---
+    // --- ГОЛОС И ПЛЕЕР ---
     function initAudio() { if(!audioReady) { synth.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
-    function speakText(t) { synth.cancel(); let u = new SpeechSynthesisUtterance(t.substring(0,400)); u.lang='ru-RU'; synth.speak(u); }
+    function speak(t) { synth.cancel(); let u = new SpeechSynthesisUtterance(t.substring(0,500)); u.lang='ru-RU'; synth.speak(u); }
     
     function togglePlay() {
         if(!bookData.text.length) return;
         bookData.playing = !bookData.playing;
         document.getElementById('play-btn').innerHTML = bookData.playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
-        if(bookData.playing) speakBook(); else synth.cancel();
+        if(bookData.playing) runReader(); else synth.cancel();
     }
 
-    function speakBook() {
+    function runReader() {
         if(!bookData.playing || bookData.idx >= bookData.text.length) return;
         document.querySelectorAll('.active-sentence').forEach(e => e.classList.remove('active-sentence'));
         let el = document.getElementById('s' + bookData.idx);
         if(el) { el.classList.add('active-sentence'); el.scrollIntoView({block:'center', behavior:'smooth'}); }
+        
         let u = new SpeechSynthesisUtterance(bookData.text[bookData.idx]);
         u.lang = 'ru-RU';
-        u.onend = () => { if(bookData.playing) { bookData.idx++; speakBook(); } };
+        u.onend = () => { if(bookData.playing) { bookData.idx++; runReader(); } };
         synth.speak(u);
     }
 
     function clearBook() { synth.cancel(); bookData={text:[], idx:0, playing:false}; document.getElementById('book-content').innerHTML=''; document.getElementById('book-empty').style.display='block'; }
-    function runMic(id, cb, bId) {
+
+    function runMic(id, cb) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return;
         const rec = new SpeechRecognition(); rec.lang = 'ru-RU';
