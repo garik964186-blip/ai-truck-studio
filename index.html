@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StreamLine AI | FIXED VERSION</title>
+    <title>StreamLine AI | ULTIMATE</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -20,20 +20,26 @@
         .back { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; background: #e8d5a7; border-left: 2px solid rgba(0,0,0,0.1); }
 
         .paper-sheet { display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden; }
-        .header { padding: 15px; background: rgba(0,0,0,0.08); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; height: 60px; flex-shrink: 0;}
+        .header { padding: 15px; background: rgba(0,0,0,0.08); border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; display: flex; justify-content: space-between; align-items: center; height: 60px; flex-shrink: 0; z-index: 10;}
         
-        /* Исправлена прокрутка */
-        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; -webkit-overflow-scrolling: touch; position: relative; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; -webkit-overflow-scrolling: touch; position: relative; z-index: 5; }
         
         .ai-select { width: 46%; margin: 5px 2%; padding: 10px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; font-size: 13px; font-weight: bold; }
-        .input-bar { padding: 10px; background: rgba(255,255,255,0.4); border-top: 2px solid var(--ink); flex-shrink: 0; padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+        .input-bar { padding: 10px; background: rgba(255,255,255,0.4); border-top: 2px solid var(--ink); flex-shrink: 0; padding-bottom: calc(15px + env(safe-area-inset-bottom)); z-index: 20; }
         .row { display: flex; gap: 10px; align-items: center; }
         .field { flex: 1; padding: 12px; border: 2px solid var(--ink); border-radius: 30px; outline: none; font-size: 16px; background: #fff; }
         .btn { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--ink); display: flex; align-items: center; justify-content: center; width: 40px; }
         
-        .nav-dots { position: fixed; bottom: 80px; width: 100%; text-align: center; z-index: 100; pointer-events: none; }
-        .dot { display: inline-block; width: 12px; height: 12px; background: var(--gold); border-radius: 50%; margin: 0 6px; opacity: 0.3; pointer-events: auto; transition: 0.3s; }
+        /* НАВИГАЦИЯ (Точки) */
+        .nav-dots { position: fixed; bottom: 85px; width: 100%; text-align: center; z-index: 100; pointer-events: none; }
+        .dot { display: inline-block; width: 12px; height: 12px; background: var(--gold); border-radius: 50%; margin: 0 8px; opacity: 0.4; pointer-events: auto; transition: 0.3s; box-shadow: 0 0 5px rgba(0,0,0,0.5); cursor: pointer; }
         .dot.active { opacity: 1; transform: scale(1.4); background: var(--accent); }
+
+        /* НОВЫЕ СТРЕЛКИ НАВИГАЦИИ */
+        .page-arrow { position: fixed; top: 50%; transform: translateY(-50%); width: 50px; height: 80px; background: rgba(0,0,0,0.1); color: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; z-index: 200; border-radius: 10px; opacity: 0.6; transition: 0.2s; }
+        .page-arrow:active { background: rgba(212, 175, 55, 0.5); }
+        .arrow-left { left: 0; border-top-right-radius: 15px; border-bottom-right-radius: 15px; }
+        .arrow-right { right: 0; border-top-left-radius: 15px; border-bottom-left-radius: 15px; }
         
         .ai-msg { padding: 15px; background: rgba(255,255,255,0.6); border-radius: 15px; margin-bottom: 15px; border-left: 5px solid var(--gold); position: relative; word-wrap: break-word;}
         .user-msg { text-align:right; margin-bottom:15px; padding-right:10px; font-weight: bold; color: var(--leather); }
@@ -44,13 +50,15 @@
         .lib-frame { flex: 1; border: none; width: 100%; }
         .active-sentence { background: rgba(212, 175, 55, 0.4); border-bottom: 2px solid var(--gold); transition: all 0.3s; }
 
-        /* Стиль для картинок */
         .art-card { margin-bottom:20px; border:4px solid var(--gold); background:#fff; border-radius: 4px; overflow: hidden; }
         .art-card img { width:100%; display:block; min-height: 200px; background: #eee; }
         .art-prompt { text-align:center; padding:8px; font-size:12px; color: var(--ink); border-top: 1px solid #ddd; }
     </style>
 </head>
 <body onclick="unlockAudio()">
+
+<div class="page-arrow arrow-left" onclick="jumpTo(step - 1)" id="btn-prev" style="display:none;"><i class="fas fa-chevron-left"></i></div>
+<div class="page-arrow arrow-right" onclick="jumpTo(step + 1)" id="btn-next"><i class="fas fa-chevron-right"></i></div>
 
 <div class="nav-dots">
     <div class="dot active" onclick="jumpTo(1)"></div>
@@ -154,7 +162,7 @@
                     </video>
                 </div>
                 <h1 style="color:var(--gold); letter-spacing:5px; text-shadow: 2px 2px #000;">STREAMLINE AI</h1>
-                <p style="color:var(--gold); opacity:0.8;">BOSS ULTIMATE SYSTEM v2.0</p>
+                <p style="color:var(--gold); opacity:0.8;">BOSS ULTIMATE SYSTEM v3.0</p>
                 <div style="color:var(--gold); margin-top:40px; border:2px solid var(--gold); padding:12px 25px; border-radius:40px; font-weight:bold;">ВОЙТИ В СИСТЕМУ</div>
             </div>
             <div class="back"></div>
@@ -168,8 +176,7 @@
     const synth = window.speechSynthesis;
     let bookData = { sentences: [], index: 0, isPlaying: false, utterance: null };
 
-    // --- 1. СИСТЕМА ЗВУКА (FIXED) ---
-    // Браузеры блокируют звук без жеста. Этот хак "размораживает" аудио при первом клике.
+    // --- 1. СИСТЕМА ЗВУКА ---
     let audioUnlocked = false;
     function unlockAudio() {
         if (!audioUnlocked) {
@@ -181,19 +188,15 @@
     }
 
     function speakText(text) {
-        // Отменяем старое, чтобы не было очереди
         synth.cancel();
-        // Убираем markdown символы для чистоты речи
         const clean = text.replace(/[*#`_]/g, '');
         const u = new SpeechSynthesisUtterance(clean);
         u.lang = 'ru-RU';
         u.rate = 1.1; 
-        u.pitch = 1.0;
         synth.speak(u);
     }
 
-    // --- 2. НАВИГАЦИЯ (ИСПРАВЛЕННЫЙ СВАЙП) ---
-    // Добавлена проверка, что свайп "сильнее" прокрутки, чтобы не ломать скролл
+    // --- 2. НАВИГАЦИЯ (СВАЙП + КНОПКИ) ---
     let touchStartX = 0;
     let touchStartY = 0;
 
@@ -209,30 +212,38 @@
         let diffX = touchStartX - touchEndX;
         let diffY = touchStartY - touchEndY;
 
-        // Срабатываем только если движение по горизонтали ЯВНО больше, чем по вертикали
-        // И само движение достаточно длинное (>60px)
-        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
-            if (diffX > 0 && step < 4) jumpTo(step + 1); // Свайп влево (вперед)
-            else if (diffX < 0 && step > 1) jumpTo(step - 1); // Свайп вправо (назад)
+        // Если движение было сильным по горизонтали, игнорируем вертикальный скролл
+        if (Math.abs(diffX) > 60) { 
+            // Если свайп очень явный (>80px) или горизонталь сильнее вертикали
+            if (Math.abs(diffX) > 80 || Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0 && step < 4) jumpTo(step + 1); 
+                else if (diffX < 0 && step > 1) jumpTo(step - 1); 
+            }
         }
     });
 
     function jumpTo(s) {
-        if(s === step) return;
+        if(s < 1 || s > 4) return;
         step = s;
-        // Переворот страниц
+        
+        // Управление видимостью страниц
         for(let i=1; i<=3; i++) {
             const page = document.getElementById('p'+i);
             if(s > i) page.classList.add('flipped');
             else page.classList.remove('flipped');
         }
-        // Точки навигации
+        
+        // Обновление точек
         document.querySelectorAll('.dot').forEach((d, i) => {
             d.classList.toggle('active', i === s-1);
         });
+
+        // Управление стрелками
+        document.getElementById('btn-prev').style.display = (s === 1) ? 'none' : 'flex';
+        document.getElementById('btn-next').style.display = (s === 4) ? 'none' : 'flex';
     }
 
-    // --- 3. ИНТЕЛЛЕКТ-ХАБ (FIXED AI) ---
+    // --- 3. ИНТЕЛЛЕКТ-ХАБ ---
     async function askAI() {
         let input = document.getElementById('i-chat');
         let prompt = input.value.trim();
@@ -240,41 +251,28 @@
         let model = document.getElementById('chat-model').value;
         
         if(!prompt) return;
+        input.value = ''; input.blur();
         
-        input.value = '';
-        input.blur(); // Скрываем клавиатуру
-        
-        // Показываем сообщение пользователя
         hub.innerHTML += `<div class="user-msg">Босс: ${prompt}</div>`;
         hub.scrollTo(0, hub.scrollHeight);
-        
         document.getElementById('chat-status').style.display = 'block';
 
         try {
-            // Убрали переводчик (он часто падал). Нейросеть поймет русский напрямую.
-            // Используем прямой fetch с кодированием URI
-            const systemPrompt = "Отвечай на русском языке. Будь краток и полезен. ";
+            const systemPrompt = "Отвечай на русском языке. Будь краток. ";
             const finalUrl = `https://text.pollinations.ai/${encodeURIComponent(systemPrompt + prompt)}?model=${model}`;
-            
             const response = await fetch(finalUrl);
-            if (!response.ok) throw new Error('Network error');
-            
             const text = await response.text();
             
-            hub.innerHTML += `<div class="ai-msg"><b>AI (${model}):</b><br>${marked.parse(text)}</div>`;
-            speakText(text); // Озвучка ответа
+            hub.innerHTML += `<div class="ai-msg"><b>AI:</b><br>${marked.parse(text)}</div>`;
+            speakText(text);
         } catch(e) {
-            hub.innerHTML += `<div class="ai-msg" style="border-color:red;"><b>Ошибка:</b> Не удалось связаться с сервером AI. Попробуйте еще раз.</div>`;
+            hub.innerHTML += `<div class="ai-msg" style="border-color:red;">Ошибка сети.</div>`;
         }
-        
         document.getElementById('chat-status').style.display = 'none';
         hub.scrollTo(0, hub.scrollHeight);
     }
 
-    function clearChat() { 
-        synth.cancel(); 
-        document.getElementById('hub').innerHTML = ''; 
-    }
+    function clearChat() { synth.cancel(); document.getElementById('hub').innerHTML = ''; }
 
     // --- 4. ВИЗУАЛИЗАТОР ---
     async function drawArt() {
@@ -285,37 +283,26 @@
         let style = document.getElementById('art-style').value;
         
         if(!prompt) return;
-        input.value = '';
-        input.blur();
-
+        input.value = ''; input.blur();
         document.getElementById('art-status').style.display = 'block';
 
-        // Генерация случайного сида для уникальности
         let seed = Math.floor(Math.random() * 1000000);
-        // Формируем запрос (добавляем стиль к промпту)
         let fullPrompt = `${prompt}, ${style}`;
         let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?model=${model}&seed=${seed}&nologo=true`;
 
-        // Создаем картинку (предзагрузка)
         let img = new Image();
         img.onload = () => {
             document.getElementById('art-status').style.display = 'none';
             let div = document.createElement('div');
             div.className = 'art-card';
-            div.innerHTML = `
-                <img src="${url}" onclick="window.open('${url}', '_blank')">
-                <div class="art-prompt">${prompt}</div>
-            `;
+            div.innerHTML = `<img src="${url}" onclick="window.open('${url}', '_blank')"><div class="art-prompt">${prompt}</div>`;
             gallery.insertBefore(div, gallery.firstChild);
         };
-        img.onerror = () => {
-            document.getElementById('art-status').style.display = 'none';
-            alert('Ошибка загрузки изображения');
-        };
+        img.onerror = () => { document.getElementById('art-status').style.display = 'none'; };
         img.src = url;
     }
 
-    // --- 5. АУДИОКНИГА (ПОЛНАЯ ПЕРЕРАБОТКА) ---
+    // --- 5. АУДИОКНИГА ---
     function toggleLib() {
         const modal = document.getElementById('lib-modal');
         modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
@@ -324,12 +311,9 @@
     function manualLoad() {
         let rawText = document.getElementById('i-book').value;
         if(!rawText) return;
-        
-        // Разбиваем текст на предложения более умно
         bookData.sentences = rawText.match(/[^.!?]+[.!?]+["']?|[\s\S]+$/g) || [rawText];
         bookData.index = 0;
         bookData.isPlaying = false;
-        
         renderBook();
         document.getElementById('i-book').value = '';
         document.getElementById('book-empty').style.display = 'none';
@@ -345,22 +329,15 @@
     function jumpBookTo(idx) {
         bookData.index = idx;
         highlightSentence();
-        if(bookData.isPlaying) {
-            synth.cancel();
-            playNextSentence();
-        }
+        if(bookData.isPlaying) { synth.cancel(); playNextSentence(); }
     }
 
     function toggleBookPlay() {
         const btn = document.getElementById('play-btn');
-        
         if (bookData.isPlaying) {
-            // ПАУЗА
-            bookData.isPlaying = false;
-            synth.cancel();
+            bookData.isPlaying = false; synth.cancel();
             btn.innerHTML = '<i class="fas fa-play"></i>';
         } else {
-            // СТАРТ
             if (bookData.sentences.length === 0) return;
             bookData.isPlaying = true;
             btn.innerHTML = '<i class="fas fa-pause"></i>';
@@ -370,43 +347,32 @@
     }
 
     function playNextSentence() {
-        if (!bookData.isPlaying) return;
-        
-        if (bookData.index >= bookData.sentences.length) {
+        if (!bookData.isPlaying || bookData.index >= bookData.sentences.length) {
             bookData.isPlaying = false;
             document.getElementById('play-btn').innerHTML = '<i class="fas fa-play"></i>';
             return;
         }
-
         highlightSentence();
-
         const text = bookData.sentences[bookData.index];
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'ru-RU';
-        utterance.rate = 1.0;
-        
-        utterance.onend = () => {
-            if (bookData.isPlaying) {
-                bookData.index++;
-                playNextSentence();
-            }
-        };
-
-        utterance.onerror = (e) => {
-            console.error("Speech Error", e);
-            // Если ошибка, пробуем пропустить предложение
-            if (bookData.isPlaying) {
-                bookData.index++;
-                playNextSentence();
-            }
-        };
-
+        utterance.onend = () => { if (bookData.isPlaying) { bookData.index++; playNextSentence(); }};
         synth.speak(utterance);
     }
 
     function highlightSentence() {
         document.querySelectorAll('.active-sentence').forEach(e => e.classList.remove('active-sentence'));
         const el = document.getElementById('s' + bookData.index);
-        if (el) {
-            el.classList.add('active-sentence');
-            el.scrollIntoView({
+        if (el) { el.classList.add('active-sentence'); el.scrollIntoView({behavior: "smooth", block: "center"}); }
+    }
+
+    function resetBook() {
+        synth.cancel();
+        bookData = { sentences: [], index: 0, isPlaying: false };
+        document.getElementById('book-content').innerHTML = '';
+        document.getElementById('book-empty').style.display = 'block';
+        document.getElementById('play-btn').innerHTML = '<i class="fas fa-play"></i>';
+    }
+
+    // --- 6. ГОЛОСОВОЙ ВВОД ---
+    function runMic(inputId, callb
