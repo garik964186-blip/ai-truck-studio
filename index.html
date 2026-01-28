@@ -8,9 +8,10 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand(); // Развернуть на весь экран
+        window.Telegram.WebApp.expand(); // Развернуть на максимум
+        window.Telegram.WebApp.disableVerticalSwipe(); // Запретить закрытие свайпом вниз
     </script>
-
+    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
@@ -21,11 +22,10 @@
             --leather: #2a0505; --pause-color: #d4af37;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100dvh; 
-            background: #000; overflow: hidden; font-family: "Georgia", serif;
-            /* Учет системных отступов Telegram */
-            padding-top: env(safe-area-inset-top);
+            background: #000; overflow: hidden; font-family: "Georgia", serif; 
         }
         
         @keyframes fogMove { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
@@ -34,7 +34,11 @@
             opacity: 0.08; pointer-events: none; z-index: 10000; animation: fogMove 120s linear infinite;
         }
 
-        .viewport { width: 100vw; height: 100dvh; position: relative; perspective: 2000px; }
+        .viewport { 
+            width: 100vw; height: 100dvh; position: relative; perspective: 2000px; 
+            touch-action: none; /* Важно для Telegram: отключаем стандартные жесты браузера */
+        }
+        
         .book { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
         
         .page { 
@@ -162,7 +166,7 @@
                     <h1 style="margin:0; letter-spacing:5px; font-size:28px;">НАША КНИГА</h1>
                     <div style="font-size:11px; opacity:0.8; margin-top:10px; font-weight:bold;">ULTIMATE BOSS EDITION</div>
                 </div>
-                <div style="margin-top:30px; font-size:12px; color:var(--gold); opacity:0.5; animation: pulse 2s infinite;">← СВАЙП ДЛЯ ВХОДА</div>
+                <div style="margin-top:30px; font-size:12px; color:var(--gold); opacity:0.5;">← СВАЙП ДЛЯ ВХОДА</div>
             </div>
             <div class="back"></div>
         </div>
@@ -203,16 +207,22 @@
         step = s;
     }
 
+    // УЛУЧШЕННЫЙ КОНТРОЛЛЕР СВАЙПОВ ДЛЯ ТЕЛЕГРАМА
     let sX = 0;
-    document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
+    document.addEventListener('touchstart', e => {
+        sX = e.touches[0].clientX;
+    }, {passive: false});
+
     document.addEventListener('touchend', e => {
+        // Если открыт зум картинки — не листаем страницы
         if(document.getElementById('z-overlay').style.display === 'flex') return;
+        
         let d = sX - e.changedTouches[0].clientX;
-        if (Math.abs(d) > 60) {
+        if (Math.abs(d) > 50) { // Чуть снизил порог для отзывчивости
             if (d > 0 && step < 3) jumpTo(step + 1);
             else if (d < 0 && step > 1) jumpTo(step - 1);
         }
-    }, {passive: true});
+    }, {passive: false});
 
     async function sendMsg() {
         const i = document.getElementById('i-chat'), b = document.getElementById('hub-box'), m = document.getElementById('chat-model').value;
