@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>НАША КНИГА | BOSS CUSTOM EDITION</title>
     
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand(); // Развернуть на весь экран
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pinch-zoom-js@2.3.4/dist/pinch-zoom.umd.js"></script>
@@ -15,7 +21,12 @@
             --leather: #2a0505; --pause-color: #d4af37;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #000; overflow: hidden; font-family: "Georgia", serif; }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100dvh; 
+            background: #000; overflow: hidden; font-family: "Georgia", serif;
+            /* Учет системных отступов Telegram */
+            padding-top: env(safe-area-inset-top);
+        }
         
         @keyframes fogMove { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
         body::after {
@@ -55,12 +66,12 @@
         .user-msg { text-align: right; opacity: 0.6; font-style: italic; font-size: 14px; margin-bottom: 5px; color: var(--accent); }
         .status-bar { font-size: 11px; text-align: center; color: var(--accent); min-height: 20px; font-weight: bold; }
 
-        .input-bar { padding: 15px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+        .input-bar { padding: 15px; background: rgba(255,255,255,0.3); border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
         .row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
         .field { flex: 1; background: #fff; border: 2px solid var(--ink); padding: 12px 15px; border-radius: 25px; font-size: 16px; outline: none; }
         .btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); }
 
-        .nav-dots { position: fixed; bottom: 85px; left: 0; right: 0; display: flex; justify-content: center; gap: 15px; z-index: 5000; }
+        .nav-dots { position: fixed; bottom: 100px; left: 0; right: 0; display: flex; justify-content: center; gap: 15px; z-index: 5000; }
         .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); opacity: 0.3; border: 1px solid #000; transition: 0.3s; }
         .dot.active { opacity: 1; transform: scale(1.3); }
 
@@ -161,13 +172,9 @@
 
 <script>
     let step = 1, pz = null, audioReady = false, isVoiceInput = false;
-    
-    // Ссылка на ваш звук с GitHub
     const flipSound = new Audio('https://raw.githubusercontent.com/garik964186-blip/ai-truck-studio/main/page-flip-sound.mp3');
-
     let speechData = { isPaused: false, lastIndex: 0, currentText: "", activeElement: null };
 
-    // Пробуждение аудио по клику
     function wakeAudio() { if(!audioReady) { window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); audioReady = true; } }
 
     async function translateAndEnhance(text, mode = 'none') {
@@ -175,7 +182,6 @@
             const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ru|en`);
             const d = await r.json();
             let en = d.responseData.translatedText;
-            
             if (mode === 'simon') en = `Simon's cat style, simple 2D line art, minimalist hand-drawn animation character, black ink on white background, thick outlines, expressive, funny, ${en}`;
             if (mode === 'pro') en += ", masterpiece, 8k, highly detailed";
             if (mode === 'cartoon') en += ", cartoon style, vibrant";
@@ -187,12 +193,9 @@
     function jumpTo(s) {
         if(s === step) return;
         stopAllSpeech(); 
-        vibrate(30); 
-        
-        // Воспроизведение звука при смене страницы
+        if(navigator.vibrate) navigator.vibrate(30); 
         flipSound.currentTime = 0; 
         flipSound.play().catch(e => console.log("Audio play blocked"));
-
         const dots = document.querySelectorAll('.dot');
         dots.forEach((d, i) => d.classList.toggle('active', i === s-1));
         document.getElementById('p1').classList.toggle('flipped', s > 1);
@@ -200,7 +203,6 @@
         step = s;
     }
 
-    // Свайпы
     let sX = 0;
     document.addEventListener('touchstart', e => sX = e.touches[0].clientX, {passive: true});
     document.addEventListener('touchend', e => {
@@ -220,7 +222,6 @@
         const tid = 'l-'+Date.now();
         b.insertAdjacentHTML('beforeend', `<div id="${tid}" style="font-size:12px;opacity:0.5">⚡ Думаю...</div>`);
         b.scrollTop = b.scrollHeight;
-
         try {
             const en = await translateAndEnhance(val);
             const r = await fetch(`https://text.pollinations.ai/prompt/Respond%20in%20Russian:%20${encodeURIComponent(en)}?model=${m}`);
@@ -287,11 +288,9 @@
         if(!i.value) return;
         const txt = i.value; i.value = '';
         document.getElementById('status-art').innerText = "Рисую шедевр...";
-        vibrate(30);
-
+        if(navigator.vibrate) navigator.vibrate(30);
         const en = await translateAndEnhance(txt, s);
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?model=${m}&seed=${Math.floor(Math.random()*1e6)}&nologo=true`;
-        
         const div = document.createElement('div');
         div.style.cssText = "background:#fff;padding:5px;margin-bottom:15px;box-shadow:0 5px 15px rgba(0,0,0,0.2);position:relative;border-radius:4px;";
         div.innerHTML = `
@@ -303,12 +302,12 @@
             <p style="text-align:center;font-size:12px;margin:8px 0;font-weight:bold;">${txt}</p>
         `;
         b.prepend(div);
-        div.querySelector('img').onload = () => { document.getElementById('status-art').innerText = ""; vibrate(100); };
+        div.querySelector('img').onload = () => { document.getElementById('status-art').innerText = ""; if(navigator.vibrate) navigator.vibrate(100); };
     }
 
     async function downloadImage(url, promptText) {
         try {
-            vibrate(50);
+            if(navigator.vibrate) navigator.vibrate(50);
             const r = await fetch(url);
             const b = await r.blob();
             const u = window.URL.createObjectURL(b);
@@ -322,7 +321,6 @@
     function clearArt() { if(confirm("Удалить арты?")) document.getElementById('imgs-box').innerHTML=''; }
     function openZ(u) { document.getElementById('z-img').src = u; document.getElementById('z-overlay').style.display = 'flex'; pz = new PinchZoom.default(document.getElementById('z-wrap'), {maxZoom:4}); }
     function closeZ() { document.getElementById('z-overlay').style.display = 'none'; if(pz) pz.destroy(); }
-    function vibrate(ms) { if(navigator.vibrate) navigator.vibrate(ms); }
 </script>
 </body>
 </html>
